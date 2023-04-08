@@ -9,6 +9,7 @@
 - Locate
 
 ### XCRun
+- Locate
 - Install AuthKey_*.p8 files
 
 ### XCDevice
