@@ -23,7 +23,7 @@ jobs:
           7.0.x
 
     - name: Test
-      run: dotnet test ./generated/src/AppleDev.Test/AppleDev.Test.csproj
+      run: dotnet test ./AppleDev.Test/AppleDev.Test.csproj
 
     - name: Pack
       shell: pwsh
@@ -36,7 +36,7 @@ jobs:
         echo "PACKAGE VERSION: $VERSION"
         
         New-Item -ItemType Directory -Force -Path .\artifacts
-        dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./generated/src/AppleDev/AppleDev.csproj
+        dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./AppleDev/AppleDev.csproj
 
         $pfxPath = Join-Path -Path $pwd -ChildPath "codesigncert.pfx"
         [IO.File]::WriteAllBytes("$pfxPath", [System.Convert]::FromBase64String($env:CODESIGN_PFX))
