@@ -14,6 +14,14 @@ public class XCRun
 		return null;
 	}
 
+	internal FileInfo LocateOrThrow()
+	{
+		var xcrun = Locate();
+		if (xcrun is null || !xcrun.Exists)
+			throw new FileNotFoundException(xcrun?.FullName ?? ToolPath);
+		return xcrun;
+	}
+
 	public Task InstallPrivateKey(string apiKeyId, string privateKeyBase64)
 	{
 		var pkDir = PrivateKeysDirectory;
