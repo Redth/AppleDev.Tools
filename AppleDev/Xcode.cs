@@ -5,7 +5,7 @@ namespace AppleDev;
 
 public class Xcode
 {
-	public async Task<DirectoryInfo?> LocateAsync(CancellationToken cancellationToken)
+	public async Task<DirectoryInfo?> LocateAsync(CancellationToken cancellationToken = default)
 	{
 		if (!OperatingSystem.IsMacOS())
 			return null;

@@ -8,7 +8,7 @@ namespace AppleDev;
 
 public partial class XCDevice
 {
-	public async Task<FileInfo> LocateAsync(CancellationToken cancellationToken)
+	public async Task<FileInfo> LocateAsync(CancellationToken cancellationToken = default)
 	{
 		var xcode = new Xcode();
 
@@ -80,7 +80,7 @@ public partial class XCDevice
 
 	public delegate Task DeviceChangeDelegate(string id, bool added);
 
-	public async Task ObserveAsync(CancellationToken cancellationToken, XCDeviceType type, DeviceChangeDelegate handler)
+	public async Task ObserveAsync(CancellationToken cancellationToken, XCDeviceType type, DeviceChangeDelegate handler, Func<string, Task> consoleOutputHandler = null)
 	{
 		if (!OperatingSystem.IsMacOS())
 			return;
@@ -91,8 +91,14 @@ public partial class XCDevice
 
 		await Cli.Wrap(xcdevicePath.FullName)
 			.WithArguments(args)
+			.WithStandardErrorPipe(PipeTarget.ToDelegate(async (line) =>
+			{
+				consoleOutputHandler?.Invoke(line);
+			}))
 			.WithStandardOutputPipe(PipeTarget.ToDelegate(async (line) =>
 			{
+				consoleOutputHandler?.Invoke(line);
+				
 				string? id = null;
 
 				if (line.StartsWith("Attach:", StringComparison.OrdinalIgnoreCase))

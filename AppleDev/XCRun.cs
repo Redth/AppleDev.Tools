@@ -2,9 +2,16 @@
 
 public class XCRun
 {
-	public string Locate()
+	public const string ToolPath = "/usr/bin/xcrun";
+	
+	public FileInfo? Locate()
 	{
-		return "/usr/bin/xcrun";
+		var path = new FileInfo(ToolPath);
+
+		if (path.Exists)
+			return path;
+
+		return null;
 	}
 
 	public Task InstallPrivateKey(string apiKeyId, string privateKeyBase64)

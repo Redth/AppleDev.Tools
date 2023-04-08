@@ -2,9 +2,13 @@
 
 public class ALTool : XCRun
 {
-	public async Task UploadAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId)
+	public async Task UploadAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
 	{
-		CliWrap.Cli.Wrap(Locate())
+		var xcrun = Locate();
+		if (xcrun is null || !xcrun.Exists)
+			throw new FileNotFoundException(xcrun?.FullName ?? ToolPath);
+		
+		await CliWrap.Cli.Wrap(xcrun.FullName)
 			.WithArguments(new string[]
 			{
 				"altool",
@@ -26,12 +30,16 @@ public class ALTool : XCRun
 				apiKeyId,
 				"--apiIssuer",
 				issuerId
-			});
+			}).ExecuteAsync(cancellationToken).ConfigureAwait(false);
 	}
 
-	public async Task ValidateAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId)
+	public async Task ValidateAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
 	{
-		CliWrap.Cli.Wrap(Locate())
+		var xcrun = Locate();
+		if (xcrun is null || !xcrun.Exists)
+			throw new FileNotFoundException(xcrun?.FullName ?? ToolPath);
+		
+		await CliWrap.Cli.Wrap(xcrun.FullName)
 			.WithArguments(new string[]
 			{
 				"altool",
@@ -53,6 +61,7 @@ public class ALTool : XCRun
 				apiKeyId,
 				"--apiIssuer",
 				issuerId
-			});
+			})
+			.ExecuteAsync(cancellationToken).ConfigureAwait(false);
 	}
 }

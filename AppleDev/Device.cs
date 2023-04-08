@@ -16,32 +16,32 @@ public class Device
 	public bool Simulator { get; set; }
 
 	[JsonProperty("operatingSystemVersion")]
-	public string OperatingSystemVersion { get; set; }
+	public string? OperatingSystemVersion { get; set; }
 
 	[JsonProperty("available")]
 	public bool Available { get; set; }
 
 	[JsonProperty("platform")]
-	public string Platform { get; set; }
+	public string? Platform { get; set; }
 
 	[JsonProperty("modelCode")]
-	public string ModelCode { get; set; }
+	public string? ModelCode { get; set; }
 
 	[JsonProperty("identifier")]
-	public string Identifier { get; set; }
+	public string? Identifier { get; set; }
 
 	[JsonProperty("architecture")]
-	public string Architecture { get; set; }
+	public string? Architecture { get; set; }
 
 	[JsonProperty("modelUTI")]
-	public string ModelUTI { get; set; }
+	public string? ModelUTI { get; set; }
 
 	[JsonProperty("modelName")]
-	public string ModelName { get; set; }
+	public string? ModelName { get; set; }
 
 	[JsonProperty("name")]
-	public string Name { get; set; }
+	public string? Name { get; set; }
 
 	[JsonProperty("interface")]
-	public string Interface { get; set; }
+	public string? Interface { get; set; }
 }
