@@ -1,4 +1,5 @@
 ﻿using CliWrap;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -6,11 +7,57 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace AppleDev
 {
 	public class SimCtl : XCRun
 	{
+		public async Task<DirectoryInfo?> LocateSimulatorAppAsync(CancellationToken cancellationToken = default)
+		{
+			var xcode = new Xcode();
+			var xcodePath = await xcode.LocateAsync(cancellationToken).ConfigureAwait(false);
+
+			if (xcodePath is null || !xcodePath.Exists)
+				return null;
+
+			var simAppPath = new DirectoryInfo(Path.Combine(xcodePath.FullName, "Contents", "Developer", "Applications", "Simulator.app"));
+			if (simAppPath.Exists)
+				return simAppPath;
+			return null;
+		}
+
+		public async Task<bool> OpenSimulatorAppAsync(CancellationToken cancellationToken = default)
+		{
+			var simAppPath = await LocateSimulatorAppAsync(cancellationToken).ConfigureAwait(false);
+
+			if (simAppPath is null || !simAppPath.Exists)
+				throw new FileNotFoundException(simAppPath?.FullName ?? "Simulator.app");
+
+			var result = await Cli.Wrap("/usr/bin/open")
+				.WithArguments(simAppPath.FullName)
+				.ExecuteAsync(cancellationToken)
+				.ConfigureAwait(false);
+
+			return result.ExitCode == 0;
+		}
+
+		public async Task Boot(string uuid, CancellationToken cancellationToken = default)
+		{
+			var xcrun = LocateOrThrow();
+			var stdout = new StringBuilder();
+
+			await Cli.Wrap(xcrun.FullName)
+				.WithArguments(new[]
+				{
+					"simctl",
+					"boot",
+					uuid
+				})
+				.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
+				.ExecuteAsync(cancellationToken).ConfigureAwait(false);
+		}
+
 		public async Task<List<SimCtlDevice>> GetSimulatorsAsync(CancellationToken cancellationToken = default)
 		{
 			var results = new List<SimCtlDevice>();
