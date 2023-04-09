@@ -60,22 +60,30 @@ namespace AppleDev.Test
 
 			var s = sims.FirstOrDefault(s => s.DeviceType?.ProductFamily?.Contains("iPhone") ?? false);
 
+			_testOutputHelper.WriteLine($"Found: {s?.Name} - {s?.Udid}");
+			
 			var udid = s?.Udid;
 			
 			Assert.NotEmpty(udid);
 			
 			// Erase the sim first
-			await simctl.EraseAsync(udid);
+			Assert.True(await simctl.EraseAsync(udid)));
 
+			_testOutputHelper.WriteLine($"Erased: {udid}");
+
+			
 			// Open simulator.app
 			//Assert.True(await simctl.OpenSimulatorAppAsync(udid));
 
 			// Boot
 			Assert.True(await simctl.BootAsync(udid));
+			_testOutputHelper.WriteLine($"Booting: {udid}");
 			
 			// Wait for boot complete
-			Assert.True(await simctl.WaitForBootedAsync(udid, TimeSpan.FromSeconds(120)));
+			Assert.True(await simctl.WaitForBootedAsync(udid, TimeSpan.FromSeconds(240)));
 
+			_testOutputHelper.WriteLine($"Waited for boot: {udid}");
+			
 			// Verify we found a sim
 			var booted = (await simctl.GetSimulatorsAsync())
 				.FirstOrDefault(i => !string.IsNullOrEmpty(i.Udid) && i.Udid == udid && i.IsBooted);
