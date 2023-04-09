@@ -19,3 +19,15 @@
 ### ALTool
 - Upload app to app store / test flight
 - Validate app
+
+### SimCtl
+- List Simulators
+- Boot simulator (optionally wait for ready)
+- Delete simulator
+- Erase Simulator
+- Open Simulator.app
+- Add media to simulator
+- Install/Uninstall apps in simulator
+- Launch/Terminate apps in simulator
+- Open URL in simulator
+- Screenshot of simulator
