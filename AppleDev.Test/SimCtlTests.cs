@@ -67,7 +67,7 @@ namespace AppleDev.Test
 			Assert.NotEmpty(udid);
 			
 			// Erase the sim first
-			Assert.True(await simctl.EraseAsync(udid)));
+			Assert.True(await simctl.EraseAsync(udid));
 
 			_testOutputHelper.WriteLine($"Erased: {udid}");
 
