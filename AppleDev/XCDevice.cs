@@ -80,7 +80,7 @@ public partial class XCDevice
 
 	public delegate Task DeviceChangeDelegate(string id, bool added);
 
-	public async Task ObserveAsync(CancellationToken cancellationToken, XCDeviceType type, DeviceChangeDelegate handler, Func<string, Task> consoleOutputHandler = null)
+	public async Task ObserveAsync(CancellationToken cancellationToken, XCDeviceType type, DeviceChangeDelegate handler, Func<string, Task>? consoleOutputHandler = null)
 	{
 		if (!OperatingSystem.IsMacOS())
 			return;
@@ -89,31 +89,35 @@ public partial class XCDevice
 
 		var args = $"observe {TypeToFlag(type)}";
 
-		await Cli.Wrap(xcdevicePath.FullName)
-			.WithArguments(args)
-			.WithStandardErrorPipe(PipeTarget.ToDelegate(async (line) =>
-			{
-				consoleOutputHandler?.Invoke(line);
-			}))
-			.WithStandardOutputPipe(PipeTarget.ToDelegate(async (line) =>
-			{
-				consoleOutputHandler?.Invoke(line);
-				
-				string? id = null;
+		try
+		{
+			await Cli.Wrap(xcdevicePath.FullName)
+				.WithArguments(args)
+				.WithValidation(CommandResultValidation.None)
+				.WithStandardErrorPipe(PipeTarget.ToDelegate(line => { consoleOutputHandler?.Invoke(line); }))
+				.WithStandardOutputPipe(PipeTarget.ToDelegate(async (line) =>
+				{
+					consoleOutputHandler?.Invoke(line);
 
-				if (line.StartsWith("Attach:", StringComparison.OrdinalIgnoreCase))
-				{
-					id = line?.Substring(7)?.Trim() ?? string.Empty;
-					if (!string.IsNullOrEmpty(id) && handler is not null)
-						await handler(id, true);
-				}
-				else if (line.StartsWith("Detach:", StringComparison.OrdinalIgnoreCase))
-				{
-					id = line?.Substring(7)?.Trim() ?? string.Empty;
-					if (!string.IsNullOrEmpty(id) && handler is not null)
-						await handler(id, false);
-				}
-			}))
-			.ExecuteAsync(cancellationToken).ConfigureAwait(false);
+					string? id = null;
+
+					if (line.StartsWith("Attach:", StringComparison.OrdinalIgnoreCase))
+					{
+						id = line?.Substring(7)?.Trim() ?? string.Empty;
+						if (!string.IsNullOrEmpty(id) && handler is not null)
+							await handler(id, true);
+					}
+					else if (line.StartsWith("Detach:", StringComparison.OrdinalIgnoreCase))
+					{
+						id = line?.Substring(7)?.Trim() ?? string.Empty;
+						if (!string.IsNullOrEmpty(id) && handler is not null)
+							await handler(id, false);
+					}
+				}))
+				.ExecuteAsync(default, gracefulCancellationToken: cancellationToken).ConfigureAwait(false);
+		}
+		catch (OperationCanceledException)
+		{
+		}
 	}
 }

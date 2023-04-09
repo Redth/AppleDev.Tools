@@ -2,6 +2,16 @@
 
 public class ALTool : XCRun
 {
+	/// <summary>
+	/// Uploads an app to AppStoreConnect / TestFlight
+	/// </summary>
+	/// <param name="appPath">Path to the .app / .ipa to upload</param>
+	/// <param name="appType">What type of app is being uploaded</param>
+	/// <param name="apiKeyId">API KeyID</param>
+	/// <param name="issuerId">IssuerID for the API Key</param>
+	/// <param name="cancellationToken"></param>
+	/// <exception cref="FileNotFoundException"></exception>
+	/// <exception cref="InvalidDataException"></exception>
 	public async Task UploadAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
 	{
 		var xcrun = Locate();
