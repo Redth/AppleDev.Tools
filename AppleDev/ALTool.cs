@@ -14,6 +14,8 @@ public class ALTool : XCRun
 	/// <exception cref="InvalidDataException"></exception>
 	public async Task UploadAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
 	{
+		base.ThrowIfNotMacOS();
+		
 		var xcrun = Locate();
 		if (xcrun is null || !xcrun.Exists)
 			throw new FileNotFoundException(xcrun?.FullName ?? ToolPath);
@@ -45,6 +47,8 @@ public class ALTool : XCRun
 
 	public async Task ValidateAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
 	{
+		base.ThrowIfNotMacOS();
+
 		var xcrun = Locate();
 		if (xcrun is null || !xcrun.Exists)
 			throw new FileNotFoundException(xcrun?.FullName ?? ToolPath);

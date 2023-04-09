@@ -16,6 +16,8 @@ namespace AppleDev
 	{
 		public async Task<DirectoryInfo?> LocateSimulatorAppAsync(CancellationToken cancellationToken = default)
 		{
+			base.ThrowIfNotMacOS();
+
 			var xcode = new Xcode();
 			var xcodePath = await xcode.LocateAsync(cancellationToken).ConfigureAwait(false);
 
@@ -37,6 +39,8 @@ namespace AppleDev
 		/// <exception cref="FileNotFoundException"></exception>
 		public async Task<bool> OpenSimulatorAppAsync(string? udid = null, CancellationToken cancellationToken = default)
 		{
+			base.ThrowIfNotMacOS();
+			
 			var simAppPath = await LocateSimulatorAppAsync(cancellationToken).ConfigureAwait(false);
 
 			if (simAppPath is null || !simAppPath.Exists)
@@ -96,6 +100,8 @@ namespace AppleDev
 		/// <returns>True if the simulator was found to be ready.</returns>
 		public async Task<bool> WaitForBootedAsync(string udid, TimeSpan timeout, CancellationToken cancellationToken = default)
 		{
+			base.ThrowIfNotMacOS();
+			
 			CancellationTokenSource? cts = null;
 			var ct = cancellationToken;
 
@@ -262,6 +268,8 @@ namespace AppleDev
 		
 		async Task<bool> RunSimCtlCmdAsync(Action<ArgumentsBuilder> argsBuilder, CancellationToken cancellationToken = default)
 		{
+			base.ThrowIfNotMacOS();
+			
 			var xcrun = LocateOrThrow();
 
 			try
@@ -284,6 +292,8 @@ namespace AppleDev
 
 		public async Task<List<SimCtlDevice>> GetSimulatorsAsync(bool availableOnly = true, CancellationToken cancellationToken = default)
 		{
+			base.ThrowIfNotMacOS();
+			
 			var results = new List<SimCtlDevice>();
 
 			// Set is dictionary of runtime keys and device list values
@@ -318,6 +328,8 @@ namespace AppleDev
 
 		public async Task<List<SimCtlDeviceType>> GetSimulatorGroupsAsync(CancellationToken cancellationToken = default)
 		{
+			base.ThrowIfNotMacOS();
+			
 			var results = new List<SimCtlDeviceType>();
 
 			List<SimCtlDeviceType> deviceTypes = new ();

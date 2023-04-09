@@ -6,10 +6,12 @@ using System.Text;
 
 namespace AppleDev;
 
-public partial class XCDevice
+public partial class XCDevice : XCRun
 {
 	public async Task<FileInfo> LocateAsync(CancellationToken cancellationToken = default)
 	{
+		base.ThrowIfNotMacOS();
+		
 		var xcode = new Xcode();
 
 		var xcodePath = await xcode.LocateAsync(cancellationToken).ConfigureAwait(false);
@@ -58,8 +60,7 @@ public partial class XCDevice
 
 	public Task<IReadOnlyList<Device>> GetDevicesAsync(CancellationToken cancellationToken = default, TimeSpan timeout = default)
 	{
-		if (!OperatingSystem.IsMacOS())
-			return Task.FromResult<IReadOnlyList<Device>>(new List<Device>());
+		base.ThrowIfNotMacOS();
 
 		var args = $"list";
 
@@ -82,8 +83,7 @@ public partial class XCDevice
 
 	public async Task ObserveAsync(CancellationToken cancellationToken, XCDeviceType type, DeviceChangeDelegate handler, Func<string, Task>? consoleOutputHandler = null)
 	{
-		if (!OperatingSystem.IsMacOS())
-			return;
+		base.ThrowIfNotMacOS();
 
 		var xcdevicePath = await LocateAsync(cancellationToken).ConfigureAwait(false);
 

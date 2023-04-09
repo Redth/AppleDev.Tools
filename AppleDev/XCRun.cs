@@ -22,6 +22,12 @@ public class XCRun
 		return xcrun;
 	}
 
+	internal void ThrowIfNotMacOS()
+	{
+		if (!OperatingSystem.IsMacOS())
+			throw new PlatformNotSupportedException();
+	}
+
 	public Task InstallPrivateKey(string apiKeyId, string privateKeyBase64)
 	{
 		var pkDir = PrivateKeysDirectory;
