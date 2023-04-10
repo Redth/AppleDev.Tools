@@ -20,9 +20,36 @@ public class ListProvisioningProfilesCommand : AsyncCommand<ListProvisioningProf
 			filterProfileState: settings.Active ? new List<string> { "ACTIVE" } : null,	
 			cancellationToken: data.CancellationToken).ConfigureAwait(false);
 
-		var profileAttributes = results.Data.Select(d => d.Attributes).ToList();
+		var profileResults = new List<ProfileAttributes>();
 
-		OutputHelper.Output(profileAttributes, settings.Format, settings.Verbose,
+		// Filter by bundle id if specified
+		if (!string.IsNullOrEmpty(settings.BundleId))
+		{
+			foreach (var profile in results.Data)
+			{
+				try
+				{
+					var bapi = new AppStoreConnect.Api.BundleIdsApi(config);
+					var bun = await bapi.BundleIdsGetInstanceAsync("");
+
+					var bundleId = await api.ProfilesBundleIdGetToOneRelatedAsync(profile.Id, cancellationToken: data.CancellationToken).ConfigureAwait(false);
+					if (settings.BundleId.Equals(bundleId?.Data?.Attributes?.Identifier, StringComparison.OrdinalIgnoreCase))
+					{
+						profileResults.Add(profile.Attributes);
+					}
+				}
+				catch (Exception ex)
+				{
+					AnsiConsole.WriteException(ex);
+				}
+			}
+		}
+		else
+		{
+			profileResults.AddRange(results.Data.Select(d => d.Attributes));
+		}
+
+		OutputHelper.Output(profileResults, settings.Format, settings.Verbose,
 			new ColumnInfo<ProfileAttributes>("Name", r => r.Name),
 			new ColumnInfo<ProfileAttributes>("UUID", r => r.Uuid),
 			new ColumnInfo<ProfileAttributes>("Profile Type", r => r.ProfileType.GetEnumMemberValue() ?? ""),
@@ -42,4 +69,8 @@ public class ListProvisioningProfilesCommandSettings : FormattableOutputAppStore
 	[Description("Only list active")]
 	[CommandOption("-a|--active")]
 	public bool Active { get; set; } = false;
+
+	[Description("Filter Profiles by BundleID")]
+	[CommandOption("-b|--bundle-id <bundle-id>")]
+	public string? BundleId { get; set; }
 }
