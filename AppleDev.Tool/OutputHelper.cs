@@ -33,43 +33,38 @@ public class OutputFormatTypeConverter : System.ComponentModel.TypeConverter
 	}
 }
 
-static class OutputHelper
+class ColumnInfo<T>
 {
-	internal static void Output<T>(IEnumerable<T>? items, OutputFormat? format, bool verbose, string[] columns, Func<T, string?[]> getRow, string[] extraColumns, Func<T, string?[]> getExtraRow)
+	public ColumnInfo(string title, Func<T, string?> getValue, bool verbose = false)
 	{
-		var allColumns = columns;
-		if (verbose)
-			allColumns = columns.Concat(extraColumns).ToArray();
-
-		var allRows = getRow;
-		if (verbose)
-		{
-			allRows = (t) =>
-				getRow(t).Concat(getExtraRow(t)).ToArray();
-		}
-		
-		Output<T>(items, format, allColumns, allRows);
+		Title = title;
+		Value = getValue;
+		Verbose = verbose;
 	}
 	
-	internal static void Output<T>(IEnumerable<T>? items, OutputFormat? format, string[] columns,
-		Func<T, string?[]> getRow)
-	{
-		if (items is null)
-			return;
+	public readonly string Title;
+	public readonly Func<T, string?> Value;
 
+	public readonly bool Verbose;
+}
+
+static class OutputHelper
+{
+	internal static void Output<T>(IEnumerable<T> items, OutputFormat? format, bool verbose, params ColumnInfo<T>[] columns)
+	{
 		if ((format ?? OutputFormat.None) == OutputFormat.None)
 		{
-			OutputTable<T>(items, columns, getRow);
+			OutputTable<T>(items, columns);
 		}
 		else
 		{
 			if (format == OutputFormat.Json)
-				AnsiConsole.WriteLine(JsonSerialize<IEnumerable<T>>(items));
+				AnsiConsole.WriteLine(JsonSerialize(items));
 			else if (format == OutputFormat.Xml)
-				AnsiConsole.WriteLine(XmlSerialize<IEnumerable<T>>(items));
+				AnsiConsole.WriteLine(XmlSerialize(items));
 		}
 	}
-
+	
 	internal static void Output<T>(T item, OutputFormat? format, string[] properties, Func<T, string?[]> getValues)
 	{
 		if ((format ?? OutputFormat.None) == OutputFormat.None)
@@ -85,17 +80,21 @@ static class OutputHelper
 		}
 	}
 
-	internal static void OutputTable<T>(IEnumerable<T> items, string[] columns, Func<T, string?[]> getRow)
+	
+	internal static void OutputTable<T>(IEnumerable<T> items, params ColumnInfo<T>[] columns)
 	{
 		var table = new Table();
 
 		foreach (var c in columns)
-			table.AddColumn(c);
+			table.AddColumn(c.Title);
 
 		foreach (var i in items)
 		{
-			var row = getRow(i);
-			table.AddRow(row.Select(r => r ?? string.Empty).ToArray());
+			var rowValues = new List<string>();
+			
+			foreach (var c in columns)
+				rowValues.Add(c.Value(i) ?? string.Empty);
+			table.AddRow(rowValues.ToArray());
 		}
 
 		// Render the table to the console
