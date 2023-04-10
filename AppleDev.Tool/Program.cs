@@ -34,7 +34,7 @@ app.Configure(config =>
 			.WithExample(new[] { "simulator", "boot", "--wait", "1234-1112-12242-12322-1111232" })
 			.WithExample(new[] { "simulator", "boot", "--wait", "--timeout", "240", "1234-1112-12242-12322-1111232" });
 		
-		sim.AddCommand<BootSimulatorCommand>("shutdown")
+		sim.AddCommand<ShutdownSimulatorCommand>("shutdown")
 			.WithData(data)
 			.WithDescription("Shuts down simulator(s)")
 			.WithExample(new[] { "simulator", "shutdown", "1234-1112-12242-12322-1111232" })
