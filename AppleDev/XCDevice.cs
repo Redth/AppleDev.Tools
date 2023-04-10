@@ -3,11 +3,17 @@ using CliWrap.Buffered;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace AppleDev;
 
 public partial class XCDevice : XCRun
 {
+	public XCDevice() : base() { }
+	
+	public XCDevice(ILogger<XCDevice> logger) : base(logger) { }
+
+	
 	public async Task<FileInfo> LocateAsync(CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();

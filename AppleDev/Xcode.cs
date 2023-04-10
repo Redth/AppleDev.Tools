@@ -1,10 +1,24 @@
 ﻿using CliWrap;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AppleDev;
 
 public class Xcode
 {
+	public Xcode()
+	{
+		Logger = NullLogger<Xcode>.Instance;
+	}
+	
+	public Xcode(ILogger<Xcode> logger)
+	{
+		Logger = logger;
+	}
+	
+	public readonly ILogger<Xcode> Logger;
+	
 	public async Task<DirectoryInfo?> LocateAsync(CancellationToken cancellationToken = default)
 	{
 		if (!OperatingSystem.IsMacOS())

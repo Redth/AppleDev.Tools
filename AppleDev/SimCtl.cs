@@ -8,12 +8,17 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CliWrap.Builders;
+using Microsoft.Extensions.Logging;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace AppleDev
 {
 	public class SimCtl : XCRun
 	{
+		public SimCtl() : base() { }
+	
+		public SimCtl(ILogger<SimCtl> logger) : base(logger) { }
+
 		public async Task<DirectoryInfo?> LocateSimulatorAppAsync(CancellationToken cancellationToken = default)
 		{
 			base.ThrowIfNotMacOS();

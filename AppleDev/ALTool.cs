@@ -1,7 +1,13 @@
-﻿namespace AppleDev;
+﻿using Microsoft.Extensions.Logging;
+
+namespace AppleDev;
 
 public class ALTool : XCRun
 {
+	public ALTool() : base() { }
+	
+	public ALTool(ILogger<ALTool> logger) : base(logger) { }
+	
 	/// <summary>
 	/// Uploads an app to AppStoreConnect / TestFlight
 	/// </summary>

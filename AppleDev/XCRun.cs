@@ -1,7 +1,27 @@
-﻿namespace AppleDev;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace AppleDev;
 
 public class XCRun
 {
+	public XCRun()
+	{
+		Logger = NullLogger<XCRun>.Instance;
+	}
+	
+	public XCRun(ILogger<XCRun> logger)
+	{
+		Logger = logger;
+	}
+	
+	public XCRun(ILogger logger)
+	{
+		Logger = logger;
+	}
+
+	protected readonly ILogger Logger;
+	
 	public const string ToolPath = "/usr/bin/xcrun";
 	
 	public FileInfo? Locate()
