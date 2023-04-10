@@ -66,8 +66,17 @@ app.Configure(config =>
 				.WithExample(new[] { "device", "list" });
 		});
 
-		config.AddBranch("keychain", sdkBranch =>
+		config.AddBranch("keychain", keychain =>
 		{
+			keychain.AddCommand<UnlockKeychainCommand>("unlock")
+				.WithData(data)
+				.WithDescription("Unlocks a keychain file")
+				.WithExample(new[] { "keychain", "unlock", "--allow-any-app-read", "--keychain", "~/Library/Keychains/login.keychain" });
+
+			keychain.AddCommand<UnlockKeychainCommand>("import")
+				.WithData(data)
+				.WithDescription("Unlocks a keychain file")
+				.WithExample(new[] { "keychain", "import", "~/mycert.pfx", "--keychain", "~/Library/Keychains/login.keychain" });
 
 		});
 	}

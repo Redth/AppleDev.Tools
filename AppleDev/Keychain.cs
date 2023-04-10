@@ -1,27 +1,23 @@
 ﻿using CliWrap;
+using CliWrap.Builders;
 
 public class Keychain
 {
-	public const string DefaultKeychain = "login";
+	public const string DefaultKeychain = "login.keychain-db";
 
 	public FileInfo Locate(string keychain)
 	{
 		if (Path.IsPathRooted(keychain))
 			return new FileInfo(keychain);
 
-		var keychainName = keychain;
-		if (keychainName.EndsWith(".keychain"))
-			keychainName = keychainName.Substring(0, keychain.Length - 9);
-
-		return new FileInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Keychains", $"{keychainName}.keychain"));
+		return new FileInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Keychains", keychain));
 	}
 
-	public async Task UpdateKeychainList(string keychain = DefaultKeychain)
+	public Task<bool> UpdateKeychainListAsync(string keychain = DefaultKeychain, CancellationToken cancellationToken = default)
 	{
 		var keychainPath = Locate(keychain);
 
-		await Cli.Wrap("security")
-			.WithArguments(args =>
+		return WrapSecurityAsync(args =>
 			{
 				args.Add("list-keychains");
 				args.Add("-d");
@@ -29,22 +25,16 @@ public class Keychain
 				args.Add("-s");
 				args.Add(keychainPath.FullName);
 
-				if (!Path.GetFileName(keychainPath.FullName).Equals("login.keychain"))
-					args.Add(Locate("login").FullName);
-			})
-			.ExecuteAsync().ConfigureAwait(false);
+				if (!Path.GetFileName(keychainPath.FullName).Equals(DefaultKeychain))
+					args.Add(Locate(DefaultKeychain).FullName);
+			}, cancellationToken);
 	}
 
-	public async Task DeleteKeychain(string keychain = DefaultKeychain)
-	{
-		await CliWrap.Cli.Wrap("security")
-			.WithArguments(new[] { "delete-keychain", Locate(keychain).FullName })
-			.ExecuteAsync().ConfigureAwait(false);
-	}
+	public Task<bool> DeleteKeychainAsync(string keychain = DefaultKeychain)
+		=> WrapSecurityAsync(new[] { "delete-keychain", Locate(keychain).FullName });
 
-	public Task ImportPkcs12(string file, string password, string keychain = DefaultKeychain, bool allowReadToAnyApp = false)
-		=> Cli.Wrap("security")
-			.WithArguments(args =>
+	public Task<bool> ImportPkcs12Async(string file, string passphrase, string keychain = DefaultKeychain, bool allowReadToAnyApp = false, CancellationToken cancellationToken = default)
+		=> WrapSecurityAsync(args =>
 			{
 				args.Add("import");
 				args.Add(file);
@@ -62,49 +52,66 @@ public class Keychain
 				args.Add("-T");
 				args.Add("/usr/bin/security");
 				args.Add("-P");
-				args.Add(password);
-			})
-			.ExecuteAsync();
+				args.Add(passphrase);
+			}, cancellationToken);
 
-	public Task SetPartitionList(string password, string keychain = DefaultKeychain)
-		=> Cli.Wrap("security")
-			.WithArguments(new[] { 
+	public Task<bool> SetPartitionListAsync(string password, string keychain = DefaultKeychain, CancellationToken cancellationToken = default)
+		=> WrapSecurityAsync(new[] { 
 				"set-key-partition-list",
 				"-S",
 				"apple-tool:,apple:",
 				"-k",
 				password,
 				Locate(keychain).FullName
-			}).ExecuteAsync();
+			}, cancellationToken);
 
-	public Task UnlockKeychain(string password, string keychain = DefaultKeychain)
-		=> Cli.Wrap("security")
-			.WithArguments(new[] { 
+	public Task<bool> UnlockKeychainAsync(string password, string keychain = DefaultKeychain, CancellationToken cancellationToken = default)
+		=> WrapSecurityAsync(new[] { 
 				"unlock-keychain", 
 				"-p", 
 				password, 
 				Locate(keychain).FullName 
-			})
-			.ExecuteAsync();
+			}, cancellationToken);
 
-	public async Task CreateKeychain(string password, string keychain = DefaultKeychain)
+	public async Task<bool> CreateKeychainAsync(string password, string keychain = DefaultKeychain, CancellationToken cancellationToken = default)
 	{
-		await Cli.Wrap("security")
-			.WithArguments(new[] { 
-				"create-keychain", 
-				"-p", 
-				password, 
-				Locate(keychain).FullName 
-			})
-			.ExecuteAsync().ConfigureAwait(false);
+		if (!await WrapSecurityAsync(new[] {
+				"create-keychain",
+				"-p",
+				password,
+				Locate(keychain).FullName
+			}, cancellationToken).ConfigureAwait(false))
+			return false;
 
-		await Cli.Wrap("security")
-			.WithArguments(new[] { 
+		return await WrapSecurityAsync(new[] { 
 				"set-keychain-settings", 
 				"-lut", 
 				"21600", 
 				Locate(keychain).FullName 
-			})
-			.ExecuteAsync().ConfigureAwait(false);
+			}, cancellationToken).ConfigureAwait(false);
+	}
+
+	Task<bool> WrapSecurityAsync(string[] args, CancellationToken cancellationToken = default)
+		=> WrapSecurityAsync(b =>
+		{
+			foreach (var a in args)
+				b.Add(a);
+		}, cancellationToken);
+
+	async Task<bool> WrapSecurityAsync(Action<ArgumentsBuilder> args, CancellationToken cancellationToken = default)
+	{
+		var success = false;
+		try
+		{
+			var r = await Cli.Wrap("/usr/bin/security")
+				.WithArguments(a => args(a))
+				.ExecuteAsync(cancellationToken)
+				.ConfigureAwait(false);
+
+			success = r.ExitCode == 0;
+		}
+		catch (OperationCanceledException) { }
+
+		return success;
 	}
 }
