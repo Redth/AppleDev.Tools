@@ -30,8 +30,8 @@ public class Keychain
 			}, cancellationToken);
 	}
 
-	public Task<bool> DeleteKeychainAsync(string keychain = DefaultKeychain)
-		=> WrapSecurityAsync(new[] { "delete-keychain", Locate(keychain).FullName });
+	public Task<bool> DeleteKeychainAsync(string keychain = DefaultKeychain, CancellationToken cancellationToken = default)
+		=> WrapSecurityAsync(new[] { "delete-keychain", Locate(keychain).FullName }, cancellationToken);
 
 	public Task<bool> ImportPkcs12Async(string file, string passphrase, string keychain = DefaultKeychain, bool allowReadToAnyApp = false, CancellationToken cancellationToken = default)
 		=> WrapSecurityAsync(args =>

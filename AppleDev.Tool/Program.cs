@@ -71,12 +71,22 @@ app.Configure(config =>
 			keychain.AddCommand<UnlockKeychainCommand>("unlock")
 				.WithData(data)
 				.WithDescription("Unlocks a keychain file")
-				.WithExample(new[] { "keychain", "unlock", "--allow-any-app-read", "--keychain", "~/Library/Keychains/login.keychain" });
+				.WithExample(new[] { "keychain", "unlock", "--allow-any-app-read", "--keychain", "~/Library/Keychains/login.keychain-db" });
 
-			keychain.AddCommand<UnlockKeychainCommand>("import")
+			keychain.AddCommand<ImportPkcs12KeychainCommand>("import")
 				.WithData(data)
-				.WithDescription("Unlocks a keychain file")
-				.WithExample(new[] { "keychain", "import", "~/mycert.pfx", "--keychain", "~/Library/Keychains/login.keychain" });
+				.WithDescription("Imports a certificate into a keychain")
+				.WithExample(new[] { "keychain", "import", "~/mycert.pfx", "--keychain", "~/Library/Keychains/login.keychain-db" });
+
+			keychain.AddCommand<CreateKeychainCommand>("create")
+				.WithData(data)
+				.WithDescription("Creates a new keychain")
+				.WithExample(new[] { "keychain", "create", "--keychain", "~/Library/Keychains/ci-temp.keychain", "--pasword", "temp1234" });
+
+			keychain.AddCommand<DeleteKeychainCommand>("delete")
+				.WithData(data)
+				.WithDescription("Deletes a keychain")
+				.WithExample(new[] { "keychain", "delete", "--keychain", "~/Library/Keychains/ci-temp.keychain" });
 
 		});
 	}
@@ -85,8 +95,9 @@ app.Configure(config =>
 	{
 		provisioning.AddCommand<ListProvisioningProfilesCommand>("list")
 			.WithData(data)
-			.WithDescription("List provisioning profiles")
-			.WithExample(new[] { "provisioning", "list" });
+			.WithDescription("List provisioning profiles and optionally downloads/installs them")
+			.WithExample(new[] { "provisioning", "list" })
+			.WithExample(new[] { "provisioning", "list", "--download" });
 	});
 
 	config.AddBranch("certificate", provisioning =>
@@ -95,6 +106,7 @@ app.Configure(config =>
 			.WithData(data)
 			.WithDescription("Create new certificate")
 			.WithExample(new[] { "certificate", "create" });
+
 	});
 });
 
