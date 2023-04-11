@@ -44,7 +44,7 @@ jobs:
         name: NuGet
         path: ./artifacts
 
-  build:
+  test:
     name: Test
     needs: build
     runs-on: macos-latest
@@ -61,7 +61,7 @@ jobs:
 
   publish:
     name: Publish
-    needs: build
+    needs: test
     runs-on: windows-latest
     if: github.event_name == 'release'
     steps:
