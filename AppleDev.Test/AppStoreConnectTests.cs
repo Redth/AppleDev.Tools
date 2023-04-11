@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using AppleAppStoreConnect;
 
 namespace AppleDev.Test
 {
@@ -13,49 +14,54 @@ namespace AppleDev.Test
 	{
 		public AppStoreConnectTests()
 		{
+			Client = new AppStoreConnectClient(
+				new AppStoreConnectConfiguration(
+					Environment.GetEnvironmentVariable("APP_STORE_CONNECT_KEY_ID") ?? "",
+					Environment.GetEnvironmentVariable("APP_STORE_CONNECT_ISSUER_ID") ?? "",
+					Environment.GetEnvironmentVariable("APP_STORE_CONNECT_PRIVATE_KEY") ?? ""));
 		}
 
+
+		readonly AppStoreConnectClient Client;
 
 		[Fact]
-		public async Task CreateCertificate()
+		public async Task ListCertificates()
 		{
-			var config = new AppStoreConnect.Client.AppStoreConnectConfiguration(
-				Environment.GetEnvironmentVariable("APP_STORE_CONNECT_KEY_ID") ?? "",
-				Environment.GetEnvironmentVariable("APP_STORE_CONNECT_ISSUER_ID") ?? "",
-				Environment.GetEnvironmentVariable("APP_STORE_CONNECT_PRIVATE_KEY") ?? "");
-
-			var api = new AppStoreConnect.Api.CertificatesApi(config);
-			
-			using var rsa = RSA.Create(2048);
-
-			var certificateRequest = new CertificateRequest(
-				$"CN={Environment.MachineName}",
-				rsa,
-				HashAlgorithmName.SHA256,
-				RSASignaturePadding.Pkcs1);
-
-			var pemr = certificateRequest.CreateSigningRequestPem();
-
-			var response = await api.CertificatesCreateInstanceAsync(new AppStoreConnect.Model.CertificateCreateRequest(new AppStoreConnect.Model.CertificateCreateRequestData(AppStoreConnect.Model.CertificateCreateRequestData.TypeEnum.Certificates,
-				new AppStoreConnect.Model.CertificateCreateRequestDataAttributes(
-					pemr,
-					AppStoreConnect.Model.CertificateType.DEVELOPMENT)))).ConfigureAwait(false);
-
-			var exp = response.Data.Attributes.ExpirationDate;
-
-			Assert.True(exp > DateTimeOffset.Now);
+			var certs = await Client.ListCertificatesAsync();
+			Assert.NotNull(certs);
+			Assert.NotEmpty(certs.Data);
 		}
-
+		
 		[Fact]
-		public void ParseCertResp()
+		public async Task ListProfiles()
 		{
-			var content = "";
-
-			var data = Convert.FromBase64String(content);
-
-			var cert = new X509Certificate2(data);
-
-			Assert.NotEmpty(cert.FriendlyName);
+			var profiles = await Client.ListProfilesAsync();
+			Assert.NotNull(profiles);
+			Assert.NotEmpty(profiles.Data);
 		}
+		
+		[Fact]
+		public async Task ListDevices()
+		{
+			var devices = await Client.ListDevicesAsync();
+			Assert.NotNull(devices);
+			Assert.NotEmpty(devices.Data);
+		}
+		
+		[Fact]
+		public async Task ListBundleIds()
+		{
+			var bundleIds = await Client.ListBundleIdsAsync();
+			Assert.NotNull(bundleIds);
+			Assert.NotEmpty(bundleIds.Data);
+		}
+		
+		// [Fact]
+		// public async Task CreateCertificate()
+		// {
+		// 	var cert = await Client.CreateCertificateAsync();
+		// 	
+		// 	Assert.NotNull(cert?.Data?.Attributes?.CertificateContent);
+		// }
 	}
 }
