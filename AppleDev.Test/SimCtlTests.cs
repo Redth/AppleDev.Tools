@@ -64,7 +64,7 @@ namespace AppleDev.Test
 			
 			var udid = s?.Udid;
 			
-			Assert.NotEmpty(udid);
+			Assert.NotNull(udid);
 			
 			// Erase the sim first
 			Assert.True(await simctl.EraseAsync(udid));

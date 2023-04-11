@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Security.Cryptography.X509Certificates;
+using AppleAppStoreConnect;
 using Newtonsoft.Json.Linq;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -11,30 +12,13 @@ public class CreateCertificateCommand : AsyncCommand<CreateCertificateCommandSet
 	public override async Task<int> ExecuteAsync(CommandContext context, CreateCertificateCommandSettings settings)
 	{
 		//var data = context.GetData();
-		var config = new AppStoreConnect.Client.AppStoreConnectConfiguration(settings.KeyId, settings.IssuerId, settings.GetPrivateKeyBase64());
-		var api = new AppStoreConnect.Api.CertificatesApi(config);
+		var config = new AppStoreConnectConfiguration(settings.KeyId, settings.IssuerId, settings.GetPrivateKeyBase64());
+		var api = new AppStoreConnectClient(config);
 
 		var csrGenerator = new CertificateSigningRequestGenerator();
 		var csr = csrGenerator.GeneratePem(settings.CommonName);
 
-		var response = await api.CertificatesCreateInstanceAsync(new AppStoreConnect.Model.CertificateCreateRequest(new AppStoreConnect.Model.CertificateCreateRequestData(AppStoreConnect.Model.CertificateCreateRequestData.TypeEnum.Certificates,
-			new AppStoreConnect.Model.CertificateCreateRequestDataAttributes(
-				csr,
-				settings.CertificateType switch
-				{
-					CreateCertificateType.IOS_DEVELOPMENT => AppStoreConnect.Model.CertificateType.IOSDEVELOPMENT,
-					CreateCertificateType.IOS_DISTRIBUTION => AppStoreConnect.Model.CertificateType.IOSDISTRIBUTION,
-					CreateCertificateType.MAC_APP_DISTRIBUTION => AppStoreConnect.Model.CertificateType.MACAPPDISTRIBUTION,
-					CreateCertificateType.MAC_INSTALLER_DISTRIBUTION => AppStoreConnect.Model.CertificateType.MACINSTALLERDISTRIBUTION,
-					CreateCertificateType.MAC_APP_DEVELOPMENT => AppStoreConnect.Model.CertificateType.MACAPPDEVELOPMENT,
-					CreateCertificateType.DEVELOPER_ID_KEXT => AppStoreConnect.Model.CertificateType.DEVELOPERIDKEXT,
-					CreateCertificateType.DEVELOPER_ID_APPLICATION => AppStoreConnect.Model.CertificateType.DEVELOPERIDAPPLICATION,
-					CreateCertificateType.DEVELOPMENT => AppStoreConnect.Model.CertificateType.DEVELOPMENT,
-					CreateCertificateType.DISTRIBUTION => AppStoreConnect.Model.CertificateType.DISTRIBUTION,
-					CreateCertificateType.PASS_TYPE_ID => AppStoreConnect.Model.CertificateType.PASSTYPEID,
-					CreateCertificateType.PASS_TYPE_ID_WITH_NFC => AppStoreConnect.Model.CertificateType.PASSTYPEIDWITHNFC,
-					_ => AppStoreConnect.Model.CertificateType.DEVELOPMENT,
-				})))).ConfigureAwait(false);
+		var response = await api.CreateCertificateAsync(csr, settings.CertificateType).ConfigureAwait(false);
 
 		var cert = new X509Certificate2(Convert.FromBase64String(response.Data.Attributes.CertificateContent));
 
@@ -68,7 +52,7 @@ public class CreateCertificateCommandSettings : AppStoreConnectApiCommandSetting
 {
 	[Description("Type of Apple certificate")]
 	[CommandOption("-t|--type <type>")]
-	public CreateCertificateType CertificateType { get; set; } = CreateCertificateType.DEVELOPMENT;
+	public CertificateType CertificateType { get; set; } = CertificateType.DEVELOPMENT;
 
 	[Description("Optional common name for the CSR")]
 	[CommandOption("-c|--common-name <common-name>")]

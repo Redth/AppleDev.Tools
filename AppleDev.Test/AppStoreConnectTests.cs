@@ -20,12 +20,12 @@ namespace AppleDev.Test
 		public async Task CreateCertificate()
 		{
 			var config = new AppStoreConnect.Client.AppStoreConnectConfiguration(
-				"",
-				"",
-				"");
+				Environment.GetEnvironmentVariable("APP_STORE_CONNECT_KEY_ID") ?? "",
+				Environment.GetEnvironmentVariable("APP_STORE_CONNECT_ISSUER_ID") ?? "",
+				Environment.GetEnvironmentVariable("APP_STORE_CONNECT_PRIVATE_KEY") ?? "");
 
 			var api = new AppStoreConnect.Api.CertificatesApi(config);
-
+			
 			using var rsa = RSA.Create(2048);
 
 			var certificateRequest = new CertificateRequest(
@@ -47,7 +47,7 @@ namespace AppleDev.Test
 		}
 
 		[Fact]
-		public async Task ParseCertResp()
+		public void ParseCertResp()
 		{
 			var content = "";
 
