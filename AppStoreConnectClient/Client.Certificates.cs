@@ -40,6 +40,17 @@ partial class AppStoreConnectClient
 	}
 
 	public async Task<ItemResponse<Certificate, CertificateAttributes>> CreateCertificateAsync(
+		string? commonName = null,
+		CertificateType certificateType = CertificateType.DEVELOPMENT,
+		CancellationToken cancellationToken = default)
+	{
+		var g = new CertificateSigningRequestGenerator();
+		var csr = g.GeneratePem(commonName);
+
+		return await CreateCertificateWithSigningRequestAsync(csr, certificateType, cancellationToken).ConfigureAwait(false);
+	}
+
+	public async Task<ItemResponse<Certificate, CertificateAttributes>> CreateCertificateWithSigningRequestAsync(
 		string csrContent,
 		CertificateType certificateType,
 		CancellationToken cancellationToken = default)

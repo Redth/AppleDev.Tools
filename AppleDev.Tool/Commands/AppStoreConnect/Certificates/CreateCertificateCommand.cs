@@ -15,10 +15,7 @@ public class CreateCertificateCommand : AsyncCommand<CreateCertificateCommandSet
 		var config = new AppStoreConnectConfiguration(settings.KeyId, settings.IssuerId, settings.GetPrivateKeyBase64());
 		var api = new AppStoreConnectClient(config);
 
-		var csrGenerator = new CertificateSigningRequestGenerator();
-		var csr = csrGenerator.GeneratePem(settings.CommonName);
-
-		var response = await api.CreateCertificateAsync(csr, settings.CertificateType).ConfigureAwait(false);
+		var response = await api.CreateCertificateWithSigningRequestAsync(settings.CommonName ?? Environment.MachineName, settings.CertificateType).ConfigureAwait(false);
 
 		var cert = new X509Certificate2(Convert.FromBase64String(response.Data.Attributes.CertificateContent));
 
