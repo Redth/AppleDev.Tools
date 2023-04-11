@@ -12,7 +12,7 @@ jobs:
     env:
       NUPKG_MAJOR: 0.999
       CODESIGN_PFX: ${{ secrets.CODESIGN_PFX }}
-    runs-on: macos-latest
+    runs-on: windows-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -21,10 +21,6 @@ jobs:
       with:
         dotnet-version: |
           7.0.x
-
-    - name: Test
-      run: dotnet test ./AppleDev.Test/AppleDev.Test.csproj
-
     - name: Pack
       shell: pwsh
       run: |
@@ -47,6 +43,21 @@ jobs:
       with:
         name: NuGet
         path: ./artifacts
+
+  build:
+    name: Test
+    needs: build
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: |
+          7.0.x
+    - name: Test
+      run: dotnet test ./AppleDev.Test/AppleDev.Test.csproj
 
   publish:
     name: Publish
