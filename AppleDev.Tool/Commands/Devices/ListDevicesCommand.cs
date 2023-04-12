@@ -33,7 +33,7 @@ public class ListDevicesCommandSettings : FormattableOutputCommandSettings
 	[Description("Timeout to search for more network devices in seconds")]
 	[DefaultValue(5)]
 	[CommandOption("-t|--timeout <seconds>")]
-	public uint Timeout { get; set; } = 5;
+	public int Timeout { get; set; } = 5;
 
 	[Description("Show devices only, no simulators")]
 	[CommandOption("-d|--devices-only")]
