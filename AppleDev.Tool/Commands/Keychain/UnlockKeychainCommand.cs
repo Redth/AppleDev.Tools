@@ -18,11 +18,11 @@ public class UnlockKeychainCommand : AsyncCommand<UnlockKeychainCommandSettings>
 public class UnlockKeychainCommandSettings : CommandSettings
 {
 	[Description("Keychain password")]
-	[CommandOption("-p|-password <password>")]
+	[CommandOption("-p|--password <password>")]
 	public string Password { get; set; } = string.Empty;
 
 	[Description("Keychain name")]
 	[DefaultValue("login.keychain-db")]
-	[CommandOption("-k|-keychain <keychain>")]
+	[CommandOption("-k|--keychain <keychain>")]
 	public string Keychain { get; set; } = "login.keychain-db";
 }

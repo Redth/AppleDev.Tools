@@ -19,7 +19,7 @@ public class DeleteKeychainCommandSettings : CommandSettings
 {
 	[Description("Keychain")]
 	[DefaultValue("login.keychain-db")]
-	[CommandOption("-k|-keychain <keychain>")]
+	[CommandOption("-k|--keychain <keychain>")]
 	public string Keychain { get; set; } = string.Empty;
 
 	public override ValidationResult Validate()

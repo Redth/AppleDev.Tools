@@ -18,12 +18,12 @@ public class CreateKeychainCommand : AsyncCommand<CreateKeychainCommandSettings>
 public class CreateKeychainCommandSettings : CommandSettings
 {
 	[Description("Keychain password")]
-	[CommandOption("-p|-password <password>")]
+	[CommandOption("-p|--password <password>")]
 	public string Password { get; set; } = string.Empty;
 
 	[Description("Keychain")]
 	[DefaultValue("login.keychain-db")]
-	[CommandOption("-k|-keychain <keychain>")]
+	[CommandOption("-k|--keychain <keychain>")]
 	public string Keychain { get; set; } = string.Empty;
 
 	public override ValidationResult Validate()
