@@ -33,6 +33,7 @@ jobs:
         
         New-Item -ItemType Directory -Force -Path .\artifacts
         dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./AppleDev/AppleDev.csproj
+        dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./AppleDev.Tool/AppleDev.Tool.csproj
 
         $pfxPath = Join-Path -Path $pwd -ChildPath "codesigncert.pfx"
         [IO.File]::WriteAllBytes("$pfxPath", [System.Convert]::FromBase64String($env:CODESIGN_PFX))
