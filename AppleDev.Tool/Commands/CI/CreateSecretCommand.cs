@@ -49,25 +49,31 @@ public class CreateSecretCommandSettings : CommandSettings
 {
 	[Description("Certificate file (.p12 or .pfx)")]
 	[CommandOption("--from-certificate <certificate_file>")]
+	[TypeConverter(typeof(FileInfoTypeConverter))]
 	public FileInfo? FromCertificate { get; set; }
 
 	[Description("Private Key file (.p8)")]
 	[CommandOption("--from-private-key <private_key_file>")]
+	[TypeConverter(typeof(FileInfoTypeConverter))]
 	public FileInfo? FromPrivateKey { get; set; }
 
 	[Description("Keystore file (.keystore)")]
 	[CommandOption("--from-keystore <keystore_file>")]
+	[TypeConverter(typeof(FileInfoTypeConverter))]
 	public FileInfo? FromKeystore { get; set; }
 
 	[Description("Google PEPK Key file (.pepk)")]
 	[CommandOption("--from-pepk <pepk_key_file>")]
+	[TypeConverter(typeof(FileInfoTypeConverter))]
 	public FileInfo? FromPepk { get; set; }
 
 	[Description("Text file")]
 	[CommandOption("--from-text-file <text_file>")]
+	[TypeConverter(typeof(FileInfoTypeConverter))]
 	public FileInfo? FromTextFile { get; set; }
 
 	[Description("Binary file")]
 	[CommandOption("--from-binary-file <binary_file>")]
+	[TypeConverter(typeof(FileInfoTypeConverter))]
 	public FileInfo? FromBinaryFile { get; set; }
 }

@@ -37,7 +37,6 @@ public class DeprovisionCiCommand : AsyncCommand<DeprovisionCiCommandSettings>
 public class DeprovisionCiCommandSettings : CommandSettings
 {
 	[Description("Keychain name to import into")]
-	[DefaultValue("login.keychain-db")]
 	[CommandOption("--keychain <keychain>")]
-	public string Keychain { get; set; } = AppleDev.Keychain.DefaultKeychain;
+	public string Keychain { get; set; } = string.Empty;
 }

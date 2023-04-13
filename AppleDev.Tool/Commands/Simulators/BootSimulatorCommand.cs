@@ -28,7 +28,7 @@ public class BootSimulatorCommandSettings : CommandSettings
     [Description("Timeout to wait until ready")]
     [CommandOption("--timeout")]
     [DefaultValue(120)]
-    public uint Timeout { get; set; }
+    public int Timeout { get; set; }
 
     [Description("Simulator UDID")]
     

@@ -23,6 +23,7 @@ public class ImportPkcs12KeychainCommandSettings : CommandSettings
 {
 	[Description("Certificate file (PKCS12/PFX) to import")]
 	[CommandArgument(0, "<certificate_file>")]
+	[TypeConverter(typeof(FileInfoTypeConverter))]
 	public FileInfo? CertificateFile { get; set; }
 
 	[Description("Certificate's passphrase")]

@@ -191,11 +191,14 @@ public class ProvisionCiCommandSettings : CommandSettings
 	
 	[Description("Provisioning profile type(s) to match / download")]
 	[CommandOption("--profile-type <PROFILE_TYPE>")]
+	[DefaultValue(ProfileType.Unknown)]
+	[TypeConverter(typeof(StringEnumTypeConverter<ProfileType>))]
 	public ProfileType[] ProfileTypes { get; set; } = new ProfileType[0];
 
 
 	[Description("Override default directory to save downloaded profiles to")]
 	[CommandOption("--profile-path <directory>")]
+	[TypeConverter(typeof(DirectoryInfoTypeConverter))]
 	public DirectoryInfo? ProfilePath { get; set; }
 
 

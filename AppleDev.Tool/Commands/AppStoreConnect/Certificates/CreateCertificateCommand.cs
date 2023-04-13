@@ -49,6 +49,8 @@ public class CreateCertificateCommandSettings : AppStoreConnectApiCommandSetting
 {
 	[Description("Type of Apple certificate")]
 	[CommandOption("-t|--type <type>")]
+	[DefaultValue(CertificateType.DEVELOPMENT)]
+	[TypeConverter(typeof(StringEnumTypeConverter<CertificateType>))]
 	public CertificateType CertificateType { get; set; } = CertificateType.DEVELOPMENT;
 
 	[Description("Optional common name for the CSR")]

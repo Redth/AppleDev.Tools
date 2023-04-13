@@ -38,4 +38,12 @@ public class ListDevicesCommandSettings : FormattableOutputCommandSettings
 	[Description("Show devices only, no simulators")]
 	[CommandOption("-d|--devices-only")]
 	public bool DevicesOnly { get; set; } = false;
+
+	public override ValidationResult Validate()
+	{
+		if (Timeout <= 0)
+			return ValidationResult.Error("Invalide --timeout value, must be greater than 0");
+
+		return base.Validate();
+	}
 }

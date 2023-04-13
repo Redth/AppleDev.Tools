@@ -78,6 +78,8 @@ public class ListProvisioningProfilesCommandSettings : FormattableOutputAppStore
 {
 	[Description("Filter to provisioning profile type")]
 	[CommandOption("-t|--type <type>")]
+	[DefaultValue(ProfileType.IOS_APP_DEVELOPMENT)]
+	[TypeConverter(typeof(StringEnumTypeConverter<ProfileType>))]
 	public ProfileType[] ProfileTypes { get; set; } = new ProfileType[0];
 
 	[Description("Only list active")]
@@ -90,6 +92,7 @@ public class ListProvisioningProfilesCommandSettings : FormattableOutputAppStore
 
 	[Description("Override default directory to save downloaded profiles to")]
 	[CommandOption("--download-path <directory>")]
+	[TypeConverter(typeof(DirectoryInfoTypeConverter))]
 	public DirectoryInfo? DownloadPath { get; set; }
 
 	[Description("Filter Profiles by BundleID")]

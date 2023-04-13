@@ -8,7 +8,7 @@ public class FormattableOutputCommandSettings : CommandSettings
     [Description("Output Format")]
     [CommandOption("-f|--format")]
     [DefaultValue(OutputFormat.None)]
-    [TypeConverter(typeof(OutputFormatTypeConverter))]
+    [TypeConverter(typeof(StringEnumTypeConverter<OutputFormat>))]
     public OutputFormat Format { get; set; }
     
     [Description("Verbose")]
