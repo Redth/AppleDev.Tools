@@ -42,28 +42,7 @@ public class ListProvisioningProfilesCommand : AsyncCommand<ListProvisioningProf
 
 		if (settings.Download)
 		{
-			// Get the folder to save to
-			var profilesDir = settings.DownloadPath ??
-				new DirectoryInfo(OperatingSystem.IsWindows()
-					? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Xamarin", "iOS", "Provisioning", "Profiles")
-					: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "MobileDevice", "Provisioning Profiles"));
-
-			// Create the folder if it doesn't exist
-			if (!profilesDir.Exists)
-				profilesDir.Create();
-
-			// Download the profiles
-			foreach (var p in profileResults)
-			{
-				var extension = p.Profile.Platform == Platform.MAC_OS
-					? "provisionprofile"
-					: "mobileprovision";
-
-				var profileFilename = Path.Combine(profilesDir.FullName, $"{p.Profile.Uuid}.{extension}");
-
-				// Write the file
-				await File.WriteAllBytesAsync(profileFilename, Convert.FromBase64String(p.Profile.ProfileContent)).ConfigureAwait(false);				
-			}
+			await appStoreConnect.InstallProfilesAsync(profileResults.Select(p => p.Profile), settings.DownloadPath).ConfigureAwait(false);
 		}
 
 		OutputHelper.Output(profileResults, settings.Format, settings.Verbose,

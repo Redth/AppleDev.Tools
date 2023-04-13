@@ -10,6 +10,32 @@ partial class AppStoreConnectClient
 {
 	public const string PROFILES_TYPE = Profile.TYPE;
 
+	public async Task InstallProfilesAsync(IEnumerable<ProfileAttributes> profiles, DirectoryInfo? path = null)
+	{
+		// Get the folder to save to
+		var profilesDir = path ??
+			new DirectoryInfo(OperatingSystem.IsWindows()
+				? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Xamarin", "iOS", "Provisioning", "Profiles")
+				: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "MobileDevice", "Provisioning Profiles"));
+
+		// Create the folder if it doesn't exist
+		if (!profilesDir.Exists)
+			profilesDir.Create();
+
+		// Download the profiles
+		foreach (var p in profiles)
+		{
+			var extension = p.Platform == Platform.MAC_OS
+				? "provisionprofile"
+				: "mobileprovision";
+
+			var profileFilename = Path.Combine(profilesDir.FullName, $"{p.Uuid}.{extension}");
+
+			// Write the file
+			await File.WriteAllBytesAsync(profileFilename, Convert.FromBase64String(p.ProfileContent)).ConfigureAwait(false);
+		}
+	}
+
 	public async Task<ProfileResponse> ListProfilesAsync(
 		string[]? filterId = null,
 		string[]? filterName = null,
