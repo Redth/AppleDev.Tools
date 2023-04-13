@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Security.Cryptography.X509Certificates;
 using AppleAppStoreConnect;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -15,26 +16,71 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 
 		var certificateData = settings.GetBytesFromFileOrEnvironmentOrBase64String(settings.Certificate);
 
-		if (certificateData is not null)
+		if (!settings.ImportCert())
+		{
+			AnsiConsole.Write($"Certificate not specified or found, skipping...");
+		}
+		else
 		{
 			var keychain = new Keychain();
 
-			if (!string.IsNullOrEmpty(settings.Keychain) && settings.Keychain != Keychain.DefaultKeychain)
-			{
-				AnsiConsole.Write($"Creating Keychain {settings.Keychain}...");
-				var createResult = await keychain.CreateKeychainAsync(settings.Keychain, settings.KeychainPassword, data.CancellationToken).ConfigureAwait(false);
+			var keychainFile = keychain.Locate(settings.Keychain);
 
-				if (!createResult.Success)
+			if (settings.CreateKeychain())
+			{
+				if (keychainFile.Exists)
+				{
+					AnsiConsole.WriteLine($"Keychain already exists: {keychainFile.Name}");
+				}
+				else
+				{
+
+					AnsiConsole.Write($"Creating Keychain {keychainFile.Name}...");
+					var createResult = await keychain
+						.CreateKeychainAsync(settings.Keychain, settings.KeychainPassword, data.CancellationToken)
+						.ConfigureAwait(false);
+
+					if (!createResult.Success)
+					{
+						AnsiConsole.WriteLine();
+						createResult.OutputFailure("Creating Keychain Failed");
+						return 1;
+					}
+
+					AnsiConsole.WriteLine($" Done.");
+				}
+				
+				AnsiConsole.Write($"Setting Default Keychain {keychainFile.Name}...");
+				var setDefResult = await keychain
+					.SetDefaultKeychainAsync(settings.Keychain, data.CancellationToken)
+					.ConfigureAwait(false);
+
+				if (!setDefResult.Success)
 				{
 					AnsiConsole.WriteLine();
-					createResult.OutputFailure("Creating Keychain Failed");
+					setDefResult.OutputFailure("Setting Default Keychain Failed");
 					return 1;
 				}
-					
-				AnsiConsole.WriteLine($" Done.");
-			}	
 
-			AnsiConsole.Write($"Importing Certificate into {settings.Keychain} (AllowAnyAppRead: {settings.AllowAnyAppRead})...");
+				AnsiConsole.WriteLine($" Done.");
+			}
+
+			if (!string.IsNullOrEmpty(settings.KeychainPassword))
+			{
+				AnsiConsole.Write($"Unlocking Keychain {settings.Keychain}...");
+				try
+				{
+					var unlockResult = await keychain.UnlockKeychainAsync(settings.KeychainPassword, settings.Keychain).ConfigureAwait(false);
+					
+					if (!unlockResult.Success)
+						AnsiConsole.WriteLine("[yellow]Warning: Failed to unlock keychain[/]");
+				} catch {}
+
+				AnsiConsole.WriteLine(" Done.");
+			}
+			
+
+			AnsiConsole.Write($"Importing Certificate into {keychainFile.Name} (AllowAnyAppRead: {settings.AllowAnyAppRead})...");
 
 			var tmpFile = Path.GetTempFileName();
 			File.WriteAllBytes(tmpFile, certificateData);
@@ -52,9 +98,9 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 		}
 
 
-		if (settings.BundleIdentifiers.Length > 0)
+		if (settings.InstallProfiles())
 		{
-			AnsiConsole.Write($"Installing Provisioning Profiles for: {string.Join(", ", settings.BundleIdentifiers)}...");
+			AnsiConsole.WriteLine($"Installing Provisioning Profiles for: {string.Join(", ", settings.BundleIdentifiers)}...");
 
 			var profileResults = new List<ProvisioningProfile>();
 
@@ -88,7 +134,7 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 
 			foreach (var p in profileResults)
 			{
-				AnsiConsole.WriteLine($"Installing profile: {p.Profile.Name} ({p.Profile.Uuid}) - {p.Profile.ProfileTypeValue} -  {p.Profile.PlatformValue} - BundleID: {p.BundleId?.Identifier}");
+				AnsiConsole.WriteLine($"  - Installing profile: {p.Profile.Name} ({p.Profile.Uuid}) - {p.Profile.ProfileTypeValue} -  {p.Profile.PlatformValue} - BundleID: {p.BundleId?.Identifier}");
 			}
 
 
@@ -115,6 +161,10 @@ public class ProvisionCiCommandSettings : CommandSettings
 	[CommandOption("--certificate-passphrase <passphrase>")]
 	public string CertificatePassphrase { get; set; } = string.Empty;
 
+	internal bool ImportCert()
+		=> !string.IsNullOrWhiteSpace(Certificate) &&
+		   this.GetBytesFromFileOrEnvironmentOrBase64String(Certificate) is not null;
+	
 	[Description("Keychain name to import into")]
 	[DefaultValue("login.keychain-db")]
 	[CommandOption("--keychain <keychain>")]
@@ -123,6 +173,9 @@ public class ProvisionCiCommandSettings : CommandSettings
 	[Description("Keychain password")]
 	[CommandOption("--keychain-password <password>")]
 	public string KeychainPassword { get; set; } = string.Empty;
+
+	internal bool CreateKeychain()
+		=> !string.IsNullOrWhiteSpace(Keychain) && Keychain != AppleDev.Keychain.DefaultKeychain;
 
 	[Description("Allows any app read permission")]
 	[CommandOption("--keychain-allow-any-app-read")]
@@ -133,6 +186,9 @@ public class ProvisionCiCommandSettings : CommandSettings
 	[CommandOption("--bundle-identifier <BUNDLE_IDENTIFIER>")]
 	public string[] BundleIdentifiers { get; set; } = new string[0];
 
+	internal bool InstallProfiles()
+		=> BundleIdentifiers?.Any() ?? false;
+	
 	[Description("Provisioning profile type(s) to match / download")]
 	[CommandOption("--profile-type <PROFILE_TYPE>")]
 	public ProfileType[] ProfileTypes { get; set; } = new ProfileType[0];
@@ -157,4 +213,27 @@ public class ProvisionCiCommandSettings : CommandSettings
 	[CommandOption("--api-private-key <private_key>")]
 	public string ApiPrivateKey { get; set; }
 		= Environment.GetEnvironmentVariable("APP_STORE_CONNECT_PRIVATE_KEY") ?? string.Empty;
+
+	public override ValidationResult Validate()
+	{
+		if (this.CreateKeychain())
+		{
+			if (string.IsNullOrWhiteSpace(KeychainPassword))
+				return ValidationResult.Error("--keychain-password is required");
+		}
+
+		if (this.InstallProfiles())
+		{
+			if (string.IsNullOrEmpty(ApiKeyId))
+				return ValidationResult.Error("--api-key-id is required");
+			
+			if (string.IsNullOrEmpty(ApiIssuerId))
+				return ValidationResult.Error("--api-issuer-id is required");
+			
+			if (string.IsNullOrEmpty(ApiPrivateKey))
+				return ValidationResult.Error("--api-private-key is required");
+		}
+		
+		return base.Validate();
+	}
 }
