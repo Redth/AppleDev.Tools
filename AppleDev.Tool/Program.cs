@@ -71,12 +71,12 @@ app.Configure(config =>
 			keychain.AddCommand<UnlockKeychainCommand>("unlock")
 				.WithData(data)
 				.WithDescription("Unlocks a keychain file")
-				.WithExample(new[] { "keychain", "unlock", "--allow-any-app-read", "--keychain", "~/Library/Keychains/login.keychain-db" });
+				.WithExample(new[] { "keychain", "unlock", "--allow-any-app-read", "--keychain", "~/Library/Keychains/login.keychain-db", "--password", "temp1234" });
 
 			keychain.AddCommand<ImportPkcs12KeychainCommand>("import")
 				.WithData(data)
 				.WithDescription("Imports a certificate into a keychain")
-				.WithExample(new[] { "keychain", "import", "~/mycert.pfx", "--keychain", "~/Library/Keychains/login.keychain-db" });
+				.WithExample(new[] { "keychain", "import", "~/mycert.p12", "--keychain", "~/Library/Keychains/login.keychain-db" });
 
 			keychain.AddCommand<CreateKeychainCommand>("create")
 				.WithData(data)
