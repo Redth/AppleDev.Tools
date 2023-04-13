@@ -6,6 +6,23 @@ namespace AppleDev.Tool;
 
 static class OutputHelper
 {
+	internal static void OutputFailure(this ProcessResult result, string? message = null, bool verbose = false)
+	{
+		if (verbose)
+		{
+			AnsiConsole.WriteLine(result.StdOut);
+		}
+
+		if (!result.Success)
+		{
+			message ??= "Failed";
+
+			AnsiConsole.WriteLine($"[red]{message}[/]");
+			AnsiConsole.WriteLine(result.StdErr);
+		}
+	}
+
+
 	internal static void Output<T>(T item, OutputFormat? format, bool verbose, params ColumnInfo<T>[] columns)
 	{
 		if ((format ?? OutputFormat.None) == OutputFormat.None)

@@ -10,9 +10,12 @@ public class UnlockKeychainCommand : AsyncCommand<UnlockKeychainCommandSettings>
 	{
 		var data = context.GetData();
 		var keychain = new Keychain();
-		var success = await keychain.UnlockKeychainAsync(settings.Password, settings.Keychain, data.CancellationToken).ConfigureAwait(false);
+		var result = await keychain.UnlockKeychainAsync(settings.Password, settings.Keychain, data.CancellationToken).ConfigureAwait(false);
 
-		return this.ExitCode(success);
+		if (!result.Success)
+			result.OutputFailure("Unlock Keychain Failed");
+
+		return this.ExitCode(result.Success);
 	}
 }
 public class UnlockKeychainCommandSettings : CommandSettings
@@ -22,7 +25,7 @@ public class UnlockKeychainCommandSettings : CommandSettings
 	public string Password { get; set; } = string.Empty;
 
 	[Description("Keychain name")]
-	[DefaultValue("login.keychain-db")]
+	[DefaultValue(AppleDev.Keychain.DefaultKeychain)]
 	[CommandOption("-k|--keychain <keychain>")]
-	public string Keychain { get; set; } = "login.keychain-db";
+	public string Keychain { get; set; } = AppleDev.Keychain.DefaultKeychain;
 }

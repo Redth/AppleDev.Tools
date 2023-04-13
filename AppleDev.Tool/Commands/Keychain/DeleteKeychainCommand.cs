@@ -10,15 +10,17 @@ public class DeleteKeychainCommand : AsyncCommand<DeleteKeychainCommandSettings>
 	{
 		var data = context.GetData();
 		var keychain = new Keychain();
-		var success = await keychain.DeleteKeychainAsync(settings.Keychain, data.CancellationToken).ConfigureAwait(false);
-
-		return this.ExitCode(success);
+		var result = await keychain.DeleteKeychainAsync(settings.Keychain, data.CancellationToken).ConfigureAwait(false);
+		
+		if (!result.Success)
+			result.OutputFailure("Delete Keychain Failed");
+		
+		return this.ExitCode(result.Success);
 	}
 }
 public class DeleteKeychainCommandSettings : CommandSettings
 {
 	[Description("Keychain")]
-	[DefaultValue("login.keychain-db")]
 	[CommandOption("-k|--keychain <keychain>")]
 	public string Keychain { get; set; } = string.Empty;
 

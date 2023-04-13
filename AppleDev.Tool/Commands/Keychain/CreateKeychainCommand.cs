@@ -10,9 +10,12 @@ public class CreateKeychainCommand : AsyncCommand<CreateKeychainCommandSettings>
 	{
 		var data = context.GetData();
 		var keychain = new Keychain();
-		var success = await keychain.CreateKeychainAsync(settings.Password, settings.Keychain, data.CancellationToken).ConfigureAwait(false);
+		var result = await keychain.CreateKeychainAsync(settings.Password, settings.Keychain, data.CancellationToken).ConfigureAwait(false);
 
-		return this.ExitCode(success);
+		if (!result.Success)
+			result.OutputFailure("Create Keychain Failed");
+
+		return this.ExitCode(result.Success);
 	}
 }
 public class CreateKeychainCommandSettings : CommandSettings

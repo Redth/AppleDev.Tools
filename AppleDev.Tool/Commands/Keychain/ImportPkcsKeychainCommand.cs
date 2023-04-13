@@ -10,9 +10,12 @@ public class ImportPkcs12KeychainCommand : AsyncCommand<ImportPkcs12KeychainComm
 	{
 		var data = context.GetData();
 		var keychain = new Keychain();
-		var success = await keychain.ImportPkcs12Async(settings.CertificateFile!.FullName, settings.CertificatePassphrase, settings.Keychain, settings.AllowAnyAppRead, data.CancellationToken).ConfigureAwait(false);
+		var result = await keychain.ImportPkcs12Async(settings.CertificateFile!.FullName, settings.CertificatePassphrase, settings.Keychain, settings.AllowAnyAppRead, data.CancellationToken).ConfigureAwait(false);
 
-		return this.ExitCode(success);
+		if (!result.Success)
+			result.OutputFailure("Import Keychain Failed");
+
+		return this.ExitCode(result.Success);
 	}
 }
 
@@ -27,9 +30,9 @@ public class ImportPkcs12KeychainCommandSettings : CommandSettings
 	public string CertificatePassphrase { get; set; } = string.Empty;
 
 	[Description("Keychain name to import into")]
-	[DefaultValue("login.keychain-db")]
+	[DefaultValue(AppleDev.Keychain.DefaultKeychain)]
 	[CommandOption("-k|--keychain <keychain>")]
-	public string Keychain { get; set; } = "login.keychain-db";
+	public string Keychain { get; set; } = AppleDev.Keychain.DefaultKeychain;
 
 	[Description("Allows any app read permission")]
 	[CommandOption("--allow-any-app-read")]
