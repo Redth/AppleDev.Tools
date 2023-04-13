@@ -112,9 +112,14 @@ app.Configure(config =>
 	config.AddBranch("ci", ci =>
 	{
 		ci.AddCommand<ProvisionCiCommand>("provision")
-		.WithData(data)
-		.WithDescription("Provisions a CI environment with certificates, keychain, provisioning profiles")
-		.WithExample(new[] { "ci", "provision", "--certificate", "CERT_BASE_64_STRING", "--bundle-identifier", "com.myapp.id" });
+			.WithData(data)
+			.WithDescription("Provisions a CI environment with certificates, keychain, provisioning profiles")
+			.WithExample(new[] { "ci", "provision", "--keychain", "tmp.keychain", "--certificate", "CERT_BASE_64_STRING", "--bundle-identifier", "com.myapp.id" });
+
+		ci.AddCommand<DeprovisionCiCommand>("deprovision")
+			.WithData(data)
+			.WithDescription("Deprovisions a CI environment previously provisioned with the provision command")
+			.WithExample(new[] { "ci", "deprovision", "--keychain", "tmp.keychain" });
 	});
 });
 
