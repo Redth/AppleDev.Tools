@@ -81,12 +81,17 @@ app.Configure(config =>
 			keychain.AddCommand<CreateKeychainCommand>("create")
 				.WithData(data)
 				.WithDescription("Creates a new keychain")
-				.WithExample(new[] { "keychain", "create", "--keychain", "~/Library/Keychains/ci-temp.keychain", "--pasword", "temp1234" });
+				.WithExample(new[] { "keychain", "create", "--keychain", "~/Library/Keychains/ci-temp.keychain-db", "--password", "temp1234" });
 
 			keychain.AddCommand<DeleteKeychainCommand>("delete")
 				.WithData(data)
 				.WithDescription("Deletes a keychain")
-				.WithExample(new[] { "keychain", "delete", "--keychain", "~/Library/Keychains/ci-temp.keychain" });
+				.WithExample(new[] { "keychain", "delete", "--keychain", "~/Library/Keychains/ci-temp.keychain-db" });
+			
+			keychain.AddCommand<SetDefaultKeychainCommand>("default")
+				.WithData(data)
+				.WithDescription("Sets the default keychain")
+				.WithExample(new[] { "keychain", "default", "--keychain", "~/Library/Keychains/ci-temp.keychain-db" });
 
 		});
 	}
