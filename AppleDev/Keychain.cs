@@ -13,6 +13,14 @@ public class Keychain
 		if (Path.IsPathRooted(keychain))
 			return new FileInfo(keychain);
 
+		if (!keychain.EndsWith(".keychain-db"))
+		{
+			if (keychain.EndsWith(".keychain"))
+				keychain += "-db";
+			else
+				keychain += ".keychain-db";
+		}
+
 		return new FileInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Keychains", keychain));
 	}
 
