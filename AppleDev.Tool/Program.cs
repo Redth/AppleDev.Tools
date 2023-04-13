@@ -108,6 +108,14 @@ app.Configure(config =>
 			.WithExample(new[] { "certificate", "create" });
 
 	});
+
+	config.AddBranch("ci", ci =>
+	{
+		ci.AddCommand<ProvisionCiCommand>("provision")
+		.WithData(data)
+		.WithDescription("Provisions a CI environment with certificates, keychain, provisioning profiles")
+		.WithExample(new[] { "ci", "provision", "--certificate", "CERT_BASE_64_STRING", "--bundle-identifier", "com.myapp.id" });
+	});
 });
 
 

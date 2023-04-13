@@ -6,11 +6,61 @@ using System.Runtime.Serialization;
 
 static class Extensions
 {
-    public static CommandContextData GetData(this CommandContext ctx)
-        => (ctx.Data as CommandContextData) ?? new CommandContextData();
+	public static CommandContextData GetData(this CommandContext ctx)
+		=> (ctx.Data as CommandContextData) ?? new CommandContextData();
 
-    public static int ExitCode(this ICommand _, bool success = true, int errorExitCode = 1)
-        => success ? 0 : errorExitCode;
+	public static int ExitCode(this ICommand _, bool success = true, int errorExitCode = 1)
+		=> success ? 0 : errorExitCode;
+
+
+	public static string? GetStringFromFileOrEnvironmentOrString(this CommandSettings _, string input)
+	{
+		try
+		{
+			if (File.Exists(input))
+				return File.ReadAllText(input);
+		}
+		catch { }
+
+		try
+		{
+			var envVar = Environment.GetEnvironmentVariable(input);
+			if (!string.IsNullOrWhiteSpace(envVar))
+				return envVar;
+		}
+		catch { }
+
+		try
+		{
+			return input;
+		}
+		catch { }
+
+		return null;
+	}
+
+	public static byte[]? GetBytesFromFileOrEnvironmentOrBase64String(this CommandSettings _, string input)
+	{
+		try {
+			if (File.Exists(input))
+				return File.ReadAllBytes(input);
+		} catch { }
+
+		try
+		{
+			var envVar = Environment.GetEnvironmentVariable(input);
+			if (!string.IsNullOrWhiteSpace(envVar))
+				return Convert.FromBase64String(envVar);
+		} catch { }
+
+		try
+		{
+			return Convert.FromBase64String(input);
+		}
+		catch { }
+
+		return null;
+	}
 
 
 	public static FileInfo GetOutputFile(this IOutputCommandSettings command, string prefix = "", string extension = "")
