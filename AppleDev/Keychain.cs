@@ -1,4 +1,6 @@
-﻿using CliWrap;
+﻿using System.ComponentModel;
+using System.Diagnostics;
+using CliWrap;
 using CliWrap.Builders;
 using System.Text;
 
@@ -44,6 +46,10 @@ public class Keychain
 	public Task<ProcessResult> DeleteKeychainAsync(string keychain = DefaultKeychain, CancellationToken cancellationToken = default)
 		=> WrapSecurityAsync(new[] { "delete-keychain", Locate(keychain).FullName }, cancellationToken);
 
+	public Task<ProcessResult> SetDefaultKeychainAsync(string keychain = DefaultKeychain, CancellationToken cancellationToken = default)
+		=> WrapSecurityAsync(new[] { "default-keychain", "-s", Locate(keychain).FullName }, cancellationToken);
+
+	
 	public Task<ProcessResult> ImportPkcs12Async(string file, string passphrase, string keychain = DefaultKeychain, bool allowReadToAnyApp = false, CancellationToken cancellationToken = default)
 		=> WrapSecurityAsync(args =>
 			{
