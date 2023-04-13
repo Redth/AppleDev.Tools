@@ -125,6 +125,12 @@ app.Configure(config =>
 			.WithData(data)
 			.WithDescription("Deprovisions a CI environment previously provisioned with the provision command")
 			.WithExample(new[] { "ci", "deprovision", "--keychain", "tmp.keychain" });
+
+		ci.AddCommand<CreateSecretCommand>("secret")
+			.WithData(data)
+			.WithDescription("Creates a base64 encoded string suitable for CI secret storage from a private key (.p8) or certificate (.p12 or .pfx) file")
+			.WithExample(new[] { "ci", "secret", "--from-certificate", "dev.p12" })
+			.WithExample(new[] { "ci", "secret", "--from-private-key", "WXYZ1234.p8" });
 	});
 });
 
