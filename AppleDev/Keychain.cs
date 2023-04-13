@@ -84,14 +84,20 @@ public class Keychain
 				Locate(keychain).FullName 
 			}, cancellationToken);
 
-	public async Task<ProcessResult> CreateKeychainAsync(string password, string keychain = DefaultKeychain, CancellationToken cancellationToken = default)
+	public async Task<ProcessResult> CreateKeychainAsync(string keychain, string? password = null, CancellationToken cancellationToken = default)
 	{
-		var createResult = await WrapSecurityAsync(new[] {
-				"create-keychain",
-				"-p",
-				password,
-				Locate(keychain).FullName
-			}, cancellationToken).ConfigureAwait(false);
+		var createResult = await WrapSecurityAsync(args =>
+		{
+			args.Add("create-keychain");
+
+			if (!string.IsNullOrEmpty(password))
+			{
+				args.Add("-p");
+				args.Add(password);
+			}
+
+			args.Add(Locate(keychain).FullName);
+		}, cancellationToken).ConfigureAwait(false);
 
 		if (!createResult.Success)
 			return createResult;
