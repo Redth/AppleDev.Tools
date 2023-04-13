@@ -120,8 +120,14 @@ public class Keychain
 		var stderr = new StringBuilder();
 		try
 		{
+			var argBuilder = new ArgumentsBuilder();
+			args(argBuilder);
+			var argstr = argBuilder.Build();
+			
+			Debug.WriteLine("/usr/bin/security " + argstr);
+			
 			var r = await Cli.Wrap("/usr/bin/security")
-				.WithArguments(a => args(a))
+				.WithArguments(argstr)
 				.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
 				.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
 				.ExecuteAsync(cancellationToken)
@@ -129,7 +135,13 @@ public class Keychain
 
 			success = r.ExitCode == 0;
 		}
-		catch (OperationCanceledException) { }
+		catch (OperationCanceledException)
+		{
+		}
+		catch (Exception ex)
+		{
+			stderr.AppendLine(ex.Message);
+		}
 
 		return new ProcessResult(success, stdout.ToString(), stderr.ToString());
 	}
