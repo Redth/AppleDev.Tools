@@ -10,14 +10,15 @@ public class DeprovisionCiCommand : AsyncCommand<DeprovisionCiCommandSettings>
 	public override async Task<int> ExecuteAsync(CommandContext context, DeprovisionCiCommandSettings settings)
 	{
 		var data = context.GetData();
-
+		
 		AnsiConsole.Write(new Rule("Deprovisioning..."));
-
-
-		var keychain = new Keychain();
+		
 		if (!string.IsNullOrEmpty(settings.Keychain) && settings.Keychain != Keychain.DefaultKeychain)
 		{
-			AnsiConsole.Write($"Deleting Keychain {settings.Keychain}...");
+			var keychain = new Keychain();
+			var keychainFile = keychain.Locate(settings.Keychain);
+
+			AnsiConsole.Write($"Deleting Keychain {keychainFile.Name}...");
 			var createResult = await keychain.DeleteKeychainAsync(settings.Keychain, data.CancellationToken).ConfigureAwait(false);
 
 			if (!createResult.Success)
