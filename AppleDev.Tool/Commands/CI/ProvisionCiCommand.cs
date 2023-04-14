@@ -197,7 +197,7 @@ public class ProvisionCiCommandSettings : CommandSettings
 	public string? KeychainPassword { get; set; } = string.Empty;
 
 	internal bool CreateKeychain()
-		=> !string.IsNullOrWhiteSpace(Keychain) && Keychain != AppleDev.Keychain.DefaultKeychain;
+		=> Keychain != AppleDev.Keychain.DefaultKeychain;
 
 	[Description("Allows any app read permission")]
 	[CommandOption("--keychain-allow-any-app-read")]
