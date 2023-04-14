@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography.X509Certificates;
 using AppleAppStoreConnect;
 using Spectre.Console;
@@ -28,6 +29,9 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 			var keychain = new Keychain();
 
 			var keychainFile = keychain.Locate(keychainName);
+
+			this.SetOutputVariable("Keychain", keychainFile.FullName);
+			this.SetOutputVariable("KeychainPassword", keychainPassword, true);
 
 			if (settings.CreateKeychain())
 			{
@@ -88,7 +92,18 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 
 			var tmpFile = Path.GetTempFileName();
 			if (certificateData is not null)
+			{
 				File.WriteAllBytes(tmpFile, certificateData);
+
+				var x509 = new X509Certificate2(certificateData);
+				var certificateFriendlyName = x509.FriendlyName;
+
+				if (!string.IsNullOrEmpty(certificateFriendlyName))
+				{
+					this.SetOutputVariable("AppleCertificateFriendlyName", certificateFriendlyName);
+					this.SetOutputVariable("AppleCertificateFile", tmpFile);
+				}
+			}
 
 			var importResult = await keychain.ImportPkcs12Async(tmpFile, settings.CertificatePassphrase, keychainFile.FullName, allowAny, data.CancellationToken).ConfigureAwait(false);
 
@@ -122,6 +137,18 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 
 		if (settings.InstallProfiles())
 		{
+			this.SetOutputVariable("BundleIdentifiers", string.Join(",", settings.BundleIdentifiers));
+			for (int i = 0; i < settings.BundleIdentifiers.Length; i++)
+				this.SetOutputVariable($"BundleIdentifier{i}", settings.BundleIdentifiers[i]);
+
+
+			if (settings.ProfileTypes.Length > 0)
+			{
+				this.SetOutputVariable("ProfileTypes", string.Join(",", settings.ProfileTypes));
+				for (int i = 0; i < settings.ProfileTypes.Length; i++)
+					this.SetOutputVariable($"ProfileType{i}", settings.ProfileTypes[i].ToString());
+			}
+
 			AnsiConsole.WriteLine($"Installing Provisioning Profiles for: {string.Join(", ", settings.BundleIdentifiers)}...");
 
 			var profileResults = new List<ProvisioningProfile>();
