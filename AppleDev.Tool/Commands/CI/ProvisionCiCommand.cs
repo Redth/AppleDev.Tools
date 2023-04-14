@@ -33,59 +33,53 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 			this.SetOutputVariable("Keychain", keychainFile.FullName);
 			this.SetOutputVariable("KeychainPassword", keychainPassword, true);
 
-			if (settings.CreateKeychain())
+			if (keychainFile.Exists)
 			{
-				if (keychainFile.Exists)
-				{
-					AnsiConsole.WriteLine($"Keychain already exists: {keychainFile.FullName}");
-				}
-				else
-				{
-
-					AnsiConsole.Write($"Creating Keychain {keychainFile.FullName}...");
-					var createResult = await keychain
-						.CreateKeychainAsync(keychainFile.FullName, keychainPassword, data.CancellationToken)
-						.ConfigureAwait(false);
-
-					if (!createResult.Success)
-					{
-						AnsiConsole.WriteLine();
-						createResult.OutputFailure("Creating Keychain Failed");
-						return 1;
-					}
-
-					AnsiConsole.WriteLine($" Done.");
-				}
-				
-				AnsiConsole.Write($"Setting Default Keychain {keychainFile.FullName}...");
-				var setDefResult = await keychain
-					.SetDefaultKeychainAsync(keychainFile.FullName, data.CancellationToken)
+				AnsiConsole.WriteLine($"Keychain already exists: {keychainFile.FullName}");
+			}
+			else
+			{
+				AnsiConsole.Write($"Creating Keychain {keychainFile.FullName}...");
+				var createResult = await keychain
+					.CreateKeychainAsync(keychainFile.FullName, keychainPassword, data.CancellationToken)
 					.ConfigureAwait(false);
 
-				if (!setDefResult.Success)
+				if (!createResult.Success)
 				{
 					AnsiConsole.WriteLine();
-					setDefResult.OutputFailure("Setting Default Keychain Failed");
+					createResult.OutputFailure("Creating Keychain Failed");
 					return 1;
 				}
 
 				AnsiConsole.WriteLine($" Done.");
 			}
 
-			if (!string.IsNullOrEmpty(keychainPassword))
-			{
-				AnsiConsole.Write($"Unlocking Keychain {keychainFile.FullName}...");
-				try
-				{
-					var unlockResult = await keychain.UnlockKeychainAsync(keychainPassword, keychainFile.FullName).ConfigureAwait(false);
-					
-					if (!unlockResult.Success)
-						AnsiConsole.WriteLine("[yellow]Warning: Failed to unlock keychain[/]");
-				} catch {}
+			AnsiConsole.Write($"Setting Default Keychain {keychainFile.FullName}...");
+			var setDefResult = await keychain
+				.SetDefaultKeychainAsync(keychainFile.FullName, data.CancellationToken)
+				.ConfigureAwait(false);
 
-				AnsiConsole.WriteLine(" Done.");
+			if (!setDefResult.Success)
+			{
+				AnsiConsole.WriteLine();
+				setDefResult.OutputFailure("Setting Default Keychain Failed");
+				return 1;
 			}
-			
+
+			AnsiConsole.WriteLine($" Done.");
+
+			AnsiConsole.Write($"Unlocking Keychain {keychainFile.FullName}...");
+			try
+			{
+				var unlockResult = await keychain.UnlockKeychainAsync(keychainPassword, keychainFile.FullName).ConfigureAwait(false);
+					
+				if (!unlockResult.Success)
+					AnsiConsole.WriteLine("[yellow]Warning: Failed to unlock keychain[/]");
+			} catch {}
+
+			AnsiConsole.WriteLine(" Done.");
+
+
 			bool allowAny = !settings.DisallowAllowAnyAppRead;
 
 			AnsiConsole.Write($"Importing Certificate into {keychainFile.FullName} (AllowAnyAppRead: {allowAny})...");
@@ -215,9 +209,8 @@ public class ProvisionCiCommandSettings : CommandSettings
 		   this.GetBytesFromFileOrEnvironmentOrBase64String(Certificate) is not null;
 	
 	[Description("Keychain name to import into")]
-	[DefaultValue("login.keychain-db")]
 	[CommandOption("--keychain <keychain>")]
-	public string Keychain { get; set; } = AppleDev.Keychain.DefaultKeychain;
+	public string Keychain { get; set; }
 
 	[Description("Keychain password")]
 	[CommandOption("--keychain-password <password>")]
