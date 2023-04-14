@@ -82,14 +82,15 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 				AnsiConsole.WriteLine(" Done.");
 			}
 			
+			bool allowAny = !settings.DisallowAllowAnyAppRead;
 
-			AnsiConsole.Write($"Importing Certificate into {keychainFile.FullName} (AllowAnyAppRead: {settings.AllowAnyAppRead})...");
+			AnsiConsole.Write($"Importing Certificate into {keychainFile.FullName} (AllowAnyAppRead: {allowAny})...");
 
 			var tmpFile = Path.GetTempFileName();
 			if (certificateData is not null)
 				File.WriteAllBytes(tmpFile, certificateData);
 
-			var importResult = await keychain.ImportPkcs12Async(tmpFile, settings.CertificatePassphrase, keychainFile.FullName, settings.AllowAnyAppRead, data.CancellationToken).ConfigureAwait(false);
+			var importResult = await keychain.ImportPkcs12Async(tmpFile, settings.CertificatePassphrase, keychainFile.FullName, allowAny, data.CancellationToken).ConfigureAwait(false);
 
 			if (!importResult.Success)
 			{
@@ -200,7 +201,11 @@ public class ProvisionCiCommandSettings : CommandSettings
 
 	[Description("Allows any app read permission")]
 	[CommandOption("--keychain-allow-any-app-read")]
-	public bool AllowAnyAppRead { get; set; }
+	public bool AllowAnyAppRead { get; set; } = true;
+	
+	[Description("Allows any app read permission")]
+	[CommandOption("--keychain-disallow-any-app-read")]
+	public bool DisallowAllowAnyAppRead { get; set; }
 
 
 	[Description("App bundle identifier(s) to match provisioning profiles for")]
