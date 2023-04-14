@@ -134,13 +134,13 @@ app.Configure(config =>
 			.WithExample(new[] { "ci", "secret", "--from-certificate", "dev.p12" })
 			.WithExample(new[] { "ci", "secret", "--from-private-key", "WXYZ1234.p8" });
 		
-		ci.AddCommand<CreateSecretCommand>("base64-to-file")
+		ci.AddCommand<Base64ToFileCommand>("base64-to-file")
 			.WithData(data)
 			.WithDescription("Writes a base64 encoded string value from direct input, or an environment variable name to a file")
 			.WithExample(new[] { "ci", "base64-to-file", "--base64", "ENV_VAR_NAME", "--output-file", "dev.p12" })
 			.WithExample(new[] { "ci", "base64-to-file", "--base64", "cmVkdGg=", "--output-file", "some.file" });
 		
-		ci.AddCommand<CreateSecretCommand>("env-to-file")
+		ci.AddCommand<EnvironmentVariableToFileCommand>("env-to-file")
 			.WithData(data)
 			.WithDescription("Writes the value of an environment variable to a file")
 			.WithExample(new[] { "ci", "env-to-file", "--env-var", "ENV_VAR_NAME", "--output-file", "apikey.p8" });
