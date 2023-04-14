@@ -93,8 +93,25 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 				importResult.OutputFailure("Import Certificate Failed");
 				return 1;
 			}
-
 			AnsiConsole.WriteLine($" Done.");
+
+			if (settings.CreateKeychain())
+			{
+				AnsiConsole.Write($"Setting Partition List for {keychainFile.Name}...");
+
+				var partitionResult = await keychain.SetPartitionListAsync(settings.KeychainPassword, settings.Keychain,
+						data.CancellationToken)
+					.ConfigureAwait(false);
+
+				if (!partitionResult.Success)
+				{
+					AnsiConsole.WriteLine();
+					partitionResult.OutputFailure("Set Partition List Failed");
+					return 1;
+				}
+
+				AnsiConsole.WriteLine($" Done.");
+			}
 		}
 
 
