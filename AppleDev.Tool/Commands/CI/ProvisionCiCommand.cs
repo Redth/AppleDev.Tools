@@ -223,18 +223,18 @@ public class ProvisionCiCommandSettings : CommandSettings
 	public DirectoryInfo? ProfilePath { get; set; }
 
 
-	[Description("AppStoreConnect Key ID")]
-	[CommandOption("--api-key-id <key_id>")]
+	[Description("AppStoreConnect Key ID value or environment variable name (Can also be supplied via the 'APP_STORE_CONNECT_KEY_ID' environment variable)")]
+	[CommandOption("--api-key-id|--app-store-connect-key-id <key_id>")]
 	public string ApiKeyId { get; set; }
 		= Environment.GetEnvironmentVariable("APP_STORE_CONNECT_KEY_ID") ?? string.Empty;
 
-	[Description("AppStoreConnect Issuer ID")]
-	[CommandOption("--api-issuer-id <issuer_id>")]
+	[Description("AppStoreConnect Issuer ID value or environment variable name (Can also be supplied via the 'APP_STORE_CONNECT_ISSUER_ID' environment variable)")]
+	[CommandOption("--api-issuer-id|--app-store-connect-issuer-id <issuer_id>")]
 	public string ApiIssuerId { get; set; }
 		= Environment.GetEnvironmentVariable("APP_STORE_CONNECT_ISSUER_ID") ?? string.Empty;
 
-	[Description("AppStoreConnect Private Key Filename or Base64 string or Environment variable with Base64 string")]
-	[CommandOption("--api-private-key <private_key>")]
+	[Description("AppStoreConnect Private Key (.p8) filename or environment variable name with (.p8) file contents (Can also be supplied via the 'APP_STORE_CONNECT_PRIVATE_KEY' environment variable)")]
+	[CommandOption("--api-private-key|--app-store-connect-private-key <private_key>")]
 	public string ApiPrivateKey { get; set; }
 		= Environment.GetEnvironmentVariable("APP_STORE_CONNECT_PRIVATE_KEY") ?? string.Empty;
 

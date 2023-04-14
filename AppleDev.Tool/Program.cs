@@ -119,6 +119,8 @@ app.Configure(config =>
 		ci.AddCommand<ProvisionCiCommand>("provision")
 			.WithData(data)
 			.WithDescription("Provisions a CI environment with certificates, keychain, provisioning profiles")
+			.WithExample(new[] { "ci", "provision", "--certificate", "ENV_VAR_NAME_WITH_BASE64_CERT_DATA", "--bundle-identifier", "com.myapp.id" })
+			.WithExample(new[] { "ci", "provision", "--certificate", "ENV_VAR_NAME_WITH_BASE64_CERT_DATA", "--bundle-identifier", "com.myapp.id", "--app-store-connect-key-id", "XYZ123ABC", "--app-store-connect-issuer-id", "aaaa-1111-bbbbb-2222-cccc", "--app-store-connect-private-key", "ENV_VAR_NAME_P8_FILE_CONTENTS" })
 			.WithExample(new[] { "ci", "provision", "--keychain", "tmp.keychain", "--certificate", "CERT_BASE_64_STRING", "--bundle-identifier", "com.myapp.id" });
 
 		ci.AddCommand<DeprovisionCiCommand>("deprovision")
