@@ -24,6 +24,9 @@ public class CreateSecretCommand : AsyncCommand<CreateSecretCommandSettings>
 		else if (settings.FromBinaryFile is not null)
 			secret = FromBinaryFile(settings.FromBinaryFile);
 
+		if (settings.OutputFile is not null)
+			File.WriteAllText(settings.OutputFile.FullName, secret);
+		
 		AnsiConsole.WriteLine(secret);
 
 		return Task.FromResult(this.ExitCode());
@@ -76,4 +79,10 @@ public class CreateSecretCommandSettings : CommandSettings
 	[CommandOption("--from-binary-file <binary_file>")]
 	[TypeConverter(typeof(FileInfoTypeConverter))]
 	public FileInfo? FromBinaryFile { get; set; }
+	
+	
+	[Description("Output file")]
+	[CommandOption("--output-file <file>")]
+	[TypeConverter(typeof(FileInfoTypeConverter))]
+	public FileInfo? OutputFile { get; set; }
 }
