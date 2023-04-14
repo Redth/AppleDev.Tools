@@ -38,6 +38,7 @@ public class Keychain
 				args.Add("-s");
 				args.Add(keychainPath.FullName);
 
+				// Add login.keychain-db if it's not the one specified
 				if (!Path.GetFileName(keychainPath.FullName).Equals(DefaultKeychain))
 					args.Add(Locate(DefaultKeychain).FullName);
 			}, cancellationToken);
@@ -48,7 +49,6 @@ public class Keychain
 
 	public Task<ProcessResult> SetDefaultKeychainAsync(string keychain = DefaultKeychain, CancellationToken cancellationToken = default)
 		=> WrapSecurityAsync(new[] { "default-keychain", "-s", Locate(keychain).FullName }, cancellationToken);
-
 	
 	public Task<ProcessResult> ImportPkcs12Async(string file, string passphrase, string keychain = DefaultKeychain, bool allowReadToAnyApp = false, CancellationToken cancellationToken = default)
 		=> WrapSecurityAsync(args =>
@@ -73,47 +73,48 @@ public class Keychain
 			}, cancellationToken);
 
 	public Task<ProcessResult> SetPartitionListAsync(string password, string keychain = DefaultKeychain, CancellationToken cancellationToken = default)
-		=> WrapSecurityAsync(new[] { 
-				"set-key-partition-list",
-				"-S",
-				"apple-tool:,apple:",
-				"-k",
-				password,
-				Locate(keychain).FullName
-			}, cancellationToken);
+		=> WrapSecurityAsync(args =>
+		{
+			args.Add("set-key-partition-list");
+			args.Add("-S");
+			args.Add("apple-tool:,apple:");
+			args.Add("-k");
+			args.Add(password);
+			args.Add(Locate(keychain).FullName);
+		}, cancellationToken);
 
 	public Task<ProcessResult> UnlockKeychainAsync(string password, string keychain = DefaultKeychain, CancellationToken cancellationToken = default)
-		=> WrapSecurityAsync(new[] { 
-				"unlock-keychain", 
-				"-p", 
-				password, 
-				Locate(keychain).FullName 
-			}, cancellationToken);
+		=> WrapSecurityAsync(args =>
+		{
+			var kc = Locate(keychain);
+			
+			args.Add("unlock-keychain");
+			args.Add("-p");
+			args.Add(password);
 
-	public async Task<ProcessResult> CreateKeychainAsync(string keychain, string? password = null, CancellationToken cancellationToken = default)
+			args.Add(kc.FullName);
+		}, cancellationToken);
+
+	public async Task<ProcessResult> CreateKeychainAsync(string keychain, string password, CancellationToken cancellationToken = default)
 	{
+		var kc = Locate(keychain);
 		var createResult = await WrapSecurityAsync(args =>
 		{
-			args.Add("create-keychain");
-
-			if (!string.IsNullOrEmpty(password))
-			{
-				args.Add("-p");
-				args.Add(password);
-			}
-
-			args.Add(Locate(keychain).FullName);
+			args.Add("create-keychain"); 
+			args.Add("-p");
+			args.Add(password);
+			args.Add(kc.FullName);
 		}, cancellationToken).ConfigureAwait(false);
 
 		if (!createResult.Success)
 			return createResult;
 
 		var setResult = await WrapSecurityAsync(new[] { 
-				"set-keychain-settings", 
-				"-lut", 
-				"21600", 
-				Locate(keychain).FullName 
-			}, cancellationToken).ConfigureAwait(false);
+			"set-keychain-settings", 
+			"-lut", 
+			"21600", 
+			kc.FullName 
+		}, cancellationToken).ConfigureAwait(false);
 
 		return new ProcessResult(setResult.Success, createResult.StdOut + Environment.NewLine + setResult.StdOut, createResult.StdErr + Environment.NewLine + setResult.StdErr);
 	}

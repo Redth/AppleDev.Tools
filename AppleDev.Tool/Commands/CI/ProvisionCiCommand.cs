@@ -14,6 +14,9 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 
 		AnsiConsole.Write(new Rule("Provisioning..."));
 
+		var keychainName = settings.Keychain ?? "build";
+		var keychainPassword = settings.KeychainPassword ?? keychainName;
+		
 		var certificateData = settings.GetBytesFromFileOrEnvironmentOrBase64String(settings.Certificate);
 
 		if (!settings.ImportCert())
@@ -24,20 +27,20 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 		{
 			var keychain = new Keychain();
 
-			var keychainFile = keychain.Locate(settings.Keychain);
+			var keychainFile = keychain.Locate(keychainName);
 
 			if (settings.CreateKeychain())
 			{
 				if (keychainFile.Exists)
 				{
-					AnsiConsole.WriteLine($"Keychain already exists: {keychainFile.Name}");
+					AnsiConsole.WriteLine($"Keychain already exists: {keychainFile.FullName}");
 				}
 				else
 				{
 
-					AnsiConsole.Write($"Creating Keychain {keychainFile.Name}...");
+					AnsiConsole.Write($"Creating Keychain {keychainFile.FullName}...");
 					var createResult = await keychain
-						.CreateKeychainAsync(settings.Keychain, settings.KeychainPassword, data.CancellationToken)
+						.CreateKeychainAsync(keychainFile.FullName, keychainPassword, data.CancellationToken)
 						.ConfigureAwait(false);
 
 					if (!createResult.Success)
@@ -50,9 +53,9 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 					AnsiConsole.WriteLine($" Done.");
 				}
 				
-				AnsiConsole.Write($"Setting Default Keychain {keychainFile.Name}...");
+				AnsiConsole.Write($"Setting Default Keychain {keychainFile.FullName}...");
 				var setDefResult = await keychain
-					.SetDefaultKeychainAsync(settings.Keychain, data.CancellationToken)
+					.SetDefaultKeychainAsync(keychainFile.FullName, data.CancellationToken)
 					.ConfigureAwait(false);
 
 				if (!setDefResult.Success)
@@ -65,12 +68,12 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 				AnsiConsole.WriteLine($" Done.");
 			}
 
-			if (!string.IsNullOrEmpty(settings.KeychainPassword))
+			if (!string.IsNullOrEmpty(keychainPassword))
 			{
-				AnsiConsole.Write($"Unlocking Keychain {settings.Keychain}...");
+				AnsiConsole.Write($"Unlocking Keychain {keychainFile.FullName}...");
 				try
 				{
-					var unlockResult = await keychain.UnlockKeychainAsync(settings.KeychainPassword, settings.Keychain).ConfigureAwait(false);
+					var unlockResult = await keychain.UnlockKeychainAsync(keychainPassword, keychainFile.FullName).ConfigureAwait(false);
 					
 					if (!unlockResult.Success)
 						AnsiConsole.WriteLine("[yellow]Warning: Failed to unlock keychain[/]");
@@ -80,13 +83,13 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 			}
 			
 
-			AnsiConsole.Write($"Importing Certificate into {keychainFile.Name} (AllowAnyAppRead: {settings.AllowAnyAppRead})...");
+			AnsiConsole.Write($"Importing Certificate into {keychainFile.FullName} (AllowAnyAppRead: {settings.AllowAnyAppRead})...");
 
 			var tmpFile = Path.GetTempFileName();
 			if (certificateData is not null)
 				File.WriteAllBytes(tmpFile, certificateData);
 
-			var importResult = await keychain.ImportPkcs12Async(tmpFile, settings.CertificatePassphrase, settings.Keychain, settings.AllowAnyAppRead, data.CancellationToken).ConfigureAwait(false);
+			var importResult = await keychain.ImportPkcs12Async(tmpFile, settings.CertificatePassphrase, keychainFile.FullName, settings.AllowAnyAppRead, data.CancellationToken).ConfigureAwait(false);
 
 			if (!importResult.Success)
 			{
@@ -98,9 +101,9 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 
 			if (settings.CreateKeychain())
 			{
-				AnsiConsole.Write($"Setting Partition List for {keychainFile.Name}...");
+				AnsiConsole.Write($"Setting Partition List for {keychainFile.FullName}...");
 
-				var partitionResult = await keychain.SetPartitionListAsync(settings.KeychainPassword, settings.Keychain,
+				var partitionResult = await keychain.SetPartitionListAsync(keychainPassword, keychainFile.FullName,
 						data.CancellationToken)
 					.ConfigureAwait(false);
 
@@ -190,7 +193,7 @@ public class ProvisionCiCommandSettings : CommandSettings
 
 	[Description("Keychain password")]
 	[CommandOption("--keychain-password <password>")]
-	public string KeychainPassword { get; set; } = string.Empty;
+	public string? KeychainPassword { get; set; } = string.Empty;
 
 	internal bool CreateKeychain()
 		=> !string.IsNullOrWhiteSpace(Keychain) && Keychain != AppleDev.Keychain.DefaultKeychain;
@@ -237,12 +240,6 @@ public class ProvisionCiCommandSettings : CommandSettings
 
 	public override ValidationResult Validate()
 	{
-		if (this.CreateKeychain())
-		{
-			if (string.IsNullOrWhiteSpace(KeychainPassword))
-				return ValidationResult.Error("--keychain-password is required");
-		}
-
 		if (this.InstallProfiles())
 		{
 			if (string.IsNullOrEmpty(ApiKeyId))

@@ -13,13 +13,15 @@ public class DeprovisionCiCommand : AsyncCommand<DeprovisionCiCommandSettings>
 		
 		AnsiConsole.Write(new Rule("Deprovisioning..."));
 		
-		if (!string.IsNullOrEmpty(settings.Keychain) && settings.Keychain != Keychain.DefaultKeychain)
-		{
-			var keychain = new Keychain();
-			var keychainFile = keychain.Locate(settings.Keychain);
+		var keychainName = settings.Keychain ?? "build";
+		
+		var keychain = new Keychain();
+		var keychainFile = keychain.Locate(keychainName);
 
+		if (keychainFile.Exists && !keychainFile.Name.Equals(AppleDev.Keychain.DefaultKeychain))
+		{
 			AnsiConsole.Write($"Deleting Keychain {keychainFile.Name}...");
-			var createResult = await keychain.DeleteKeychainAsync(settings.Keychain, data.CancellationToken).ConfigureAwait(false);
+			var createResult = await keychain.DeleteKeychainAsync(keychainFile.FullName, data.CancellationToken).ConfigureAwait(false);
 
 			if (!createResult.Success)
 			{
