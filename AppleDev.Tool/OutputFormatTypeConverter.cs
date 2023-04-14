@@ -50,10 +50,10 @@ public class FileInfoTypeConverter : System.ComponentModel.TypeConverter
 	{
 		try
 		{
-			return new FileInfo(value.ToString());
+			return new FileInfo(value.ToString()!);
 		} catch { }
 
-		return null;
+		return null!;
 	}
 }
 
@@ -66,9 +66,9 @@ public class DirectoryInfoTypeConverter : System.ComponentModel.TypeConverter
 	{
 		try
 		{
-			return new DirectoryInfo(value.ToString());
+			return new DirectoryInfo(value.ToString()!);
 		} catch { }
 
-		return null;
+		return null!;
 	}
 }

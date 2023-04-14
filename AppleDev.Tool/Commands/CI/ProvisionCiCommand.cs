@@ -83,7 +83,8 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 			AnsiConsole.Write($"Importing Certificate into {keychainFile.Name} (AllowAnyAppRead: {settings.AllowAnyAppRead})...");
 
 			var tmpFile = Path.GetTempFileName();
-			File.WriteAllBytes(tmpFile, certificateData);
+			if (certificateData is not null)
+				File.WriteAllBytes(tmpFile, certificateData);
 
 			var importResult = await keychain.ImportPkcs12Async(tmpFile, settings.CertificatePassphrase, settings.Keychain, settings.AllowAnyAppRead, data.CancellationToken).ConfigureAwait(false);
 
