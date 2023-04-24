@@ -1,6 +1,7 @@
 ﻿using CliWrap;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace AppleDev;
 
@@ -20,7 +21,7 @@ public class ALTool : XCRun
 	/// <param name="cancellationToken"></param>
 	/// <exception cref="FileNotFoundException"></exception>
 	/// <exception cref="InvalidDataException"></exception>
-	public async Task<ProcessResult> UploadAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
+	public async Task<ACToolResponse> UploadAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();
 		
@@ -36,7 +37,7 @@ public class ALTool : XCRun
 			{
 				"altool",
 				"--output-format",
-				"xml",
+				"json",
 				"--upload-app",
 				"--file",
 				appPath,
@@ -58,10 +59,10 @@ public class ALTool : XCRun
 			.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
 			.ExecuteAsync(cancellationToken).ConfigureAwait(false);
 
-		return new ProcessResult(r.ExitCode == 0, stdout.ToString(), stderr.ToString());
+		return System.Text.Json.JsonSerializer.Deserialize<ACToolResponse>(stdout.ToString())!;
 	}
 
-	public async Task<ProcessResult> ValidateAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
+	public async Task<ACToolResponse> ValidateAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();
 
@@ -77,7 +78,7 @@ public class ALTool : XCRun
 			{
 				"altool",
 				"--output-format",
-				"xml",
+				"json",
 				"--validate-app",
 				"--file",
 				appPath,
@@ -99,6 +100,48 @@ public class ALTool : XCRun
 			.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
 			.ExecuteAsync(cancellationToken).ConfigureAwait(false);
 
-		return new ProcessResult(r.ExitCode == 0, stdout.ToString(), stderr.ToString());
+		return System.Text.Json.JsonSerializer.Deserialize<ACToolResponse>(stdout.ToString())!;
 	}
+}
+
+public class ACToolResponse
+{
+	[JsonIgnore]
+	public bool Success
+		=> Errors is null || Errors.Count <= 0;
+
+	[JsonPropertyName("tool-version")]
+	public string? ToolVersion { get; set; }
+
+	[JsonPropertyName("tool-path")]
+	public string? ToolPath { get; set; }
+
+	[JsonPropertyName("os-version")]
+	public string? OsVersion { get; set; }
+
+	[JsonPropertyName("product-errors")]
+	public List<ACToolProductError> Errors { get; set; } = new();
+
+}
+
+public class ACToolProductError
+{
+	[JsonPropertyName("message")]
+	public string? Message { get; set; }
+
+	[JsonPropertyName("code")]
+	public long Code { get; set; } = 0;
+
+	[JsonPropertyName("userInfo")]
+	public ACToolProductErrorUserInfo? UserInfo { get; set; }
+
+}
+
+public class  ACToolProductErrorUserInfo
+{
+	[JsonPropertyName("NSLocalizedFailureReason")]
+	public string? FailureReason { get; set; }
+
+	[JsonPropertyName("NSLocalizedDescription")]
+	public string? Description { get; set; }
 }

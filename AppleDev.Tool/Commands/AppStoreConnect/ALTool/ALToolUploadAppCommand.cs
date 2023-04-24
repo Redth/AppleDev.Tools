@@ -25,7 +25,7 @@ public class ALToolUploadAppCommand : AsyncCommand<ALToolUploadAppCommandSetting
 			data.CancellationToken)
 			.ConfigureAwait(false);
 
-		OutputHelper.OutputResult(result, settings.Format, verbose: settings.Verbose);
+		OutputHelper.Output(result, settings.Format, verbose: settings.Verbose);
 
 		return this.ExitCode(result.Success);
 	}
