@@ -114,6 +114,24 @@ app.Configure(config =>
 
 	});
 
+	config.AddBranch("altool", altool =>
+	{
+		altool.AddCommand<ALToolValidateAppCommand>("validate")
+			.WithData(data)
+			.WithDescription("Validate app")
+			.WithExample(new[] { "validate", "--app-path", "path/to/my.ipa" });
+
+		altool.AddCommand<ALToolUploadAppCommand>("upload")
+			.WithData(data)
+			.WithDescription("Uploads app to app store")
+			.WithExample(new[] { "upload", "--app-path", "path/to/my.ipa" });
+
+		altool.AddCommand<ALToolInstallPrivateKeyCommand>("installkey")
+			.WithData(data)
+			.WithDescription("Installs a private key")
+			.WithExample(new[] { "installkey", "--key-id", "WXYZ1234", "--private-key", "NAME_OF_ENV_VAR_WITH_BASE64_KEY_FILE_CONTENTS" });
+	});
+
 	config.AddBranch("ci", ci =>
 	{
 		ci.AddCommand<ProvisionCiCommand>("provision")

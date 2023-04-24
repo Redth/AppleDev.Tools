@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CliWrap;
+using Microsoft.Extensions.Logging;
+using System.Text;
 
 namespace AppleDev;
 
@@ -18,15 +20,18 @@ public class ALTool : XCRun
 	/// <param name="cancellationToken"></param>
 	/// <exception cref="FileNotFoundException"></exception>
 	/// <exception cref="InvalidDataException"></exception>
-	public async Task UploadAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
+	public async Task<ProcessResult> UploadAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();
 		
 		var xcrun = Locate();
 		if (xcrun is null || !xcrun.Exists)
 			throw new FileNotFoundException(xcrun?.FullName ?? ToolPath);
-		
-		await CliWrap.Cli.Wrap(xcrun.FullName)
+
+		var stdout = new StringBuilder();
+		var stderr = new StringBuilder();
+
+		var r = await Cli.Wrap(xcrun.FullName)
 			.WithArguments(new string[]
 			{
 				"altool",
@@ -48,18 +53,26 @@ public class ALTool : XCRun
 				apiKeyId,
 				"--apiIssuer",
 				issuerId
-			}).ExecuteAsync(cancellationToken).ConfigureAwait(false);
+			})
+			.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
+			.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
+			.ExecuteAsync(cancellationToken).ConfigureAwait(false);
+
+		return new ProcessResult(r.ExitCode == 0, stdout.ToString(), stderr.ToString());
 	}
 
-	public async Task ValidateAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
+	public async Task<ProcessResult> ValidateAppAsync(string appPath, ALToolAppType appType, string apiKeyId, string issuerId, CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();
 
 		var xcrun = Locate();
 		if (xcrun is null || !xcrun.Exists)
 			throw new FileNotFoundException(xcrun?.FullName ?? ToolPath);
-		
-		await CliWrap.Cli.Wrap(xcrun.FullName)
+
+		var stdout = new StringBuilder();
+		var stderr = new StringBuilder();
+
+		var r = await Cli.Wrap(xcrun.FullName)
 			.WithArguments(new string[]
 			{
 				"altool",
@@ -82,6 +95,10 @@ public class ALTool : XCRun
 				"--apiIssuer",
 				issuerId
 			})
+			.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
+			.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
 			.ExecuteAsync(cancellationToken).ConfigureAwait(false);
+
+		return new ProcessResult(r.ExitCode == 0, stdout.ToString(), stderr.ToString());
 	}
 }
