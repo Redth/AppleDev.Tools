@@ -48,22 +48,31 @@ public class XCRun
 			throw new PlatformNotSupportedException();
 	}
 
-	public Task InstallPrivateKey(string apiKeyId, string privateKeyBase64)
+	public async Task<FileInfo> InstallPrivateKey(string apiKeyId, string privateKeyBase64)
 	{
 		var pkDir = PrivateKeysDirectory;
 		var path = Path.Combine(pkDir.FullName, $"AuthKey_{apiKeyId}");
 
-		return File.WriteAllTextAsync(path, privateKeyBase64);
+		await File.WriteAllTextAsync(path, privateKeyBase64);
+		return new FileInfo(path);
 	}
 
+	DirectoryInfo? privateKeysDirectory;
+	
 	public DirectoryInfo PrivateKeysDirectory
 	{
 		get
 		{
-			var d = new DirectoryInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "private_keys"));
-			if (!d.Exists)
-				d.Create();
-			return d;
+			privateKeysDirectory ??=
+				new DirectoryInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+					"private_keys"));
+			if (!privateKeysDirectory.Exists)
+				privateKeysDirectory.Create();
+			return privateKeysDirectory;
+		}
+		set
+		{
+			privateKeysDirectory = value;
 		}
 	}
 }

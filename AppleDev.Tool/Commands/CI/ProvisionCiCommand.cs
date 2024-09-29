@@ -128,6 +128,16 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 			}
 		}
 
+		if (settings.InstallApiPrivateKey)
+		{
+			var apiPrivateKey = settings.GetStringFromFileOrEnvironmentOrString(settings.ApiPrivateKey);
+
+			var xcrun = new XCRun();
+			xcrun.PrivateKeysDirectory = settings.ApiPrivateKeyDirectory;
+			
+			var keyPath = await xcrun.InstallPrivateKey(settings.ApiKeyId, apiPrivateKey!);
+			AnsiConsole.WriteLine($"Saved API Key to: {keyPath.FullName}");
+		}
 
 		if (settings.InstallProfiles())
 		{
@@ -263,6 +273,16 @@ public class ProvisionCiCommandSettings : CommandSettings
 	public string ApiPrivateKey { get; set; }
 		= Environment.GetEnvironmentVariable("APP_STORE_CONNECT_PRIVATE_KEY") ?? string.Empty;
 
+	[Description("If true, installs the --api-private-key AppStoreConnect Private Key (.p8) (if specified) to the --api-private-key-dir location.  You are responsible for removing this key if you do not want it to persist.")]
+	[CommandOption("--install-api-private-key")]
+	public bool InstallApiPrivateKey { get; set; }
+		= false;
+
+	[Description("Specifies a path to save the AppStoreConnect Private Key (.p8) file to if --install-api-private-key is true.  Default directory path is \"~/private_keys/\".")]
+	[CommandOption("--api-private-key-dir <directory_path>")]
+	public DirectoryInfo ApiPrivateKeyDirectory { get; set; }
+		= new DirectoryInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "private_keys"));
+	
 	public override ValidationResult Validate()
 	{
 		if (this.InstallProfiles())
@@ -275,6 +295,15 @@ public class ProvisionCiCommandSettings : CommandSettings
 			
 			if (string.IsNullOrEmpty(ApiPrivateKey))
 				return ValidationResult.Error("--api-private-key is required");
+		}
+
+		if (this.InstallApiPrivateKey)
+		{
+			if (string.IsNullOrEmpty(ApiPrivateKey))
+				return ValidationResult.Error("--api-private-key is required");
+			
+			if (string.IsNullOrEmpty(ApiKeyId))
+				return ValidationResult.Error("--api-key-id is required");
 		}
 		
 		return base.Validate();
