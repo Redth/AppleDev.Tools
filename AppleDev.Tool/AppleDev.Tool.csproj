@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>net8.0</TargetFrameworks>
+        <TargetFrameworks>net7.0;net8.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AssemblyName>apple</AssemblyName>
@@ -25,7 +25,7 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <DebugType>portable</DebugType>
-        <PackAsToolShimRuntimeIdentifiers>win-x64;win-x86;osx-x64</PackAsToolShimRuntimeIdentifiers>
+<!--        <PackAsToolShimRuntimeIdentifiers>win-x64;win-x86;osx-x64</PackAsToolShimRuntimeIdentifiers>-->
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true' Or '$(TF_BUILD)' == 'true'">
@@ -42,20 +42,20 @@
         <ProjectReference Include="..\AppStoreConnectClient\AppStoreConnectClient.csproj" />
     </ItemGroup>
 
-    <PropertyGroup>
-        <SigningTimestampServer>http://timestamp.entrust.net/TSS/RFC3161sha2TS</SigningTimestampServer>
-        <SignToolPath>C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe</SignToolPath>
-    </PropertyGroup>
+<!--    <PropertyGroup>-->
+<!--        <SigningTimestampServer>http://timestamp.entrust.net/TSS/RFC3161sha2TS</SigningTimestampServer>-->
+<!--        <SignToolPath>C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe</SignToolPath>-->
+<!--    </PropertyGroup>-->
 
-    <Target Name="AuthenticodeSignBeforeBack" BeforeTargets="GenerateNuspec" Condition="'$(SigningCertificatePfxFile)' != ''">
-        <ItemGroup>
-            <FilesToSign Include="@(_PackageFiles)" Condition=" '%(_PackageFiles.Filename)%(_PackageFiles.Extension)' == 'AppleDev.Tool.dll' " />
-            <FilesToSign Include="@(_PackageFiles)" Condition=" '%(_PackageFiles.Filename)%(_PackageFiles.Extension)' == 'appledev.exe' " />
-        </ItemGroup>
-        <Exec Command="&quot;$(SignToolPath)&quot; sign /v /f $(SigningCertificatePfxFile) /as /fd sha256 /td sha256 /tr $(SigningTimestampServer) %(FilesToSign.FullPath)" />
-    </Target>
+<!--    <Target Name="AuthenticodeSignBeforeBack" BeforeTargets="GenerateNuspec" Condition="'$(SigningCertificatePfxFile)' != ''">-->
+<!--        <ItemGroup>-->
+<!--            <FilesToSign Include="@(_PackageFiles)" Condition=" '%(_PackageFiles.Filename)%(_PackageFiles.Extension)' == 'AppleDev.Tool.dll' " />-->
+<!--            <FilesToSign Include="@(_PackageFiles)" Condition=" '%(_PackageFiles.Filename)%(_PackageFiles.Extension)' == 'appledev.exe' " />-->
+<!--        </ItemGroup>-->
+<!--        <Exec Command="&quot;$(SignToolPath)&quot; sign /v /f $(SigningCertificatePfxFile) /as /fd sha256 /td sha256 /tr $(SigningTimestampServer) %(FilesToSign.FullPath)" />-->
+<!--    </Target>-->
 
-    <Target Name="NugetSignAfterPack" AfterTargets="Pack" Condition="'$(SigningCertificatePfxFile)' != ''">
-        <Exec Command="dotnet nuget sign $(PackageOutputAbsolutePath)\*.nupkg --certificate-path $(SigningCertificatePfxFile) --timestamper $(SigningTimestampServer)" />
-    </Target>
+<!--    <Target Name="NugetSignAfterPack" AfterTargets="Pack" Condition="'$(SigningCertificatePfxFile)' != ''">-->
+<!--        <Exec Command="dotnet nuget sign $(PackageOutputAbsolutePath)\*.nupkg &#45;&#45;certificate-path $(SigningCertificatePfxFile) &#45;&#45;timestamper $(SigningTimestampServer)" />-->
+<!--    </Target>-->
 </Project>
