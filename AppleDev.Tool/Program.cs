@@ -104,6 +104,14 @@ app.Configure(config =>
 			.WithExample(new[] { "provisioning", "list" })
 			.WithExample(new[] { "provisioning", "list", "--download" });
 	});
+	
+	config.AddBranch("bundleids", bundleids =>
+	{
+		bundleids.AddCommand<ListBundleIdsCommand>("list")
+			.WithData(data)
+			.WithDescription("List bundle identifiers")
+			.WithExample(new[] { "bundleids", "list" });
+	});
 
 	config.AddBranch("certificate", provisioning =>
 	{
