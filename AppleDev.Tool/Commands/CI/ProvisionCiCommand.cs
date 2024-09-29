@@ -89,7 +89,10 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 			{
 				File.WriteAllBytes(tmpFile, certificateData);
 
-				var x509 = new X509Certificate2(certificateData);
+				// Use passphrase if specified
+				var x509 = !string.IsNullOrWhiteSpace(settings.CertificatePassphrase)
+					? new X509Certificate2(certificateData, settings.CertificatePassphrase)
+					: new X509Certificate2(certificateData, (string)null);
 				var certificateFriendlyName = x509.FriendlyName;
 
 				if (!string.IsNullOrEmpty(certificateFriendlyName))
