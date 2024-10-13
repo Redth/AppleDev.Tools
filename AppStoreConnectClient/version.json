@@ -6,5 +6,8 @@
   "cloudBuild": {
     "setVersionVariables": true,
     "setAllVariables": true
-  }
+  },
+  "publicReleaseRefSpec": [
+    "^refs/tags/*"
+  ]
 }
