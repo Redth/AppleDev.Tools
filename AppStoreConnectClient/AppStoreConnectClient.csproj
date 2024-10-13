@@ -24,6 +24,10 @@
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true' Or '$(TF_BUILD)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="JWT" Version="10.0.2" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143" PrivateAssets="all" />

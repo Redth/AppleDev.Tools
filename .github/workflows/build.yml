@@ -24,9 +24,9 @@ jobs:
       shell: pwsh
       run: |
         New-Item -ItemType Directory -Force -Path .\artifacts
-        dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./AppleDev/AppleDev.csproj
-        dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./AppStoreConnectClient/AppStoreConnectClient.csproj
-        dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./AppleDev.Tool/AppleDev.Tool.csproj
+        dotnet pack --output ./artifacts --configuration Release ./AppleDev/AppleDev.csproj
+        dotnet pack --output ./artifacts --configuration Release ./AppStoreConnectClient/AppStoreConnectClient.csproj
+        dotnet pack --output ./artifacts --configuration Release ./AppleDev.Tool/AppleDev.Tool.csproj
 
     - name: Artifacts
       uses: actions/upload-artifact@v4
