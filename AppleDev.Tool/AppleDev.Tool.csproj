@@ -35,6 +35,7 @@
     <ItemGroup>
         <PackageReference Include="Spectre.Console.Cli" Version="0.48.0" />
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+        <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>

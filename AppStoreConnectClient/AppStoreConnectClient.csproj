@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <PackageReference Include="JWT" Version="10.0.2" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

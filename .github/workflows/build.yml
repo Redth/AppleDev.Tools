@@ -9,12 +9,12 @@ on:
 jobs:
   build:
     name: Build
-    env:
-      NUPKG_MAJOR: 0.999
     runs-on: windows-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
@@ -23,13 +23,6 @@ jobs:
     - name: Pack
       shell: pwsh
       run: |
-        $VERSION="$env:NUPKG_MAJOR-ci$env:GITHUB_RUN_ID"
-        if ($env:GITHUB_EVENT_NAME -eq "release") {
-          $VERSION = $env:GITHUB_REF.Substring($env:GITHUB_REF.LastIndexOf('/') + 1)
-        }
-        echo "::set-output name=pkgverci::$VERSION"
-        echo "PACKAGE VERSION: $VERSION"
-        
         New-Item -ItemType Directory -Force -Path .\artifacts
         dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./AppleDev/AppleDev.csproj
         dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./AppStoreConnectClient/AppStoreConnectClient.csproj
