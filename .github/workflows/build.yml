@@ -23,10 +23,14 @@ jobs:
     - name: Pack
       shell: pwsh
       run: |
+        $IsPublicRelease="False"
+        if ($env:GITHUB_EVENT_NAME -eq "release") {
+          $IsPublicRelease="True"
+        }
         New-Item -ItemType Directory -Force -Path .\artifacts
-        dotnet pack --output ./artifacts --configuration Release ./AppleDev/AppleDev.csproj
-        dotnet pack --output ./artifacts --configuration Release ./AppStoreConnectClient/AppStoreConnectClient.csproj
-        dotnet pack --output ./artifacts --configuration Release ./AppleDev.Tool/AppleDev.Tool.csproj
+        dotnet pack --output ./artifacts --configuration Release -p:PublicRelease=$IsPublicRelease ./AppleDev/AppleDev.csproj
+        dotnet pack --output ./artifacts --configuration Release -p:PublicRelease=$IsPublicRelease ./AppStoreConnectClient/AppStoreConnectClient.csproj
+        dotnet pack --output ./artifacts --configuration Release -p:PublicRelease=$IsPublicRelease ./AppleDev.Tool/AppleDev.Tool.csproj
 
     - name: Artifacts
       uses: actions/upload-artifact@v4
