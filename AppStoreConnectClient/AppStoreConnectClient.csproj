@@ -4,6 +4,24 @@
     <TargetFrameworks>net7.0;net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\AppStoreConnectClient.xml</DocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <DebugType>portable</DebugType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <IncludeSymbols>true</IncludeSymbols>
+
+    <PackageId>AppStoreConnectClient</PackageId>
+    <OutputType>Library</OutputType>
+    <Authors>Redth</Authors>
+    <Company>Redth</Company>
+    <AssemblyTitle>AppStoreConnectClient</AssemblyTitle>
+    <Description>Client Library for Apple's AppStoreConnect API</Description>
+    <RepositoryUrl>https://github.com/redth/AppleDev.Tools.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
