@@ -42,7 +42,12 @@ public class ListProvisioningProfilesCommand : AsyncCommand<ListProvisioningProf
 
 		if (settings.Download)
 		{
-			await appStoreConnect.InstallProfilesAsync(profileResults.Select(p => p.Profile), settings.DownloadPath).ConfigureAwait(false);
+			foreach (var p in profileResults)
+			{
+				var profile = p.Profile;
+				var profileData = Convert.FromBase64String(profile.ProfileContent);
+				await ProvisioningProfiles.InstallProfileAsync(profileData, settings.DownloadPath).ConfigureAwait(false);
+			}
 		}
 
 		OutputHelper.Output(profileResults, settings.Format, settings.Verbose,

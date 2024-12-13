@@ -196,8 +196,11 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 
 			if (profileResults.Count > 0)
 			{
-				// Install profiles
-				await appStoreConnect.InstallProfilesAsync(profileResults.Select(p => p.Profile), settings.ProfilePath).ConfigureAwait(false);
+				foreach (var p in profileResults)
+				{
+					var profileData = Convert.FromBase64String(p.Profile.ProfileContent);
+					await ProvisioningProfiles.InstallProfileAsync(profileData, settings.ProfilePath).ConfigureAwait(false);
+				}
 			}
 
 			AnsiConsole.WriteLine($"Done - {profileResults.Count} Provisioning Profiles Installed.");
