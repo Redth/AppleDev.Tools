@@ -103,6 +103,16 @@ app.Configure(config =>
 			.WithDescription("List provisioning profiles and optionally downloads/installs them")
 			.WithExample(new[] { "provisioning", "list" })
 			.WithExample(new[] { "provisioning", "list", "--download" });
+		
+		provisioning.AddCommand<ListInstalledProvisioningProfilesCommand>("installed")
+			.WithData(data)
+			.WithDescription("List locally installed provisioning profiles")
+			.WithExample(new[] { "provisioning", "installed" });
+		
+		provisioning.AddCommand<ParseProvisioningProfileCommand>("parse")
+			.WithData(data)
+			.WithDescription("Parse a given provisioning profile")
+			.WithExample(new[] { "provisioning", "parse", "profile.mobileprovision" });
 	});
 	
 	config.AddBranch("bundleids", bundleids =>
