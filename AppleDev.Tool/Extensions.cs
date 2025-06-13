@@ -99,7 +99,7 @@ static class Extensions
 
 	public static FileInfo GetOutputFile(this IOutputCommandSettings command, string prefix = "", string extension = "")
 	{
-		if (!string.IsNullOrEmpty(extension))
+		if (!string.IsNullOrEmpty(extension) && !extension.StartsWith("."))
 			extension = "." + extension;
 
 		if (!string.IsNullOrEmpty(prefix))

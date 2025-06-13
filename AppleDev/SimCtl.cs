@@ -1,5 +1,4 @@
 ﻿using CliWrap;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -9,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using CliWrap.Builders;
 using Microsoft.Extensions.Logging;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace AppleDev;
 
@@ -99,22 +97,16 @@ public class SimCtl : XCRun
 	/// <summary>
 	/// Waits for the simulator to be ready (Booted).
 	/// </summary>
-	/// <param name="udid">The target UDID to wait for boot complete.</param>
+	/// <param name="target">The target UDID or Simulator Name to wait for boot complete.</param>
 	/// <param name="timeout">Timeout to wait for booted state.</param>
 	/// <param name="cancellationToken"></param>
 	/// <returns>True if the simulator was found to be ready.</returns>
-	public async Task<bool> WaitForBootedAsync(string udid, TimeSpan timeout, CancellationToken cancellationToken = default)
+	public async Task<bool> WaitForBootedAsync(string target, TimeSpan timeout, CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();
 		
-		CancellationTokenSource? cts = null;
-		var ct = cancellationToken;
-
-		if (cancellationToken == CancellationToken.None)
-		{
-			cts = new CancellationTokenSource(timeout);
-			ct = cts.Token;
-		}
+		using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+		cts.CancelAfter(timeout);
 		
 		var xcrun = LocateOrThrow();
 		var stdout = new StringBuilder();
@@ -126,10 +118,10 @@ public class SimCtl : XCRun
 				{
 					args.Add("simctl");
 					args.Add("bootstatus");
-					args.Add(udid);
+					args.Add(target);
 				})
 				.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
-				.ExecuteAsync(ct).ConfigureAwait(false);
+				.ExecuteAsync(cts.Token).ConfigureAwait(false);
 
 			return result.ExitCode == 0;
 		}
@@ -235,7 +227,7 @@ public class SimCtl : XCRun
 	public Task<bool> TerminateAppAsync(string target, string bundleIdentifier, CancellationToken cancellationToken = default)
 		=> RunSimCtlCmdAsync(args =>
 		{
-			args.Add("launch");
+			args.Add("terminate");
 			args.Add(target);
 			args.Add(bundleIdentifier);
 		}, cancellationToken);
@@ -271,6 +263,24 @@ public class SimCtl : XCRun
 			args.Add(outputFile.FullName);
 		}, cancellationToken);
 	
+	/// <summary>
+	/// Creates a new simulator device.
+	/// </summary>
+	/// <param name="name">The name for the new simulator device.</param>
+	/// <param name="deviceTypeId">The device type identifier (e.g., "com.apple.CoreSimulator.SimDeviceType.iPhone-15" or "iPhone 15").</param>
+	/// <param name="runtimeId">Optional runtime identifier. If not specified, the newest compatible runtime is used.</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> CreateAsync(string name, string deviceTypeId, string? runtimeId = null, CancellationToken cancellationToken = default)
+		=> RunSimCtlCmdAsync(args =>
+		{
+			args.Add("create");
+			args.Add(name);
+			args.Add(deviceTypeId);
+			if (!string.IsNullOrEmpty(runtimeId))
+				args.Add(runtimeId);
+		}, cancellationToken);
+
 	async Task<bool> RunSimCtlCmdAsync(Action<ArgumentsBuilder> argsBuilder, CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();
@@ -371,7 +381,7 @@ public class SimCtl : XCRun
 				}
 			}
 
-			if (deviceType.Devices.Any())
+			if (deviceType?.Devices?.Any() == true)
 				results.Add(deviceType);
 		}
 
