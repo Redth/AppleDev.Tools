@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AppleDev.Tool": {
+      "commandName": "Project",
+      "commandLineArgs": "devices list"
+    }
+  }
+}
