@@ -281,6 +281,137 @@ public class SimCtl : XCRun
 				args.Add(runtimeId);
 		}, cancellationToken);
 
+	/// <summary>
+	/// Gets the list of apps installed on the target simulator(s).
+	/// </summary>
+	/// <param name="target">The target UDID, Simulator Name, or 'booted' for all booted simulators</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>List of apps installed on the simulator(s)</returns>
+	public async Task<List<SimCtlApp>> GetAppsAsync(string target = "booted", CancellationToken cancellationToken = default)
+	{
+		base.ThrowIfNotMacOS();
+		
+		var xcrun = LocateOrThrow();
+		var stdout = new StringBuilder();
+
+		var result = await Cli.Wrap(xcrun.FullName)
+			.WithArguments(args =>
+			{
+				args.Add("simctl");
+				args.Add("listapps");
+				args.Add(target);
+			})
+			.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
+			.ExecuteAsync(cancellationToken).ConfigureAwait(false);
+
+		if (result.ExitCode != 0)
+			return new List<SimCtlApp>();
+
+		var output = stdout.ToString();
+		if (string.IsNullOrWhiteSpace(output))
+			return new List<SimCtlApp>();
+
+		// Convert simctl output to JSON format
+		var jsonOutput = PreprocessSimctlOutput(output);
+
+		File.WriteAllText("simctl_apps.json", jsonOutput); // For debugging purposes, save the output to a file
+		
+		// Parse as JSON dictionary and return the values directly
+		var appsDict = JsonConvert.DeserializeObject<Dictionary<string, SimCtlApp>>(jsonOutput);
+		if (appsDict == null)
+			return new List<SimCtlApp>();
+
+		// Return the SimCtlApp objects as-is, no post-processing
+		return appsDict.Values.ToList();
+	}
+
+	internal static string PreprocessSimctlOutput(string raw)
+	{
+		// Trim outer braces
+		raw = raw.Trim();
+
+		// Replace = with : only when not inside quotes
+		raw = ReplaceOutsideQuotes(raw, " = ", " : ");
+		raw = ReplaceOutsideQuotes(raw, "= ", ": ");
+		raw = ReplaceOutsideQuotes(raw, " =", " :");
+		raw = ReplaceOutsideQuotes(raw, "=", ":");
+
+		// Replace ; with , only when not inside quotes  
+		raw = ReplaceOutsideQuotes(raw, ";", ",");
+
+		// Replace ( with [ and ) with ] for arrays
+		raw = ReplaceOutsideQuotes(raw, "(", "[");
+		raw = ReplaceOutsideQuotes(raw, ")", "]");
+
+		// Add quotes around unquoted keys (words followed by colon)
+		raw = System.Text.RegularExpressions.Regex.Replace(raw, @"(?<=[{,\s\n\r])(\w+(?:\.\w+)*)\s*:", "\"$1\":");
+
+		// Add quotes to unquoted string values (more careful regex)
+		// This regex looks for : followed by whitespace, then captures everything that's not already quoted
+		// and doesn't start with structural characters
+		raw = System.Text.RegularExpressions.Regex.Replace(raw, @":\s*([a-zA-Z][^,\n\r}\]]*?)(?=\s*[,\n\r}\]])", m =>
+		{
+			string value = m.Groups[1].Value.Trim();
+			// Don't quote if it's a boolean, null, number, or starts with quote/brace/bracket
+			if (value == "true" || value == "false" || value == "null" ||
+				double.TryParse(value, out _) || 
+				value.StartsWith("\"") || value.StartsWith("{") || value.StartsWith("["))
+			{
+				return ": " + value;
+			}
+			return ": \"" + value + "\"";
+		});
+
+		// Clean up any trailing commas before closing braces/brackets
+		raw = System.Text.RegularExpressions.Regex.Replace(raw, @",(\s*[}\]])", "$1");
+
+		return raw;
+	}
+
+	private static string ReplaceOutsideQuotes(string input, string find, string replace)
+	{
+		var result = new StringBuilder();
+		bool inQuotes = false;
+		bool escapeNext = false;
+		
+		for (int i = 0; i < input.Length; i++)
+		{
+			char current = input[i];
+			
+			if (escapeNext)
+			{
+				result.Append(current);
+				escapeNext = false;
+				continue;
+			}
+			
+			if (current == '\\')
+			{
+				result.Append(current);
+				escapeNext = true;
+				continue;
+			}
+			
+			if (current == '"')
+			{
+				inQuotes = !inQuotes;
+				result.Append(current);
+				continue;
+			}
+			
+			if (!inQuotes && input.Substring(i).StartsWith(find))
+			{
+				result.Append(replace);
+				i += find.Length - 1; // Skip the rest of the found string
+				continue;
+			}
+			
+			result.Append(current);
+		}
+		
+		return result.ToString();
+	}
+
 	async Task<bool> RunSimCtlCmdAsync(Action<ArgumentsBuilder> argsBuilder, CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();
@@ -517,4 +648,40 @@ public class SimCtlDevice
 
 	[JsonProperty("runtime")]
 	public SimCtlRuntime? Runtime { get; set; }
+}
+
+public class SimCtlApp
+{
+	[JsonProperty("ApplicationType")]
+	public string? ApplicationType { get; set; }
+
+	[JsonProperty("Bundle")]
+	public string? Bundle { get; set; }
+
+	[JsonProperty("CFBundleDisplayName")]
+	public string? CFBundleDisplayName { get; set; }
+
+	[JsonProperty("CFBundleExecutable")]
+	public string? CFBundleExecutable { get; set; }
+
+	[JsonProperty("CFBundleIdentifier")]
+	public string? CFBundleIdentifier { get; set; }
+
+	[JsonProperty("CFBundleName")]
+	public string? CFBundleName { get; set; }
+
+	[JsonProperty("CFBundleVersion")]
+	public string? CFBundleVersion { get; set; }
+
+	[JsonProperty("DataContainer")]
+	public string? DataContainer { get; set; }
+
+	[JsonProperty("GroupContainers")]
+	public Dictionary<string, string>? GroupContainers { get; set; }
+
+	[JsonProperty("Path")]
+	public string? Path { get; set; }
+
+	[JsonProperty("SBAppTags")]
+	public List<string>? SBAppTags { get; set; }
 }
