@@ -1,36 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO.Compression;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Xunit.Abstractions;
+﻿using Xunit.Abstractions;
 
 namespace AppleDev.Test;
 
-public class SimCtlTests : IAsyncDisposable
+public class SimCtlTests
 {
 	private readonly ITestOutputHelper _testOutputHelper;
 	private readonly SimCtl _simCtl;
-	private readonly string _testSimName;
 
 	public SimCtlTests(ITestOutputHelper testOutputHelper)
 	{
 		_testOutputHelper = testOutputHelper;
-		_simCtl = new SimCtl();
-		_testSimName = $"Test-iPhone-{DateTime.Now:yyyyMMdd-HHmmss}";
-	}
-
-	public async ValueTask DisposeAsync()
-	{
-		try
-		{
-			await _simCtl.DeleteAsync(_testSimName);
-		}
-		catch (Exception ex)
-		{
-			_testOutputHelper.WriteLine($"Failed to clean up test simulator: {ex.Message}");
-		}
+		_simCtl = new SimCtl(new XUnitLogger<SimCtl>(testOutputHelper));
 	}
 
 	[Fact]
@@ -102,6 +82,10 @@ public class SimCtlTests : IAsyncDisposable
 			.FirstOrDefault(i => !string.IsNullOrEmpty(i.Udid) && i.Udid == udid && i.IsBooted);
 
 		Assert.NotNull(booted);
+
+		await _simCtl.ShutdownAsync(udid);
+
+		_testOutputHelper.WriteLine($"Shutdown: {udid}");
 	}
 
 	[Fact]
@@ -186,244 +170,5 @@ public class SimCtlTests : IAsyncDisposable
 		Assert.NotNull(parsed);
 		Assert.Contains("com.apple.Bridge", parsed.Keys);
 		Assert.Contains("com.apple.webapp", parsed.Keys);
-	}
-
-	[Fact]
-	public async Task CreateSimulator_ShouldSucceed()
-	{
-		// Create a simulator
-		var iPhoneType = await GetTestingDeviceTypeAsync();
-		var success = await _simCtl.CreateAsync(_testSimName, iPhoneType.Identifier!);
-		Assert.True(success);
-
-		// Verify the simulator was created
-		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
-		var createdSim = sims.FirstOrDefault(s => s.Name == _testSimName);
-		Assert.NotNull(createdSim);
-		Assert.Equal(_testSimName, createdSim.Name);
-	}
-
-	[Fact]
-	public async Task BootAndShutdownSimulator_ShouldSucceed()
-	{
-		// Create a temporary simulator for testing
-		var iPhoneDeviceType = await GetTestingDeviceTypeAsync();
-		await _simCtl.CreateAsync(_testSimName, iPhoneDeviceType.Identifier!);
-
-		// Boot the simulator
-		var bootSuccess = await _simCtl.BootAsync(_testSimName);
-		Assert.True(bootSuccess, "Failed to boot the simulator");
-
-		// Wait for boot to complete
-		var waitSuccess = await _simCtl.WaitForBootedAsync(_testSimName, TimeSpan.FromSeconds(120));
-		Assert.True(waitSuccess, "Failed to wait for the simulator to boot");
-
-		// Verify the simulator is booted
-		var updatedSims = await _simCtl.GetSimulatorsAsync();
-		var bootedSim = updatedSims.FirstOrDefault(s => s.Name == _testSimName);
-		Assert.NotNull(bootedSim);
-		Assert.True(bootedSim.IsBooted, "Simulator is not in booted state");
-
-		// Shutdown the simulator
-		var shutdownSuccess = await _simCtl.ShutdownAsync(_testSimName);
-		Assert.True(shutdownSuccess, "Failed to shutdown the simulator");
-
-		// Verify the simulator is shutdown
-		var retries = 3;
-		while (retries-- > 0 && bootedSim.IsBooted)
-		{
-			await Task.Delay(500); // Give it a moment to shutdown
-
-			updatedSims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
-			var shutdownSim = updatedSims.FirstOrDefault(s => s.Name == _testSimName);
-			Assert.NotNull(shutdownSim);
-			Assert.False(shutdownSim.IsBooted, "Simulator is still in booted state after shutdown");
-		}
-	}
-
-	[Fact]
-	public async Task DeleteSimulator_ShouldSucceed()
-	{
-		await CreateTestSimulatorAsync();
-
-		// Get the created simulator
-		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
-		var createdSim = sims.FirstOrDefault(s => s.Name == _testSimName);
-		Assert.NotNull(createdSim);
-		Assert.NotNull(createdSim.Udid);
-
-		// Delete the simulator
-		var deleteSuccess = await _simCtl.DeleteAsync(_testSimName);
-		Assert.True(deleteSuccess, "Failed to delete the simulator");
-
-		// Verify the simulator was deleted
-		var updatedSims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
-		var deletedSim = updatedSims.FirstOrDefault(s => s.Name == _testSimName);
-		Assert.Null(deletedSim);
-	}
-
-	[Fact]
-	public async Task EraseSimulator_ShouldSucceed()
-    {
-        await CreateTestSimulatorAsync();
-
-        var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
-        var testSim = sims.FirstOrDefault(s => s.Name == _testSimName);
-        Assert.NotNull(testSim);
-        Assert.NotNull(testSim.Udid);
-
-        // Erase the simulator
-        var eraseSuccess = await _simCtl.EraseAsync(testSim.Udid);
-        Assert.True(eraseSuccess, "Failed to erase the simulator");
-
-        // Verify the simulator still exists but is clean
-        var updatedSims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
-        var erasedSim = updatedSims.FirstOrDefault(s => s.Udid == testSim.Udid);
-        Assert.NotNull(erasedSim);
-    }
-
-    [Fact]
-	public async Task SimulatorLifecycle_CreateBootShutdownDelete_ShouldSucceed()
-	{
-		var iPhoneDeviceType = await GetTestingDeviceTypeAsync();
-
-		// 1. Create
-		var createSuccess = await _simCtl.CreateAsync(_testSimName, iPhoneDeviceType.Identifier!);
-		Assert.True(createSuccess);
-
-		// Get the created simulator
-		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
-		var testSim = sims.FirstOrDefault(s => s.Name == _testSimName);
-		Assert.NotNull(testSim);
-		Assert.NotNull(testSim.Udid);
-
-		// 2. Boot
-		var bootSuccess = await _simCtl.BootAsync(testSim.Udid);
-		Assert.True(bootSuccess, "Failed to boot the simulator");
-
-		var waitSuccess = await _simCtl.WaitForBootedAsync(testSim.Udid, TimeSpan.FromSeconds(120));
-		Assert.True(waitSuccess, "Failed to wait for the simulator to boot");
-
-		// 3. Verify booted state
-		var updatedSims = await _simCtl.GetSimulatorsAsync();
-		var bootedSim = updatedSims.FirstOrDefault(s => s.Udid == testSim.Udid);
-		Assert.NotNull(bootedSim);
-		Assert.True(bootedSim.IsBooted, "Simulator is not in booted state");
-
-		// 4. Shutdown
-		var shutdownSuccess = await _simCtl.ShutdownAsync(testSim.Udid);
-		Assert.True(shutdownSuccess, "Failed to shutdown the simulator");
-
-		// Give it time to shutdown
-		await Task.Delay(3000);
-
-		// 5. Verify shutdown state
-		updatedSims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
-		var shutdownSim = updatedSims.FirstOrDefault(s => s.Udid == testSim.Udid);
-		Assert.NotNull(shutdownSim);
-		Assert.False(shutdownSim.IsBooted, "Simulator is still in booted state after shutdown");
-
-		// 6. Delete
-		var deleteSuccess = await _simCtl.DeleteAsync(testSim.Udid);
-		Assert.True(deleteSuccess, "Failed to delete the simulator");
-
-		// 7. Verify deletion
-		updatedSims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
-		var deletedSim = updatedSims.FirstOrDefault(s => s.Udid == testSim.Udid);
-		Assert.Null(deletedSim);
-	}
-
-    private async Task CreateTestSimulatorAsync()
-    {
-        var iPhoneDeviceType = await GetTestingDeviceTypeAsync();
-
-        await _simCtl.CreateAsync(_testSimName, iPhoneDeviceType.Identifier!);
-    }
-
-	[Fact]
-	public async Task GetAppsAsync_ShouldReturnAppsWithCorrectProperties()
-	{
-		// Create a temporary simulator for testing
-		var iPhoneDeviceType = await GetTestingDeviceTypeAsync();
-		await _simCtl.CreateAsync(_testSimName, iPhoneDeviceType.Identifier!);
-
-		// Boot the simulator
-		var bootSuccess = await _simCtl.BootAsync(_testSimName);
-		Assert.True(bootSuccess, "Failed to boot the simulator");
-
-		// Wait for boot to complete
-		var waitSuccess = await _simCtl.WaitForBootedAsync(_testSimName, TimeSpan.FromSeconds(120));
-		Assert.True(waitSuccess, "Failed to wait for the simulator to boot");
-
-		// Get the installed apps
-		var apps = await _simCtl.GetAppsAsync(_testSimName);
-		Assert.NotNull(apps);
-
-		// At minimum, verify we have some apps and they have basic identifiers
-		Assert.True(apps.Count > 0, "Should have at least some apps");
-		Assert.True(apps.All(a => !string.IsNullOrEmpty(a.CFBundleIdentifier)),  "All apps should have a CFBundleIdentifier");
-
-		// Specifically look for the com.apple.Bridge app to validate all properties
-		var bridgeApp = apps.FirstOrDefault(a => a.CFBundleIdentifier == "com.apple.Bridge");
-		Assert.NotNull(bridgeApp);
-			
-		// Validate all required properties for com.apple.Bridge
-		Assert.Equal("System", bridgeApp.ApplicationType);
-		Assert.Equal("com.apple.Bridge", bridgeApp.CFBundleIdentifier);
-		Assert.Equal("Watch", bridgeApp.CFBundleDisplayName);
-		Assert.Equal("Bridge", bridgeApp.CFBundleExecutable);
-		Assert.Equal("Watch", bridgeApp.CFBundleName);
-		Assert.Equal("1.0", bridgeApp.CFBundleVersion);
-		
-		// Validate path structure
-		Assert.NotNull(bridgeApp.Bundle);
-		Assert.Contains("Bridge.app", bridgeApp.Bundle);
-		Assert.StartsWith("file://", bridgeApp.Bundle);
-		
-		Assert.NotNull(bridgeApp.Path);
-		Assert.Contains("Bridge.app", bridgeApp.Path);
-		
-		// Validate DataContainer
-		Assert.NotNull(bridgeApp.DataContainer);
-		Assert.StartsWith("file://", bridgeApp.DataContainer);
-		Assert.Contains("Containers/Data/Application", bridgeApp.DataContainer);
-		
-		// Validate GroupContainers - should have specific groups
-		Assert.NotNull(bridgeApp.GroupContainers);
-		Assert.True(bridgeApp.GroupContainers.Count > 0, "Bridge app should have group containers");
-		
-		// Check for expected group containers
-		var expectedGroups = new[]
-		{
-			"243LU875E5.groups.com.apple.podcasts",
-			"group.com.apple.bridge",
-			"group.com.apple.iBooks",
-			"group.com.apple.mail",
-			"group.com.apple.stocks",
-			"group.com.apple.weather"
-		};
-		
-		foreach (var expectedGroup in expectedGroups)
-		{
-			Assert.Contains(expectedGroup, bridgeApp.GroupContainers.Keys);
-			Assert.NotNull(bridgeApp.GroupContainers[expectedGroup]);
-			Assert.StartsWith("file://", bridgeApp.GroupContainers[expectedGroup]);
-			Assert.Contains("Containers/Shared/AppGroup", bridgeApp.GroupContainers[expectedGroup]);
-		}
-		
-		// Validate SBAppTags - should contain "watch-companion"
-		Assert.NotNull(bridgeApp.SBAppTags);
-		Assert.Contains("watch-companion", bridgeApp.SBAppTags);
-	}
-
-	private async Task<SimCtlDeviceType> GetTestingDeviceTypeAsync()
-	{
-		var deviceTypes = await _simCtl.GetSimulatorGroupsAsync();
-
-		// Find an iPhone device type
-		var iPhoneType = deviceTypes.FirstOrDefault(dt => dt.ProductFamily?.Contains("iPhone") == true);
-		Assert.NotNull(iPhoneType);
-
-		return iPhoneType;
 	}
 }

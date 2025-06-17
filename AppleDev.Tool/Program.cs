@@ -91,15 +91,6 @@ app.Configure(config =>
 				.WithExample(new[] { "simulator", "screenshot", "\"My iPhone 15\"" })
 				.WithExample(new[] { "simulator", "screenshot", "--output", "~/Desktop/screenshot.png", "ABCD1234-1234-1234-1234-123456789ABC" })
 				.WithExample(new[] { "simulator", "screenshot", "--output", "~/screenshots/ios-app-$(date +%Y%m%d-%H%M%S).png", "\"My iPhone 15\"" });
-
-			sim.AddCommand<ListAppsCommand>("listapps")
-				.WithData(data)
-				.WithDescription("Lists apps installed on simulators")
-				.WithExample(new[] { "simulator", "listapps", "booted" })
-				.WithExample(new[] { "simulator", "listapps", "ABCD1234-1234-1234-1234-123456789ABC" })
-				.WithExample(new[] { "simulator", "listapps", "\"My iPhone 15\"" })
-				.WithExample(new[] { "simulator", "listapps", "booted", "--format", "json" })
-				.WithExample(new[] { "simulator", "listapps", "booted", "--verbose" });
 		});
 
 		config.AddBranch("device", devices =>
