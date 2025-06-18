@@ -271,8 +271,21 @@ public class SimCtlComplexTests : IAsyncLifetime
 		var logs = await _simCtl.GetLogsAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
-		Assert.Contains(logs, log => log.Subsystem == "com.apple.Navigation");
-		Assert.DoesNotContain(logs, log => log.Subsystem == "ClockKit");
+
+		try
+		{
+			Assert.Contains(logs, log => log.Subsystem == "com.apple.Navigation");
+			Assert.DoesNotContain(logs, log => log.Subsystem == "ClockKit");
+		}
+		catch
+		{
+			_testOutputHelper.WriteLine($"Logs for {_testSimName}:");
+			foreach (var log in logs)
+			{
+				_testOutputHelper.WriteLine(log.ToString());
+			}
+			throw;
+		}
 	}
 
 	[Fact]
@@ -287,8 +300,21 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
 
-		Assert.Contains(logs, log => log.Contains("[com.apple.Maps:GeneralMapsWidget]"));
-		Assert.DoesNotContain(logs, log => log.Contains("Clock"));
+		try
+		{
+			Assert.Contains(logs, log => log.Contains("[com.apple.Maps:GeneralMapsWidget]"));
+			Assert.DoesNotContain(logs, log => log.Contains("Clock"));
+		
+		}
+		catch
+		{
+			_testOutputHelper.WriteLine($"Logs for {_testSimName}:");
+			foreach (var log in logs)
+			{
+				_testOutputHelper.WriteLine(log.ToString());
+			}
+			throw;
+		}
 	}
 
 	[Fact]

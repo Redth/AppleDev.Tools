@@ -326,9 +326,6 @@ public class SimCtl : XCRun
 			// Convert simctl output to JSON format
 			var jsonOutput = PreprocessSimctlOutput(output);
 
-			// For debugging purposes, save the output to a file
-			Logger?.LogDebug("SimCtl listapps output for {Target}: {Output}", target, jsonOutput);
-
 			// Parse as JSON dictionary and return the values directly
 			var appsDict = JsonConvert.DeserializeObject<Dictionary<string, SimCtlApp>>(jsonOutput);
 			if (appsDict == null)
