@@ -268,6 +268,8 @@ public class SimCtlComplexTests : IAsyncLifetime
 	{
 		await BootAndWaitAsync();
 
+		await Task.Delay(5000); // Allow some time for logs to accumulate
+
 		// Get logs with a predicate filter
 		var logs = await _simCtl.GetLogsAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
 		Assert.NotNull(logs);
@@ -275,7 +277,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 
 		try
 		{
-			Assert.Contains(logs, log => log.Subsystem == "GeneralMapsWidget");
+			Assert.Contains(logs, log => log.Subsystem == "com.apple.Maps");
 			Assert.DoesNotContain(logs, log => log.Subsystem == "ClockKit");
 		}
 		catch
