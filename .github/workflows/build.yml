@@ -41,7 +41,7 @@ jobs:
       APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
       APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
     needs: build
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
     - name: Checkout
       uses: actions/checkout@v2
