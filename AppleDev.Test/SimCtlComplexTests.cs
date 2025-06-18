@@ -286,12 +286,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
 
-		_testOutputHelper.WriteLine("Plain logs:");
-		foreach (var log in logs)
-		{
-			_testOutputHelper.WriteLine(log);
-		}
-
 		Assert.Contains(logs, log => log.Contains("[com.apple.Maps:GeneralMapsWidget]"));
 		Assert.DoesNotContain(logs, log => log.Contains("Clock"));
 	}
