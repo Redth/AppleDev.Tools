@@ -53,7 +53,7 @@ jobs:
         dotnet-version: |
           8.0.x
     - name: Test
-      run: dotnet test ./AppleDev.Test/AppleDev.Test.csproj
+      run: dotnet test ./AppleDev.Test/AppleDev.Test.csproj --logger "console;verbosity=detailed"
 
   publish:
     name: Publish
