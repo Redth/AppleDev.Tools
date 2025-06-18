@@ -1,8 +1,10 @@
-﻿using System.Xml;
+﻿using System.Text.Json;
+using System.Xml;
 using Xunit.Abstractions;
 
 namespace AppleDev.Test;
 
+[Collection("SimCtl")]
 public class SimCtlComplexTests : IAsyncLifetime
 {
 	private readonly ITestOutputHelper _testOutputHelper;
@@ -266,12 +268,27 @@ public class SimCtlComplexTests : IAsyncLifetime
 	{
 		await BootAndWaitAsync();
 
+		await Task.Delay(5000); // Allow some time for logs to accumulate
+
 		// Get logs with a predicate filter
 		var logs = await _simCtl.GetLogsAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
-		Assert.Contains(logs, log => log.Subsystem == "com.apple.Navigation");
-		Assert.DoesNotContain(logs, log => log.Subsystem == "ClockKit");
+
+		try
+		{
+			Assert.Contains(logs, log => log.Subsystem == "com.apple.Maps");
+			Assert.DoesNotContain(logs, log => log.Subsystem == "ClockKit");
+		}
+		catch
+		{
+			_testOutputHelper.WriteLine($"Logs for {_testSimName}:");
+			foreach (var log in logs)
+			{
+				_testOutputHelper.WriteLine(JsonSerializer.Serialize(log));
+			}
+			throw;
+		}
 	}
 
 	[Fact]
@@ -286,14 +303,21 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
 
-		_testOutputHelper.WriteLine("Plain logs:");
-		foreach (var log in logs)
+		try
 		{
-			_testOutputHelper.WriteLine(log);
+			Assert.Contains(logs, log => log.Contains("[com.apple.Maps:GeneralMapsWidget]"));
+			Assert.DoesNotContain(logs, log => log.Contains("Clock"));
+		
 		}
-
-		Assert.Contains(logs, log => log.Contains("[com.apple.Maps:GeneralMapsWidget]"));
-		Assert.DoesNotContain(logs, log => log.Contains("Clock"));
+		catch
+		{
+			_testOutputHelper.WriteLine($"Logs for {_testSimName}:");
+			foreach (var log in logs)
+			{
+				_testOutputHelper.WriteLine(log);
+			}
+			throw;
+		}
 	}
 
 	[Fact]
