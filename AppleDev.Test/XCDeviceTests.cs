@@ -5,17 +5,18 @@ namespace AppleDev.Test;
 public class XCDeviceTests
 {
     private readonly ITestOutputHelper _testOutputHelper;
+    private readonly XCDevice _xcdevice;
 
     public XCDeviceTests(ITestOutputHelper testOutputHelper)
     {
         _testOutputHelper = testOutputHelper;
+        _xcdevice = new XCDevice(new XUnitLogger<XCDevice>(testOutputHelper));
     }
 
     [Fact]
     public async Task LocateXCDevice()
     {
-        var xcd = new XCDevice();
-        var path = await xcd.LocateAsync().ConfigureAwait(false);
+        var path = await _xcdevice.LocateAsync().ConfigureAwait(false);
         
         Assert.NotNull(path);
         Assert.True(path.Exists);
@@ -24,9 +25,7 @@ public class XCDeviceTests
     [Fact]
     public async Task GetAnyDevices()
     {
-        var xcd = new XCDevice();
-
-        var devices = await xcd.GetDevicesAsync().ConfigureAwait(false);
+        var devices = await _xcdevice.GetDevicesAsync().ConfigureAwait(false);
         
         Assert.NotNull(devices);
         Assert.NotEmpty(devices);
@@ -37,10 +36,8 @@ public class XCDeviceTests
     [InlineData(5)]
     public async Task GetAnyDevicesWithTimeout(int timeoutSeconds)
     {
-        var xcd = new XCDevice();
-
         var ts = TimeSpan.FromSeconds(timeoutSeconds);
-        var devices = await xcd.GetDevicesAsync(timeout: ts).ConfigureAwait(false);
+        var devices = await _xcdevice.GetDevicesAsync(timeout: ts).ConfigureAwait(false);
         
         Assert.NotNull(devices);
         Assert.NotEmpty(devices);
@@ -49,8 +46,6 @@ public class XCDeviceTests
     [Fact]
     public async Task ObserveAnyDevices()
     {
-        var xcd = new XCDevice();
-
         var ct = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
         var tcs = new TaskCompletionSource<bool>();
@@ -63,7 +58,7 @@ public class XCDeviceTests
                 tcs.TrySetResult(false);
         });
         
-        await xcd.ObserveAsync(ct.Token, XCDevice.XCDeviceType.Both, (id, added) =>
+        await _xcdevice.ObserveAsync(ct.Token, XCDevice.XCDeviceType.Both, (id, added) =>
         {
             tcs.TrySetResult(true);
             if (!ct.IsCancellationRequested)
@@ -81,6 +76,6 @@ public class XCDeviceTests
             return Task.CompletedTask;
         }).ConfigureAwait(false);
 
-        Assert.True(await tcs.Task || wasAtLeastListeningAtAll);
+        Assert.True(await tcs.Task || wasAtLeastListeningAtAll, "No devices were attached/detached, nor was xcdevice listening for devices.");
     }
 }
