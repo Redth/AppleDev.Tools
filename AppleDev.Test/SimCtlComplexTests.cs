@@ -3,6 +3,7 @@ using Xunit.Abstractions;
 
 namespace AppleDev.Test;
 
+[Collection("SimCtl")]
 public class SimCtlComplexTests : IAsyncLifetime
 {
 	private readonly ITestOutputHelper _testOutputHelper;

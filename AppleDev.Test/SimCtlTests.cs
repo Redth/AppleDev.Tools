@@ -2,6 +2,7 @@
 
 namespace AppleDev.Test;
 
+[Collection("SimCtl")]
 public class SimCtlTests
 {
 	private readonly ITestOutputHelper _testOutputHelper;
