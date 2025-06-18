@@ -12,8 +12,8 @@ public class ScreenshotSimulatorCommand : AsyncCommand<ScreenshotSimulatorComman
         var simctl = new SimCtl();
 
         var path = settings.GetOutputFile("screenshot", ".png");
-        
-        var success = await simctl.RecordScreenshotAsync(settings.Udid, path, data.CancellationToken).ConfigureAwait(false);
+
+        var success = await simctl.RecordScreenshotAsync(settings.Target, path, data.CancellationToken).ConfigureAwait(false);
 
         OutputHelper.OutputObject(
             new ScreenshotResultOutput { Path = path.FullName },
@@ -30,8 +30,8 @@ public class ScreenshotSimulatorCommand : AsyncCommand<ScreenshotSimulatorComman
 }
 public class ScreenshotSimulatorCommandSettings : FormattableOutputCommandSettings, IOutputCommandSettings
 {
-    [CommandArgument(0,"<udid>")]
-    public string Udid { get; set; } = string.Empty;
+    [CommandArgument(0,"<target>")]
+    public string Target { get; set; } = string.Empty;
     
     [Description("Output path (file or directory)")]
     [CommandOption("-o|--output <PATH>")]

@@ -10,10 +10,10 @@ public class BootSimulatorCommand : AsyncCommand<BootSimulatorCommandSettings>
     {
         var data = context.GetData();
         var simctl = new SimCtl();
-        var success = await simctl.BootAsync(settings.Udid, data.CancellationToken).ConfigureAwait(false);
+        var success = await simctl.BootAsync(settings.Target, data.CancellationToken).ConfigureAwait(false);
 
         if (success && settings.Wait)
-            success = await simctl.WaitForBootedAsync(settings.Udid, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
+            success = await simctl.WaitForBootedAsync(settings.Target, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
         
         return this.ExitCode(success);
     }
@@ -30,16 +30,16 @@ public class BootSimulatorCommandSettings : CommandSettings
     [DefaultValue(120)]
     public int Timeout { get; set; }
 
-    [Description("Simulator UDID")]
+    [Description("Target simulator(s) to boot (UDID or Name)")]
     
-    [CommandArgument(0,"<udid>")]
-    public string Udid { get; set; } = string.Empty;
+    [CommandArgument(0,"<target>")]
+    public string Target { get; set; } = string.Empty;
 
     public override ValidationResult Validate()
     {
-        if (string.IsNullOrWhiteSpace(Udid))
-            return ValidationResult.Error("--udid is required");
-        
+        if (string.IsNullOrWhiteSpace(Target))
+            return ValidationResult.Error("Target is required");
+
         if (Wait && Timeout <= 0)
             return ValidationResult.Error("--timeout must be > 0");
         
