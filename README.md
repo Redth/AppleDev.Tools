@@ -4,6 +4,24 @@
 
 ![image](https://user-images.githubusercontent.com/271950/231289451-0db771e3-c2f6-4b85-a3ea-e80c70439d48.png)
 
+## Table of Contents
+
+- [Installation](#installation)
+- [CLI Tool Features](#cli-tool-features)
+  - [Simulator Management](#simulator-management)
+  - [Device Management](#device-management)
+  - [Keychain Operations](#keychain-operations)
+  - [Provisioning & Certificates](#provisioning--certificates)
+  - [CI/CD Automation](#cicd-automation)
+- [Library APIs](#library-apis)
+  - [Core Tools](#core-tools)
+  - [App Store Connect](#app-store-connect)
+  - [Security & Certificates](#security--certificates)
+- [Output Formats](#output-formats)
+- [Requirements](#requirements)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Installation
 
 Install the global CLI tool:
