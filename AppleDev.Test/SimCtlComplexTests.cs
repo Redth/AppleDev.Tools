@@ -1,4 +1,5 @@
-﻿using System.Xml;
+﻿using System.Text.Json;
+using System.Xml;
 using Xunit.Abstractions;
 
 namespace AppleDev.Test;
@@ -274,7 +275,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 
 		try
 		{
-			Assert.Contains(logs, log => log.Subsystem == "com.apple.Navigation");
+			Assert.Contains(logs, log => log.Subsystem == "GeneralMapsWidget");
 			Assert.DoesNotContain(logs, log => log.Subsystem == "ClockKit");
 		}
 		catch
@@ -282,7 +283,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 			_testOutputHelper.WriteLine($"Logs for {_testSimName}:");
 			foreach (var log in logs)
 			{
-				_testOutputHelper.WriteLine(log.ToString());
+				_testOutputHelper.WriteLine(JsonSerializer.Serialize(log));
 			}
 			throw;
 		}
@@ -311,7 +312,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 			_testOutputHelper.WriteLine($"Logs for {_testSimName}:");
 			foreach (var log in logs)
 			{
-				_testOutputHelper.WriteLine(log.ToString());
+				_testOutputHelper.WriteLine(log);
 			}
 			throw;
 		}
