@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using Spectre.Console;
 
@@ -17,8 +18,53 @@ static class OutputHelper
 		{
 			message ??= "Failed";
 
-			AnsiConsole.WriteLine($"[red]{message}[/]");
 			AnsiConsole.WriteLine(result.StdErr);
+			AnsiConsole.WriteLine($"[red]{message}[/]");
+		}
+	}
+
+	class ResultInfo
+	{
+		[JsonPropertyName("success")]
+		public bool Success { get; set; }
+
+		[JsonPropertyName("output")]
+		public string? Output { get; set; }
+
+		[JsonPropertyName("message")]
+		public string? Message { get; set; }
+	}
+
+	internal static void OutputResult(this ProcessResult result, OutputFormat format = OutputFormat.None, string? message = null, bool verbose = false)
+	{
+		if (format == OutputFormat.Json || format == OutputFormat.Xml)
+		{
+			var obj = new ResultInfo
+			{
+				Success = result.Success,
+				Output = result.Success ? result.StdOut : result.StdOut + Environment.NewLine + result.StdErr,
+				Message = message
+			};
+
+			if (format == OutputFormat.Json)
+				AnsiConsole.WriteLine(JsonSerialize(obj));
+			else if (format == OutputFormat.Xml)
+				AnsiConsole.WriteLine(XmlSerialize(obj));
+
+			return;
+		}
+
+		if (verbose)
+		{
+			AnsiConsole.WriteLine(result.StdOut);
+		}
+
+		if (!result.Success)
+		{
+			message ??= "Failed";
+
+			AnsiConsole.WriteLine(result.StdErr);
+			AnsiConsole.WriteLine($"[red]{message}[/]");
 		}
 	}
 
