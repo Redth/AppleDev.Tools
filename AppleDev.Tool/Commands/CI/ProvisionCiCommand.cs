@@ -92,7 +92,7 @@ public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 				// Use passphrase if specified
 				var x509 = !string.IsNullOrWhiteSpace(settings.CertificatePassphrase)
 					? new X509Certificate2(certificateData, settings.CertificatePassphrase)
-					: new X509Certificate2(certificateData, (string)null);
+					: new X509Certificate2(certificateData, (string?)null);
 				var certificateFriendlyName = x509.FriendlyName;
 
 				if (!string.IsNullOrEmpty(certificateFriendlyName))
@@ -226,7 +226,7 @@ public class ProvisionCiCommandSettings : CommandSettings
 	
 	[Description("Keychain name to import into")]
 	[CommandOption("--keychain <keychain>")]
-	public string Keychain { get; set; }
+	public string? Keychain { get; set; }
 
 	[Description("Keychain password")]
 	[CommandOption("--keychain-password <password>")]
