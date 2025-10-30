@@ -59,10 +59,45 @@ partial class AppStoreConnectClient
 	}
 
 	public async Task<ItemResponse<Profile, ProfileAttributes>> CreateProfileAsync(
-		ProfileAttributes profileAttributes,
+		string name,
+		ProfileType profileType,
+		string bundleIdId,
+		string[] certificateIds,
+		string[]? deviceIds = null,
 		CancellationToken cancellationToken = default)
 	{
-		return await PostAsync<Profile, ProfileAttributes>(PROFILES_TYPE, profileAttributes, cancellationToken).ConfigureAwait(false)
+		var requestAttrs = new ProfileCreateRequestAttributes
+		{
+			Name = name,
+			ProfileType = profileType.ToString(),
+			BundleId = new RelationshipRequest
+			{
+				Data = new RelationshipData { Type = BUNDLEIDS_TYPE, Id = bundleIdId }
+			},
+			Certificates = new RelationshipArrayRequest
+			{
+				Data = certificateIds.Select(id => new RelationshipData
+				{
+					Type = CERTIFICATES_TYPE,
+					Id = id
+				}).ToList()
+			}
+		};
+
+		if (deviceIds != null && deviceIds.Length > 0)
+		{
+			requestAttrs.Devices = new RelationshipArrayRequest
+			{
+				Data = deviceIds.Select(id => new RelationshipData
+				{
+					Type = DEVICES_TYPE,
+					Id = id
+				}).ToList()
+			};
+		}
+
+		return await PostAsync<Profile, ProfileAttributes, ProfileCreateRequestAttributes>(
+			PROFILES_TYPE, requestAttrs, cancellationToken).ConfigureAwait(false)
 			?? new ItemResponse<Profile, ProfileAttributes>();
 	}
 
