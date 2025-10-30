@@ -53,7 +53,16 @@ jobs:
         dotnet-version: |
           8.0.x
     - name: Test
-      run: dotnet test ./AppleDev.Test/AppleDev.Test.csproj --logger "console;verbosity=detailed"
+      run: dotnet test ./AppleDev.Test/AppleDev.Test.csproj --logger "trx;LogFileName=test-results.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
+
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: './TestResults/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
 
   publish:
     name: Publish
