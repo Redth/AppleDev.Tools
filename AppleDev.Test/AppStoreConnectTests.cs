@@ -14,49 +14,66 @@ namespace AppleDev.Test
 	{
 		public AppStoreConnectTests()
 		{
+			var keyId = Environment.GetEnvironmentVariable("APP_STORE_CONNECT_KEY_ID");
+			var issuerId = Environment.GetEnvironmentVariable("APP_STORE_CONNECT_ISSUER_ID");
+			var privateKey = Environment.GetEnvironmentVariable("APP_STORE_CONNECT_PRIVATE_KEY");
+
+			// Skip tests if credentials are not configured
+			if (string.IsNullOrWhiteSpace(keyId) || 
+			    string.IsNullOrWhiteSpace(issuerId) || 
+			    string.IsNullOrWhiteSpace(privateKey))
+			{
+				HasCredentials = false;
+				return;
+			}
+
+			HasCredentials = true;
 			Client = new AppStoreConnectClient(
-				new AppStoreConnectConfiguration(
-					Environment.GetEnvironmentVariable("APP_STORE_CONNECT_KEY_ID") ?? "",
-					Environment.GetEnvironmentVariable("APP_STORE_CONNECT_ISSUER_ID") ?? "",
-					Environment.GetEnvironmentVariable("APP_STORE_CONNECT_PRIVATE_KEY") ?? ""));
+				new AppStoreConnectConfiguration(keyId, issuerId, privateKey));
 		}
 
+		readonly AppStoreConnectClient? Client;
+		readonly bool HasCredentials;
 
-		readonly AppStoreConnectClient Client;
-
-		[Fact]
-		public async Task ListCertificates()
-		{
-			var certs = await Client.ListCertificatesAsync();
-			Assert.NotNull(certs);
-			Assert.NotEmpty(certs.Data);
-		}
+	[SkippableFact]
+	public async Task ListCertificates()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
 		
-		[Fact]
-		public async Task ListProfiles()
-		{
-			var profiles = await Client.ListProfilesAsync();
-			Assert.NotNull(profiles);
-			Assert.NotEmpty(profiles.Data);
-		}
+		var certs = await Client!.ListCertificatesAsync();
+		Assert.NotNull(certs);
+		Assert.NotEmpty(certs.Data);
+	}
+	
+	[SkippableFact]
+	public async Task ListProfiles()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
 		
-		[Fact]
-		public async Task ListDevices()
-		{
-			var devices = await Client.ListDevicesAsync();
-			Assert.NotNull(devices);
-			Assert.NotEmpty(devices.Data);
-		}
+		var profiles = await Client!.ListProfilesAsync();
+		Assert.NotNull(profiles);
+		Assert.NotEmpty(profiles.Data);
+	}
+	
+	[SkippableFact]
+	public async Task ListDevices()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
 		
-		[Fact]
-		public async Task ListBundleIds()
-		{
-			var bundleIds = await Client.ListBundleIdsAsync();
-			Assert.NotNull(bundleIds);
-			Assert.NotEmpty(bundleIds.Data);
-		}
+		var devices = await Client!.ListDevicesAsync();
+		Assert.NotNull(devices);
+		Assert.NotEmpty(devices.Data);
+	}
+	
+	[SkippableFact]
+	public async Task ListBundleIds()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
 		
-		// [Fact]
+		var bundleIds = await Client!.ListBundleIdsAsync();
+		Assert.NotNull(bundleIds);
+		Assert.NotEmpty(bundleIds.Data);
+	}		// [Fact]
 		// public async Task CreateCertificate()
 		// {
 		// 	var cert = await Client.CreateCertificateAsync();
