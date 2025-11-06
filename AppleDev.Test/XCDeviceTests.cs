@@ -13,29 +13,32 @@ public class XCDeviceTests
         _xcdevice = new XCDevice(new XUnitLogger<XCDevice>(testOutputHelper));
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task LocateXCDevice()
     {
+        Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
         var path = await _xcdevice.LocateAsync().ConfigureAwait(false);
         
         Assert.NotNull(path);
         Assert.True(path.Exists);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task GetAnyDevices()
     {
+        Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
         var devices = await _xcdevice.GetDevicesAsync().ConfigureAwait(false);
         
         Assert.NotNull(devices);
         Assert.NotEmpty(devices);
     }
     
-    [Theory]
+    [SkippableTheory]
     [InlineData(2)]
     [InlineData(5)]
     public async Task GetAnyDevicesWithTimeout(int timeoutSeconds)
     {
+        Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
         var ts = TimeSpan.FromSeconds(timeoutSeconds);
         var devices = await _xcdevice.GetDevicesAsync(timeout: ts).ConfigureAwait(false);
         
@@ -43,9 +46,10 @@ public class XCDeviceTests
         Assert.NotEmpty(devices);
     }
     
-    [Fact]
+    [SkippableFact]
     public async Task ObserveAnyDevices()
     {
+        Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
         var ct = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
         var tcs = new TaskCompletionSource<bool>();

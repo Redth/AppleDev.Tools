@@ -2,9 +2,10 @@ namespace AppleDev.Test;
 
 public class XCRunTests
 {
-    [Fact]
+    [SkippableFact]
     public void LocateXCRun()
     {
+        Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
         var xcrun = new XCRun();
         var path = xcrun.Locate();
 

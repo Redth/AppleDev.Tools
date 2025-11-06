@@ -14,9 +14,10 @@ public class SimCtlTests
 		_simCtl = new SimCtl(new XUnitLogger<SimCtl>(testOutputHelper));
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetAnySimulators()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		var sims = await _simCtl.GetSimulatorsAsync();
 
 		Assert.NotNull(sims);
@@ -28,9 +29,10 @@ public class SimCtlTests
 		}
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetAnySimulatorGroups()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		var simGrps = await _simCtl.GetSimulatorGroupsAsync();
 
 		Assert.NotNull(simGrps);
@@ -47,9 +49,10 @@ public class SimCtlTests
 		}
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task ControlSimulator()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		var sims = await _simCtl.GetSimulatorsAsync();
 
 		var s = sims.FirstOrDefault(s => s.DeviceType?.ProductFamily?.Contains("iPhone") ?? false);

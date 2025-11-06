@@ -20,6 +20,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 
 	public async Task InitializeAsync()
 	{
+		if (!OperatingSystem.IsMacOS())
+			return;
+			
 		var deviceTypes = await _simCtl.GetSimulatorGroupsAsync();
 
 		// Find an iPhone device type
@@ -44,6 +47,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 
 	public async Task DisposeAsync()
 	{
+		if (!OperatingSystem.IsMacOS())
+			return;
+			
 		try
 		{
 			await _simCtl.DeleteAsync(_testSimName);
@@ -54,9 +60,10 @@ public class SimCtlComplexTests : IAsyncLifetime
 		}
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task CreateSimulator_ShouldSucceed()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		// Verify the simulator was created
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
 		var createdSim = sims.FirstOrDefault(s => s.Name == _testSimName);
@@ -64,9 +71,10 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Equal(_testSimName, createdSim.Name);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task BootAndShutdownSimulator_ShouldSucceed()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		await BootAndWaitAsync();
 
 		// Verify the simulator is booted
@@ -92,9 +100,10 @@ public class SimCtlComplexTests : IAsyncLifetime
 		}
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task DeleteSimulator_ShouldSucceed()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		// Get the created simulator
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
 		var createdSim = sims.FirstOrDefault(s => s.Name == _testSimName);
@@ -111,9 +120,10 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Null(deletedSim);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task EraseSimulator_ShouldSucceed()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		// Get the created simulator
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
 		var testSim = sims.FirstOrDefault(s => s.Name == _testSimName);
@@ -130,9 +140,10 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotNull(erasedSim);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task SimulatorLifecycle_CreateBootShutdownDelete_ShouldSucceed()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		// Get the created simulator
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
 		var testSim = sims.FirstOrDefault(s => s.Name == _testSimName);
@@ -175,9 +186,10 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Null(deletedSim);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetAppsAsync_ShouldReturnAppsWithCorrectProperties()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		await BootAndWaitAsync();
 
 		// Get the installed apps
@@ -241,9 +253,10 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Contains("watch-companion", bridgeApp.SBAppTags);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetLogsAsync_ShouldReturnLogOutput()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		await BootAndWaitAsync();
 
 		// Get logs - should return some log data
@@ -252,9 +265,10 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotEmpty(logs);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetLogsAsync_WithStart_ShouldReturnLogOutput()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		await BootAndWaitAsync();
 
 		// Get logs - should return some log data
@@ -263,9 +277,10 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotEmpty(logs);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetLogsAsync_WithPredicate_ShouldFilterLogs()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		await BootAndWaitAsync();
 
 		await Task.Delay(5000); // Allow some time for logs to accumulate
@@ -291,9 +306,10 @@ public class SimCtlComplexTests : IAsyncLifetime
 		}
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetLogsPlainAsync_WithPredicate_ShouldFilterLogs()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		await BootAndWaitAsync();
 
 		await Task.Delay(5000); // Allow some time for logs to accumulate
@@ -320,9 +336,10 @@ public class SimCtlComplexTests : IAsyncLifetime
 		}
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task CollectLogsAsync_ShouldSucceed()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		await BootAndWaitAsync();
 
 		// Create a unique output path for the test

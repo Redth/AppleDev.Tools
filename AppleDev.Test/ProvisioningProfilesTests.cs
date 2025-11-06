@@ -25,9 +25,10 @@ public class ProvisioningProfilesTests : TestsBase
 		Assert.NotNull(profile.Name);
 	}
 	
-	[Fact]
+	[SkippableFact]
 	public async Task ListProfilesTest()
 	{
+		Skip.IfNot(OperatingSystem.IsMacOS(), "Test requires macOS");
 		var profiles = await ProvisioningProfiles.ListProfilesAsync();
 		
 		foreach (var profile in profiles)
