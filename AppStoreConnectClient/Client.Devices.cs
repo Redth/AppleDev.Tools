@@ -50,8 +50,34 @@ partial class AppStoreConnectClient
 		DeviceAttributes deviceAttributes,
 		CancellationToken cancellationToken = default)
 	{
-		return await PostAsync<Device, DeviceAttributes>(DEVICES_TYPE, deviceAttributes, cancellationToken).ConfigureAwait(false)
-			?? new ItemResponse<Device, DeviceAttributes>();
+		// Prepare only allowed attributes for create
+		var createAttrs = new DeviceCreateRequestAttributes
+		{
+			Name = deviceAttributes.Name,
+			Platform = string.IsNullOrEmpty(deviceAttributes.PlatformValue) && deviceAttributes.Platform != Platform.Unknown ? deviceAttributes.Platform.ToString() : deviceAttributes.PlatformValue,
+			Udid = deviceAttributes.Udid
+		};
+
+		var token = Configuration.AccessToken;
+		http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+		if (Environment.GetEnvironmentVariable("APPLEDEV_DEBUG") == "1")
+		{
+			var json = System.Text.Json.JsonSerializer.Serialize(new Request<DeviceCreateRequestAttributes>(new RequestData<DeviceCreateRequestAttributes>(createAttrs){ Type = Device.TYPE }), JsonSerializerOptions);
+			Console.Error.WriteLine($"[DEBUG] RegisterDevice Request: {json}");
+		}
+
+		// Use generic create overload to wrap request
+		var response = await PostAsync<Device, DeviceAttributes, DeviceCreateRequestAttributes>(DEVICES_TYPE,
+			createAttrs,
+			cancellationToken).ConfigureAwait(false);
+
+		if (response == null || string.IsNullOrEmpty(response.Data?.Id))
+		{
+			throw new Exception("Device registration failed or returned no ID.");
+		}
+
+		return response;
 	}
 
 

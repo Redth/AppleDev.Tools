@@ -1,4 +1,4 @@
-﻿namespace AppleAppStoreConnect;
+﻿﻿namespace AppleAppStoreConnect;
 
 public class QueryStringBuilder
 {
@@ -8,10 +8,19 @@ public class QueryStringBuilder
 	{
 		if (!string.IsNullOrEmpty(include))
 		{
-			if (validValues is not null && validValues.Length > 0 && !validValues.Contains(include))
-				throw new ArgumentException($"Invalid include value '{include}'.  Possible values are: " + string.Join(", ", validValues));
+			// Support comma-separated includes
+			var includeValues = include.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+			
+			if (validValues is not null && validValues.Length > 0)
+			{
+				foreach (var val in includeValues)
+				{
+					if (!validValues.Contains(val))
+						throw new ArgumentException($"Invalid include value '{val}'.  Possible values are: " + string.Join(", ", validValues));
+				}
+			}
 
-			qs.Add($"include={include}");
+			qs.Add($"include={string.Join(",", includeValues)}");
 		}
 	}
 

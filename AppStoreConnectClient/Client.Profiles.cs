@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Net.Http.Json;
 using AppleDev;
 
 namespace AppleAppStoreConnect;
@@ -66,27 +63,36 @@ partial class AppStoreConnectClient
 		string[]? deviceIds = null,
 		CancellationToken cancellationToken = default)
 	{
-		var requestAttrs = new ProfileCreateRequestAttributes
+		var request = new ProfileCreateRequest
 		{
-			Name = name,
-			ProfileType = profileType.ToString(),
-			BundleId = new RelationshipRequest
+			Data = new ProfileCreateRequestData
 			{
-				Data = new RelationshipData { Type = BUNDLEIDS_TYPE, Id = bundleIdId }
-			},
-			Certificates = new RelationshipArrayRequest
-			{
-				Data = certificateIds.Select(id => new RelationshipData
+				Attributes = new ProfileCreateAttributes
 				{
-					Type = CERTIFICATES_TYPE,
-					Id = id
-				}).ToList()
+					Name = name,
+					ProfileType = profileType.ToString()
+				},
+				Relationships = new ProfileRelationships
+				{
+					BundleId = new RelationshipRequest
+					{
+						Data = new RelationshipData { Type = BUNDLEIDS_TYPE, Id = bundleIdId }
+					},
+					Certificates = new RelationshipArrayRequest
+					{
+						Data = certificateIds.Select(id => new RelationshipData
+						{
+							Type = CERTIFICATES_TYPE,
+							Id = id
+						}).ToList()
+					}
+				}
 			}
 		};
 
 		if (deviceIds != null && deviceIds.Length > 0)
 		{
-			requestAttrs.Devices = new RelationshipArrayRequest
+			request.Data.Relationships.Devices = new RelationshipArrayRequest
 			{
 				Data = deviceIds.Select(id => new RelationshipData
 				{
@@ -96,9 +102,20 @@ partial class AppStoreConnectClient
 			};
 		}
 
-		return await PostAsync<Profile, ProfileAttributes, ProfileCreateRequestAttributes>(
-			PROFILES_TYPE, requestAttrs, cancellationToken).ConfigureAwait(false)
-			?? new ItemResponse<Profile, ProfileAttributes>();
+		var token = Configuration.AccessToken;
+		http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+		var httpResponse = await http.PostAsJsonAsync(UrlBase.TrimEnd('/') + $"/{PROFILES_TYPE}", request, cancellationToken).ConfigureAwait(false);
+		var content = await httpResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+		var parsed = System.Text.Json.JsonSerializer.Deserialize<ItemResponse<Profile, ProfileAttributes>>((string)content, JsonSerializerOptions);
+		
+		if (!httpResponse.IsSuccessStatusCode || (parsed?.HasErrors ?? false))
+		{
+			var errors = parsed?.Errors ?? TryParseErrors(content);
+			throw new AppleApiException((int)httpResponse.StatusCode, content, errors);
+		}
+		
+		return parsed ?? new ItemResponse<Profile, ProfileAttributes>();
 	}
 
 	public Task<bool> DeleteProfileAsync(string id, CancellationToken cancellationToken = default)
