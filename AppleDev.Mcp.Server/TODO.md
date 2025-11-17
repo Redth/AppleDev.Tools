@@ -4,7 +4,7 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 
 ## Implementation Status
 
-### ✅ Implemented (20 tools)
+### ✅ Implemented (21 tools)
 
 #### App Store Connect - Devices (3/3)
 - [x] ListDevices
@@ -38,14 +38,12 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 - [x] ListXcode
 - [x] LocateXcode
 
+#### App (1/1)
+- [x] GetAppInfo
+
 ---
 
-## 📋 Pending Implementation (24 tools)
-
-### App (1 tool)
-- [ ] **AppInfo** - Get information about an .app bundle
-  - Input: Path to .app or .ipa file
-  - Output: Bundle identifier, version, build number, signing info, etc.
+## 📋 Pending Implementation (23 tools)
 
 ### Keychain (5 tools)
 - [ ] **CreateKeychain** - Create a new keychain
@@ -157,14 +155,14 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 ## Current Statistics
 
 - **Total Tools**: 44
-- **Implemented in MCP**: 20 (45.5%)
-- **Pending Implementation**: 24 (54.5%)
+- **Implemented in MCP**: 21 (47.7%)
+- **Pending Implementation**: 23 (52.3%)
 
 ### By Category
 - App Store Connect: 17/17 (100%) ✅
 - Physical Devices: 1/1 (100%) ✅
 - Xcode: 2/2 (100%) ✅
+- App Operations: 1/1 (100%) ✅
 - Simulators: 0/15 (0%)
 - Keychain: 0/5 (0%)
-- App Operations: 0/1 (0%)
 
