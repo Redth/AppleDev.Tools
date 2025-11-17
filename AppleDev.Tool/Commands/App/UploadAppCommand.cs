@@ -23,12 +23,12 @@ public class UploadAppCommand : AsyncCommand<UploadAppCommandSettings>
 			AnsiConsole.MarkupLine($"Uploading [cyan]{Path.GetFileName(settings.AppPath)}[/] to App Store Connect...");
 			AnsiConsole.MarkupLine($"[dim]Type: {settings.AppType}[/]");
 
-			await altool.UploadAppAsync(
-				settings.AppPath,
-				settings.AppType,
-				settings.KeyId,
-				settings.IssuerId,
-				data.CancellationToken);
+		await altool.UploadAppAsync(
+			settings.AppPath,
+			settings.AppType,
+			settings.GetKeyId(),
+			settings.GetIssuerId(),
+			data.CancellationToken);
 
 			AnsiConsole.MarkupLine($"[green]✓ Successfully uploaded {Path.GetFileName(settings.AppPath)}[/]");
 			return this.ExitCode();

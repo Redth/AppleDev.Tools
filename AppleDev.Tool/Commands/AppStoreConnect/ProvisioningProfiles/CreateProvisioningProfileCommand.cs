@@ -10,9 +10,43 @@ public class CreateProvisioningProfileCommand : AsyncCommand<CreateProvisioningP
 	public override async Task<int> ExecuteAsync(CommandContext context, CreateProvisioningProfileCommandSettings settings)
 	{
 		var data = context.GetData();
-		var config = new AppStoreConnectConfiguration(settings.KeyId, settings.IssuerId, settings.GetPrivateKeyBase64());
+		var config = new AppStoreConnectConfiguration(settings.GetKeyId(), settings.GetIssuerId(), settings.GetPrivateKeyBase64());
 		
 		var appStoreConnect = new AppStoreConnectClient(config);
+
+		// Resolve Bundle ID (accept either resource ID or bundle identifier)
+		string bundleIdResourceId = settings.BundleId;
+		
+		// Check if it looks like a bundle identifier (contains dots) rather than a resource ID
+		if (settings.BundleId.Contains('.'))
+		{
+			AnsiConsole.MarkupLine($"[yellow]Resolving bundle identifier '[/][cyan]{settings.BundleId}[/][yellow]'...[/]");
+			
+			try
+			{
+				var bundleIdsResponse = await appStoreConnect.ListBundleIdsAsync(
+					limit: 200,
+					cancellationToken: data.CancellationToken);
+				
+				var matchingBundleId = bundleIdsResponse.Data
+					?.FirstOrDefault(b => b.Attributes.Identifier.Equals(settings.BundleId, StringComparison.OrdinalIgnoreCase));
+				
+				if (matchingBundleId == null)
+				{
+					AnsiConsole.MarkupLine($"[red]Error:[/] No Bundle ID found with identifier '{settings.BundleId}'");
+					AnsiConsole.MarkupLine($"[yellow]Tip:[/] Use 'apple bundleids list' to see available Bundle IDs");
+					return this.ExitCode(false);
+				}
+				
+				bundleIdResourceId = matchingBundleId.Id;
+				AnsiConsole.MarkupLine($"[green]✓ Resolved to resource ID:[/] {bundleIdResourceId}");
+			}
+			catch (Exception ex)
+			{
+				AnsiConsole.MarkupLine($"[red]Error resolving bundle identifier:[/] {ex.Message}");
+				return this.ExitCode(false);
+			}
+		}
 
 		// Parse certificate IDs
 		var certificateIds = settings.Certificates.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -72,7 +106,7 @@ public class CreateProvisioningProfileCommand : AsyncCommand<CreateProvisioningP
 			var result = await appStoreConnect.CreateProfileAsync(
 				settings.Name,
 				settings.ProfileType,
-				settings.BundleId,
+				bundleIdResourceId,
 				certificateIds,
 				deviceIds);
 
@@ -98,6 +132,15 @@ public class CreateProvisioningProfileCommand : AsyncCommand<CreateProvisioningP
 				AnsiConsole.MarkupLine("[red]Error:[/] Failed to create profile - no data returned.");
 				return this.ExitCode(false);
 			}
+		}
+		catch (AppleApiException apiEx)
+		{
+			AnsiConsole.MarkupLine($"[red]Failed to create profile (HTTP {apiEx.HttpStatusCode})[/]");
+			foreach (var err in apiEx.Errors)
+			{
+				AnsiConsole.MarkupLine($"  [yellow]{err.Code}[/]: {err.Detail} [dim]{err.Source?.Pointer}[/]");
+			}
+			return this.ExitCode(false);
 		}
 		catch (Exception ex)
 		{
@@ -140,7 +183,7 @@ public class CreateProvisioningProfileCommandSettings : AppStoreConnectApiComman
 	[TypeConverter(typeof(StringEnumTypeConverter<ProfileType>))]
 	public ProfileType ProfileType { get; set; } = ProfileType.IOS_APP_DEVELOPMENT;
 
-	[Description("Bundle ID resource ID")]
+	[Description("Bundle ID resource ID or bundle identifier (e.g., 'ABC123' or 'com.example.app')")]
 	[CommandOption("--bundle-id <id>")]
 	public string BundleId { get; set; } = string.Empty;
 

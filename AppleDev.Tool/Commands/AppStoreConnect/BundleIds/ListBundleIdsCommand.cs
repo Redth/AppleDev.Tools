@@ -11,7 +11,7 @@ public class ListBundleIdsCommand : AsyncCommand<ListBundleIdsCommandSettings>
 	public override async Task<int> ExecuteAsync(CommandContext context, ListBundleIdsCommandSettings settings)
 	{
 		var data = context.GetData();
-		var config = new AppStoreConnectConfiguration(settings.KeyId, settings.IssuerId, settings.GetPrivateKeyBase64());
+		var config = new AppStoreConnectConfiguration(settings.GetKeyId(), settings.GetIssuerId(), settings.GetPrivateKeyBase64());
 		
 		var appStoreConnect = new AppStoreConnectClient(config);
 

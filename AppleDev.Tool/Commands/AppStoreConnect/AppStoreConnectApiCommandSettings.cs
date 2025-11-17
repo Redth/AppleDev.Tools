@@ -5,30 +5,57 @@ namespace AppleDev.Tool.Commands;
 
 public class AppStoreConnectApiCommandSettings : CommandSettings
 {
-    [Description("AppStoreConnect Key ID")]
+    [Description("AppStoreConnect Key ID value or environment variable name (Can also be supplied via the 'APP_STORE_CONNECT_KEY_ID' environment variable)")]
     [CommandOption("-k|--key-id <key_id>")]
     public string KeyId { get; set; }
 		= Environment.GetEnvironmentVariable("APP_STORE_CONNECT_KEY_ID") ?? string.Empty;
 
-    [Description("AppStoreConnect Issuer ID")]
+    [Description("AppStoreConnect Issuer ID value or environment variable name (Can also be supplied via the 'APP_STORE_CONNECT_ISSUER_ID' environment variable)")]
     [CommandOption("-i|--issuer-id <issuer_id>")]
     public string IssuerId { get; set; }
 		= Environment.GetEnvironmentVariable("APP_STORE_CONNECT_ISSUER_ID") ?? string.Empty;
 
-    [Description("AppStoreConnect Private Key Filename or Base64 string")]
+    [Description("AppStoreConnect Private Key (.p8) filename or environment variable name with (.p8) file contents (Can also be supplied via the 'APP_STORE_CONNECT_PRIVATE_KEY' environment variable)")]
     [CommandOption("-p|--private-key <private_key>")]
     public string PrivateKey { get; set; }
 		= Environment.GetEnvironmentVariable("APP_STORE_CONNECT_PRIVATE_KEY") ?? string.Empty;
 
 	internal string GetPrivateKeyBase64()
     {
-		if (File.Exists(PrivateKey))
-        {
-            return File.ReadAllText(PrivateKey);
-        }
-
-        return PrivateKey;
+		return ResolveValue(PrivateKey);
     }
+
+	internal string GetKeyId()
+	{
+		return ResolveValue(KeyId);
+	}
+
+	internal string GetIssuerId()
+	{
+		return ResolveValue(IssuerId);
+	}
+
+	private static string ResolveValue(string value)
+	{
+		if (string.IsNullOrEmpty(value))
+			return value;
+
+		// Check if it's a file path
+		if (File.Exists(value))
+		{
+			return File.ReadAllText(value);
+		}
+
+		// Check if it's an environment variable name
+		var envValue = Environment.GetEnvironmentVariable(value);
+		if (!string.IsNullOrEmpty(envValue))
+		{
+			return envValue;
+		}
+
+		// Otherwise, use the value as-is
+		return value;
+	}
 }
 
 public class FormattableOutputAppStoreConnectCommand : FormattableOutputCommandSettings
@@ -50,11 +77,38 @@ public class FormattableOutputAppStoreConnectCommand : FormattableOutputCommandS
 
 	internal string GetPrivateKeyBase64()
 	{
-		if (File.Exists(PrivateKey))
+		return ResolveValue(PrivateKey);
+	}
+
+	internal string GetKeyId()
+	{
+		return ResolveValue(KeyId);
+	}
+
+	internal string GetIssuerId()
+	{
+		return ResolveValue(IssuerId);
+	}
+
+	private static string ResolveValue(string value)
+	{
+		if (string.IsNullOrEmpty(value))
+			return value;
+
+		// Check if it's a file path
+		if (File.Exists(value))
 		{
-			return File.ReadAllText(PrivateKey);
+			return File.ReadAllText(value);
 		}
 
-		return PrivateKey;
+		// Check if it's an environment variable name
+		var envValue = Environment.GetEnvironmentVariable(value);
+		if (!string.IsNullOrEmpty(envValue))
+		{
+			return envValue;
+		}
+
+		// Otherwise, use the value as-is
+		return value;
 	}
 }

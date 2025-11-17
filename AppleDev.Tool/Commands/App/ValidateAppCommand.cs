@@ -23,12 +23,12 @@ public class ValidateAppCommand : AsyncCommand<ValidateAppCommandSettings>
 			AnsiConsole.MarkupLine($"Validating [cyan]{Path.GetFileName(settings.AppPath)}[/]...");
 			AnsiConsole.MarkupLine($"[dim]Type: {settings.AppType}[/]");
 
-			await altool.ValidateAppAsync(
-				settings.AppPath,
-				settings.AppType,
-				settings.KeyId,
-				settings.IssuerId,
-				data.CancellationToken);
+		await altool.ValidateAppAsync(
+			settings.AppPath,
+			settings.AppType,
+			settings.GetKeyId(),
+			settings.GetIssuerId(),
+			data.CancellationToken);
 
 			AnsiConsole.MarkupLine($"[green]✓ Validation successful for {Path.GetFileName(settings.AppPath)}[/]");
 			return this.ExitCode();

@@ -10,24 +10,22 @@ public class RegisterDeviceCommand : AsyncCommand<RegisterDeviceCommandSettings>
 	public override async Task<int> ExecuteAsync(CommandContext context, RegisterDeviceCommandSettings settings)
 	{
 		var data = context.GetData();
-		var config = new AppStoreConnectConfiguration(settings.KeyId, settings.IssuerId, settings.GetPrivateKeyBase64());
-		
+		var config = new AppStoreConnectConfiguration(settings.GetKeyId(), settings.GetIssuerId(), settings.GetPrivateKeyBase64());
 		var appStoreConnect = new AppStoreConnectClient(config);
 
-		var deviceAttributes = new DeviceAttributes
+		try
 		{
-			Name = settings.Name,
-			Platform = settings.Platform,
-			Udid = settings.Udid
-		};
+			var deviceAttributes = new DeviceAttributes
+			{
+				Name = settings.Name,
+				Platform = settings.Platform,
+				Udid = settings.Udid
+			};
 
-		var response = await appStoreConnect.RegisterDeviceAsync(
-			deviceAttributes,
-			data.CancellationToken)
-			.ConfigureAwait(false);
+			var response = await appStoreConnect.RegisterDeviceAsync(
+				deviceAttributes,
+				data.CancellationToken).ConfigureAwait(false);
 
-		if (response.Data != null)
-		{
 			AnsiConsole.MarkupLine($"[green]Successfully registered device '{settings.Name}'[/]");
 			AnsiConsole.MarkupLine($"  ID: {response.Data.Id}");
 			AnsiConsole.MarkupLine($"  Platform: {response.Data.Attributes.PlatformValue}");
@@ -35,9 +33,18 @@ public class RegisterDeviceCommand : AsyncCommand<RegisterDeviceCommandSettings>
 			AnsiConsole.MarkupLine($"  Status: {response.Data.Attributes.StatusValue}");
 			return this.ExitCode();
 		}
-		else
+		catch (AppleApiException apiEx)
 		{
-			AnsiConsole.MarkupLine($"[red]Failed to register device '{settings.Name}'[/]");
+			AnsiConsole.MarkupLine($"[red]Failed to register device '{settings.Name}' (HTTP {apiEx.HttpStatusCode})[/]");
+			foreach (var err in apiEx.Errors)
+			{
+				AnsiConsole.MarkupLine($"  [yellow]{err.Code}[/]: {err.Detail} [dim]{err.Source?.Pointer}[/]");
+			}
+			return this.ExitCode(false);
+		}
+		catch (Exception ex)
+		{
+			AnsiConsole.MarkupLine($"[red]Error:[/] {ex.Message}");
 			return this.ExitCode(false);
 		}
 	}
