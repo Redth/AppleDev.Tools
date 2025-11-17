@@ -4,7 +4,7 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 
 ## Implementation Status
 
-### ✅ Implemented (18 tools)
+### ✅ Implemented (20 tools)
 
 #### App Store Connect - Devices (3/3)
 - [x] ListDevices
@@ -22,12 +22,14 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 - [x] CreateCertificate
 - [x] RevokeCertificate
 
-#### App Store Connect - Provisioning Profiles (5/5)
+#### App Store Connect - Provisioning Profiles (7/7)
 - [x] ListProvisioningProfiles
 - [x] CreateProvisioningProfile
 - [x] DeleteProvisioningProfile
 - [x] ListInstalledProvisioningProfiles
 - [x] ParseProvisioningProfile
+- [x] DownloadProvisioningProfile
+- [x] InstallProvisioningProfile
 
 #### Physical Devices (1/1)
 - [x] ListDevicesAndSimulators
@@ -38,43 +40,12 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 
 ---
 
-## 📋 Pending Implementation (31 tools)
+## 📋 Pending Implementation (24 tools)
 
-### App (3 tools)
+### App (1 tool)
 - [ ] **AppInfo** - Get information about an .app bundle
   - Input: Path to .app or .ipa file
   - Output: Bundle identifier, version, build number, signing info, etc.
-
-- [ ] **UploadApp** - Upload an app to App Store Connect
-  - Input: .ipa path, credentials
-  - Output: Upload status, build processing info
-
-- [ ] **ValidateApp** - Validate an app with App Store Connect
-  - Input: .ipa path, credentials
-  - Output: Validation results, warnings, errors
-
-### CI/Provisioning (5 tools)
-- [ ] **ProvisionCi** - Provision a CI environment with certificates and profiles
-  - Input: Bundle IDs, certificate types, device UDIDs
-  - Output: Created/downloaded certificates and profiles
-
-- [ ] **DeprovisionCi** - Clean up CI provisioning artifacts
-  - Input: Optional filter criteria
-  - Output: Cleanup status
-
-- [ ] **CreateSecret** - Create a certificate signing request and private key
-  - Input: Common name, output paths
-  - Output: CSR and private key files
-
-- [ ] **Base64ToFile** - Decode base64 string to file
-  - Input: Base64 string, output path
-  - Output: Decoded file
-
-- [ ] **EnvironmentVariableToFile** - Write environment variable to file
-  - Input: Env var name, output path
-  - Output: File with env var contents
-
-
 
 ### Keychain (5 tools)
 - [ ] **CreateKeychain** - Create a new keychain
@@ -163,43 +134,6 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
   - Output: Log stream or log file
 
 
-
-
-
----
-
-## Priority Recommendations
-
-### High Priority
-1. **Simulator Management** - Core development workflow tools
-   - ListSimulators, CreateSimulator, BootSimulator, ShutdownSimulator, EraseSimulator
-
-2. **App Installation & Testing** - Essential for automated testing
-   - InstallSimulatorApp, LaunchSimulatorApp, ListSimulatorApps
-
-3. **Physical Devices** - Important for real device testing
-   - ListDevices (xcdevice)
-
-### Medium Priority
-4. **Keychain Management** - CI/CD integration
-   - CreateKeychain, UnlockKeychain, ImportPkcsKeychain
-
-5. **App Information** - Useful for validation workflows
-   - AppInfo
-
-6. **Local Profile Management** - Development convenience
-   - ListInstalledProvisioningProfiles, ParseProvisioningProfiles
-
-### Lower Priority
-7. **CI Provisioning** - Can be composed from other tools
-   - ProvisionCi, DeprovisionCi
-
-8. **Xcode Management** - Less frequently needed
-   - ListXcode, LocateXcode
-
-9. **Utility Tools** - Nice to have
-   - Base64ToFile, EnvironmentVariableToFile, CreateSecret
-
 ---
 
 ## Implementation Notes
@@ -222,15 +156,15 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 
 ## Current Statistics
 
-- **Total CLI Commands**: 49
-- **Implemented in MCP**: 18 (36.7%)
-- **Pending Implementation**: 31 (63.3%)
+- **Total Tools**: 44
+- **Implemented in MCP**: 20 (45.5%)
+- **Pending Implementation**: 24 (54.5%)
 
 ### By Category
-- App Store Connect: 15/15 (100%) ✅
+- App Store Connect: 17/17 (100%) ✅
 - Physical Devices: 1/1 (100%) ✅
 - Xcode: 2/2 (100%) ✅
 - Simulators: 0/15 (0%)
 - Keychain: 0/5 (0%)
-- CI/Provisioning: 0/5 (0%)
-- App Operations: 0/3 (0%)
+- App Operations: 0/1 (0%)
+
