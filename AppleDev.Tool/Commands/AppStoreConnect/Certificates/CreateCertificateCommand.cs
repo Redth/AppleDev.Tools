@@ -1,7 +1,6 @@
-﻿using System.ComponentModel;
+﻿﻿using System.ComponentModel;
 using System.Security.Cryptography.X509Certificates;
 using AppleAppStoreConnect;
-using Newtonsoft.Json.Linq;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -12,7 +11,7 @@ public class CreateCertificateCommand : AsyncCommand<CreateCertificateCommandSet
 	public override async Task<int> ExecuteAsync(CommandContext context, CreateCertificateCommandSettings settings)
 	{
 		//var data = context.GetData();
-		var config = new AppStoreConnectConfiguration(settings.KeyId, settings.IssuerId, settings.GetPrivateKeyBase64());
+		var config = new AppStoreConnectConfiguration(settings.GetKeyId(), settings.GetIssuerId(), settings.GetPrivateKeyBase64());
 		var api = new AppStoreConnectClient(config);
 
 		var response = await api.CreateCertificateWithSigningRequestAsync(settings.CommonName ?? Environment.MachineName, settings.CertificateType).ConfigureAwait(false);

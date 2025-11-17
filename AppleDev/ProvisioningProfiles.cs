@@ -1,6 +1,5 @@
 using Claunia.PropertyList;
 using System.Security.Cryptography.Pkcs;
-using Newtonsoft.Json;
 
 namespace AppleDev;
 

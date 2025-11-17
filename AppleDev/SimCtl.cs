@@ -2,10 +2,11 @@
 using CliWrap.Builders;
 using CliWrap.Exceptions;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace AppleDev;
 
@@ -327,7 +328,7 @@ public class SimCtl : XCRun
 			var jsonOutput = PreprocessSimctlOutput(output);
 
 			// Parse as JSON dictionary and return the values directly
-			var appsDict = JsonConvert.DeserializeObject<Dictionary<string, SimCtlApp>>(jsonOutput);
+			var appsDict = JsonSerializer.Deserialize<Dictionary<string, SimCtlApp>>(jsonOutput);
 			if (appsDict == null)
 			{
 				Logger?.LogWarning("Failed to deserialize apps JSON for target {Target}", target);
@@ -550,7 +551,7 @@ public class SimCtl : XCRun
 
 		try
 		{
-			var dict = JsonConvert.DeserializeObject<Dictionary<string, T>>(output);
+			var dict = JsonSerializer.Deserialize<Dictionary<string, T>>(output);
 			dict ??= new Dictionary<string, T>();
 
 			if (dict.TryGetValue(cmd, out var r))
@@ -592,7 +593,7 @@ public class SimCtl : XCRun
 
 			var allLogs = string.Concat(output);
 
-			var logs = JsonConvert.DeserializeObject<List<SimCtlLogEntry>>(allLogs);
+			var logs = JsonSerializer.Deserialize<List<SimCtlLogEntry>>(allLogs);
 			logs ??= new List<SimCtlLogEntry>();
 
 			return logs;
@@ -854,208 +855,208 @@ public class SimCtl : XCRun
 
 public class SimCtlRuntime
 {
-	[JsonProperty("bundlePath")]
+	[JsonPropertyName("bundlePath")]
 	public string? BundlePath { get; set; }
 
-	[JsonProperty("buildVersion")]
+	[JsonPropertyName("buildVersion")]
 	public string? BuildVersion { get; set; }
 
-	[JsonProperty("runtimeRoot")]
+	[JsonPropertyName("runtimeRoot")]
 	public string? RuntimeRoot { get; set; }
 
-	[JsonProperty("identifier")]
+	[JsonPropertyName("identifier")]
 	public string? Identifier { get; set; }
 
-	[JsonProperty("version")]
+	[JsonPropertyName("version")]
 	public string? Version { get; set; }
 
-	[JsonProperty("isAvailable")]
+	[JsonPropertyName("isAvailable")]
 	public bool IsAvailable { get; set; }
 
-	[JsonProperty("name")]
+	[JsonPropertyName("name")]
 	public string? Name { get; set; }
 }
 
 public class SimCtlDeviceType
 {
-	[JsonProperty("minRuntimeVersion")]
+	[JsonPropertyName("minRuntimeVersion")]
 	public long MinRuntimeVersion { get; set; }
 
-	[JsonProperty("bundlePath")]
+	[JsonPropertyName("bundlePath")]
 	public string? BundlePath { get; set; }
 
-	[JsonProperty("maxRuntimeVersion")]
+	[JsonPropertyName("maxRuntimeVersion")]
 	public long MaxRuntimeVersion { get; set; }
 
-	[JsonProperty("name")]
+	[JsonPropertyName("name")]
 	public string? Name { get; set; }
 
-	[JsonProperty("identifier")]
+	[JsonPropertyName("identifier")]
 	public string? Identifier { get; set; }
 
-	[JsonProperty("productFamily")]
+	[JsonPropertyName("productFamily")]
 	public string? ProductFamily { get; set; }
 
-	[JsonProperty("devices")]
+	[JsonPropertyName("devices")]
 	public List<SimCtlDevice> Devices { get; set; } = new List<SimCtlDevice>();
 }
 
 public class SimCtlDevice
 {
-	[JsonProperty("dataPath")]
+	[JsonPropertyName("dataPath")]
 	public string? DataPath { get; set; }
 
-	[JsonProperty("logPath")]
+	[JsonPropertyName("logPath")]
 	public string? LogPath { get; set; }
 
-	[JsonProperty("udid")]
+	[JsonPropertyName("udid")]
 	public string? Udid { get; set; }
 
-	[JsonProperty("isAvailable")]
+	[JsonPropertyName("isAvailable")]
 	public bool IsAvailable { get; set; }
 
 	[JsonIgnore]
 	public bool IsBooted
 		=> !string.IsNullOrEmpty(State) && State.Contains("Booted", StringComparison.OrdinalIgnoreCase);
 
-	[JsonProperty("deviceTypeIdentifier")]
+	[JsonPropertyName("deviceTypeIdentifier")]
 	public string? DeviceTypeIdentifier { get; set; }
 
-	[JsonProperty("state")]
+	[JsonPropertyName("state")]
 	public string? State { get; set; }
 
-	[JsonProperty("name")]
+	[JsonPropertyName("name")]
 	public string? Name { get; set; }
 
-	[JsonProperty("availabilityError")]
+	[JsonPropertyName("availabilityError")]
 	public string? AvailabilityError { get; set; }
 
-	[JsonProperty("deviceType")]
+	[JsonPropertyName("deviceType")]
 	public SimCtlDeviceType? DeviceType { get; set; }
 
-	[JsonProperty("runtime")]
+	[JsonPropertyName("runtime")]
 	public SimCtlRuntime? Runtime { get; set; }
 }
 
 public class SimCtlApp
 {
-	[JsonProperty("ApplicationType")]
+	[JsonPropertyName("ApplicationType")]
 	public string? ApplicationType { get; set; }
 
-	[JsonProperty("Bundle")]
+	[JsonPropertyName("Bundle")]
 	public string? Bundle { get; set; }
 
-	[JsonProperty("CFBundleDisplayName")]
+	[JsonPropertyName("CFBundleDisplayName")]
 	public string? CFBundleDisplayName { get; set; }
 
-	[JsonProperty("CFBundleExecutable")]
+	[JsonPropertyName("CFBundleExecutable")]
 	public string? CFBundleExecutable { get; set; }
 
-	[JsonProperty("CFBundleIdentifier")]
+	[JsonPropertyName("CFBundleIdentifier")]
 	public string? CFBundleIdentifier { get; set; }
 
-	[JsonProperty("CFBundleName")]
+	[JsonPropertyName("CFBundleName")]
 	public string? CFBundleName { get; set; }
 
-	[JsonProperty("CFBundleVersion")]
+	[JsonPropertyName("CFBundleVersion")]
 	public string? CFBundleVersion { get; set; }
 
-	[JsonProperty("DataContainer")]
+	[JsonPropertyName("DataContainer")]
 	public string? DataContainer { get; set; }
 
-	[JsonProperty("GroupContainers")]
+	[JsonPropertyName("GroupContainers")]
 	public Dictionary<string, string>? GroupContainers { get; set; }
 
-	[JsonProperty("Path")]
+	[JsonPropertyName("Path")]
 	public string? Path { get; set; }
 
-	[JsonProperty("SBAppTags")]
+	[JsonPropertyName("SBAppTags")]
 	public List<string>? SBAppTags { get; set; }
 }
 
 public class SimCtlLogEntry
 {
-    [JsonProperty("timezoneName")]
+    [JsonPropertyName("timezoneName")]
     public string TimezoneName { get; set; } = string.Empty;
 
-    [JsonProperty("messageType")]
+    [JsonPropertyName("messageType")]
     public string MessageType { get; set; } = string.Empty;
 
-    [JsonProperty("eventType")]
+    [JsonPropertyName("eventType")]
     public string EventType { get; set; } = string.Empty;
 
-    [JsonProperty("source")]
+    [JsonPropertyName("source")]
     public string? Source { get; set; }
 
-    [JsonProperty("formatString")]
+    [JsonPropertyName("formatString")]
     public string FormatString { get; set; } = string.Empty;
 
-    [JsonProperty("userID")]
+    [JsonPropertyName("userID")]
     public long UserID { get; set; }
 
-    [JsonProperty("activityIdentifier")]
+    [JsonPropertyName("activityIdentifier")]
     public long ActivityIdentifier { get; set; }
 
-    [JsonProperty("subsystem")]
+    [JsonPropertyName("subsystem")]
     public string Subsystem { get; set; } = string.Empty;
 
-    [JsonProperty("category")]
+    [JsonPropertyName("category")]
     public string Category { get; set; } = string.Empty;
 
-    [JsonProperty("threadID")]
+    [JsonPropertyName("threadID")]
     public long ThreadID { get; set; }
 
-    [JsonProperty("senderImageUUID")]
+    [JsonPropertyName("senderImageUUID")]
     public string SenderImageUUID { get; set; } = string.Empty;
 
-    [JsonProperty("backtrace")]
+    [JsonPropertyName("backtrace")]
     public SimCtlLogEntryBacktrace? Backtrace { get; set; }
 
-    [JsonProperty("bootUUID")]
+    [JsonPropertyName("bootUUID")]
     public string BootUUID { get; set; } = string.Empty;
 
-    [JsonProperty("processImagePath")]
+    [JsonPropertyName("processImagePath")]
     public string ProcessImagePath { get; set; } = string.Empty;
 
-    [JsonProperty("senderImagePath")]
+    [JsonPropertyName("senderImagePath")]
     public string SenderImagePath { get; set; } = string.Empty;
 
-    [JsonProperty("timestamp")]
+    [JsonPropertyName("timestamp")]
     public string Timestamp { get; set; } = string.Empty;
 
-    [JsonProperty("machTimestamp")]
+    [JsonPropertyName("machTimestamp")]
     public long MachTimestamp { get; set; }
 
-    [JsonProperty("eventMessage")]
+    [JsonPropertyName("eventMessage")]
     public string EventMessage { get; set; } = string.Empty;
 
-    [JsonProperty("processImageUUID")]
+    [JsonPropertyName("processImageUUID")]
     public string ProcessImageUUID { get; set; } = string.Empty;
 
-    [JsonProperty("traceID")]
+    [JsonPropertyName("traceID")]
     public string TraceID { get; set; } = string.Empty;
 
-    [JsonProperty("processID")]
+    [JsonPropertyName("processID")]
     public long ProcessID { get; set; }
 
-    [JsonProperty("senderProgramCounter")]
+    [JsonPropertyName("senderProgramCounter")]
     public long SenderProgramCounter { get; set; }
 
-    [JsonProperty("parentActivityIdentifier")]
+    [JsonPropertyName("parentActivityIdentifier")]
     public long ParentActivityIdentifier { get; set; }
 }
 
 public class SimCtlLogEntryBacktrace
 {
-    [JsonProperty("frames")]
+    [JsonPropertyName("frames")]
     public List<SimCtlLogEntryBacktraceFrame> Frames { get; set; } = new List<SimCtlLogEntryBacktraceFrame>();
 }
 
 public class SimCtlLogEntryBacktraceFrame
 {
-	[JsonProperty("imageOffset")]
+	[JsonPropertyName("imageOffset")]
 	public long ImageOffset { get; set; }
 
-	[JsonProperty("imageUUID")]
+	[JsonPropertyName("imageUUID")]
 	public string ImageUUID { get; set; } = string.Empty;
 }

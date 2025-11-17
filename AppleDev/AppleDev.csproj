@@ -26,7 +26,6 @@
   <ItemGroup>
     <PackageReference Include="CliWrap" Version="3.6.4" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
     <PackageReference Include="plist-cil" Version="2.2.0" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143" PrivateAssets="all" />
