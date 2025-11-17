@@ -4,7 +4,7 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 
 ## Implementation Status
 
-### ✅ Implemented (13 tools)
+### ✅ Implemented (15 tools)
 
 #### App Store Connect - Devices (3/3)
 - [x] ListDevices
@@ -22,16 +22,16 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 - [x] CreateCertificate
 - [x] RevokeCertificate
 
-#### App Store Connect - Provisioning Profiles (3/5)
+#### App Store Connect - Provisioning Profiles (5/5)
 - [x] ListProvisioningProfiles
 - [x] CreateProvisioningProfile
 - [x] DeleteProvisioningProfile
-- [ ] ListInstalledProvisioningProfiles
-- [ ] ParseProvisioningProfiles
+- [x] ListInstalledProvisioningProfiles
+- [x] ParseProvisioningProfile
 
 ---
 
-## 📋 Pending Implementation (36 tools)
+## 📋 Pending Implementation (34 tools)
 
 ### App (3 tools)
 - [ ] **AppInfo** - Get information about an .app bundle
@@ -167,14 +167,7 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
   - Input: None
   - Output: Active Xcode path and version
 
-### Provisioning Profiles (2 tools - local operations)
-- [ ] **ListInstalledProvisioningProfiles** - List locally installed profiles
-  - Input: Optional filters
-  - Output: Installed profile info
 
-- [ ] **ParseProvisioningProfiles** - Parse and display profile contents
-  - Input: Profile path or UUID
-  - Output: Parsed profile details (certificates, devices, entitlements, etc.)
 
 ---
 
@@ -233,15 +226,14 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 ## Current Statistics
 
 - **Total CLI Commands**: 49
-- **Implemented in MCP**: 13 (26.5%)
-- **Pending Implementation**: 36 (73.5%)
+- **Implemented in MCP**: 15 (30.6%)
+- **Pending Implementation**: 34 (69.4%)
 
 ### By Category
-- App Store Connect: 13/15 (86.7%) ✅
+- App Store Connect: 15/15 (100%) ✅
 - Simulators: 0/15 (0%)
 - Keychain: 0/5 (0%)
 - CI/Provisioning: 0/5 (0%)
 - App Operations: 0/3 (0%)
 - Physical Devices: 0/1 (0%)
 - Xcode: 0/2 (0%)
-- Local Profiles: 0/2 (0%)
