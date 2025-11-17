@@ -35,50 +35,438 @@ namespace AppleDev.Test
 		readonly AppStoreConnectClient? Client;
 		readonly bool HasCredentials;
 
+	// ===== CERTIFICATE TESTS =====
+
 	[SkippableFact]
 	public async Task ListCertificates()
 	{
 		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
-		
+
 		var certs = await Client!.ListCertificatesAsync();
 		Assert.NotNull(certs);
 		Assert.NotEmpty(certs.Data);
 	}
-	
+
 	[SkippableFact]
-	public async Task ListProfiles()
+	public async Task ListCertificates_WithLimit()
 	{
 		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
-		
-		var profiles = await Client!.ListProfilesAsync();
-		Assert.NotNull(profiles);
-		Assert.NotEmpty(profiles.Data);
+
+		var certs = await Client!.ListCertificatesAsync(limit: 5);
+		Assert.NotNull(certs);
+		Assert.NotNull(certs.Data);
+		Assert.True(certs.Data.Count() <= 5);
 	}
-	
+
+	[SkippableFact]
+	public async Task ListCertificates_FilterByCertificateType()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var certs = await Client!.ListCertificatesAsync(
+			filterCertificateType: new[] { CertificateType.IOS_DISTRIBUTION });
+		Assert.NotNull(certs);
+		Assert.NotNull(certs.Data);
+
+		if (certs.Data.Any())
+		{
+			Assert.All(certs.Data, cert =>
+				Assert.Equal("IOS_DISTRIBUTION", cert.Attributes.CertificateTypeValue));
+		}
+	}
+
+	[SkippableFact]
+	public async Task ListCertificates_WithSort()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var certs = await Client!.ListCertificatesAsync(sort: "-id");
+		Assert.NotNull(certs);
+		Assert.NotNull(certs.Data);
+	}
+
+	// ===== DEVICE TESTS =====
+
 	[SkippableFact]
 	public async Task ListDevices()
 	{
 		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
-		
+
 		var devices = await Client!.ListDevicesAsync();
 		Assert.NotNull(devices);
 		Assert.NotEmpty(devices.Data);
 	}
-	
+
+	[SkippableFact]
+	public async Task ListDevices_WithLimit()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var devices = await Client!.ListDevicesAsync(limit: 10);
+		Assert.NotNull(devices);
+		Assert.NotNull(devices.Data);
+		Assert.True(devices.Data.Count() <= 10);
+	}
+
+	[SkippableFact]
+	public async Task ListDevices_FilterByPlatform()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var devices = await Client!.ListDevicesAsync(
+			filterPlatform: new[] { Platform.IOS });
+		Assert.NotNull(devices);
+		Assert.NotNull(devices.Data);
+
+		if (devices.Data.Any())
+		{
+			Assert.All(devices.Data, device =>
+				Assert.Equal("IOS", device.Attributes.PlatformValue));
+		}
+	}
+
+	[SkippableFact]
+	public async Task ListDevices_FilterByStatus()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var devices = await Client!.ListDevicesAsync(
+			filterStatus: new[] { DeviceStatus.ENABLED });
+		Assert.NotNull(devices);
+		Assert.NotNull(devices.Data);
+	}
+
+	[SkippableFact]
+	public async Task ListDevices_WithSort()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var devices = await Client!.ListDevicesAsync(sort: "name");
+		Assert.NotNull(devices);
+		Assert.NotNull(devices.Data);
+	}
+
+	// ===== BUNDLE ID TESTS =====
+
 	[SkippableFact]
 	public async Task ListBundleIds()
 	{
 		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
-		
+
 		var bundleIds = await Client!.ListBundleIdsAsync();
 		Assert.NotNull(bundleIds);
 		Assert.NotEmpty(bundleIds.Data);
-	}		// [Fact]
-		// public async Task CreateCertificate()
-		// {
-		// 	var cert = await Client.CreateCertificateAsync();
-		// 	
-		// 	Assert.NotNull(cert?.Data?.Attributes?.CertificateContent);
-		// }
+	}
+
+	[SkippableFact]
+	public async Task ListBundleIds_WithLimit()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var bundleIds = await Client!.ListBundleIdsAsync(limit: 5);
+		Assert.NotNull(bundleIds);
+		Assert.NotNull(bundleIds.Data);
+		Assert.True(bundleIds.Data.Count() <= 5);
+	}
+
+	[SkippableFact]
+	public async Task ListBundleIds_FilterByPlatform()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var bundleIds = await Client!.ListBundleIdsAsync(
+			filterPlatform: new[] { Platform.IOS });
+		Assert.NotNull(bundleIds);
+		Assert.NotNull(bundleIds.Data);
+
+		if (bundleIds.Data.Any())
+		{
+			Assert.All(bundleIds.Data, bundle =>
+				Assert.Equal("IOS", bundle.Attributes.PlatformValue));
+		}
+	}
+
+	[SkippableFact]
+	public async Task ListBundleIds_FilterByIdentifier()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		// Get first bundle ID to use as filter
+		var allBundleIds = await Client!.ListBundleIdsAsync(limit: 1);
+		Skip.If(!allBundleIds.Data.Any(), "No bundle IDs available for filtering test");
+
+		var firstIdentifier = allBundleIds.Data.First().Attributes.Identifier;
+
+		var filteredBundleIds = await Client!.ListBundleIdsAsync(
+			filterIdentifier: new[] { firstIdentifier });
+		Assert.NotNull(filteredBundleIds);
+		Assert.NotEmpty(filteredBundleIds.Data);
+		Assert.All(filteredBundleIds.Data, bundle =>
+			Assert.Equal(firstIdentifier, bundle.Attributes.Identifier));
+	}
+
+	[SkippableFact]
+	public async Task ListBundleIds_WithSort()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var bundleIds = await Client!.ListBundleIdsAsync(sort: "name");
+		Assert.NotNull(bundleIds);
+		Assert.NotNull(bundleIds.Data);
+	}
+
+	// ===== PROFILE TESTS =====
+
+	[SkippableFact]
+	public async Task ListProfiles()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var profiles = await Client!.ListProfilesAsync();
+		Assert.NotNull(profiles);
+		Assert.NotEmpty(profiles.Data);
+	}
+
+	[SkippableFact]
+	public async Task ListProfiles_WithLimit()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var profiles = await Client!.ListProfilesAsync(limit: 5);
+		Assert.NotNull(profiles);
+		Assert.NotNull(profiles.Data);
+		Assert.True(profiles.Data.Count() <= 5);
+	}
+
+	[SkippableFact]
+	public async Task ListProfiles_FilterByProfileState()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var profiles = await Client!.ListProfilesAsync(
+			filterProfileState: new[] { ProfileState.ACTIVE });
+		Assert.NotNull(profiles);
+		Assert.NotNull(profiles.Data);
+
+		if (profiles.Data.Any())
+		{
+			Assert.All(profiles.Data, profile =>
+				Assert.Equal("ACTIVE", profile.Attributes.ProfileStateValue));
+		}
+	}
+
+	[SkippableFact]
+	public async Task ListProfiles_FilterByProfileType()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var profiles = await Client!.ListProfilesAsync(
+			filterProfileType: new[] { ProfileType.IOS_APP_DEVELOPMENT });
+		Assert.NotNull(profiles);
+		Assert.NotNull(profiles.Data);
+
+		if (profiles.Data.Any())
+		{
+			Assert.All(profiles.Data, profile =>
+				Assert.Equal("IOS_APP_DEVELOPMENT", profile.Attributes.ProfileTypeValue));
+		}
+	}
+
+	[SkippableFact]
+	public async Task ListProfiles_WithInclude()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var profiles = await Client!.ListProfilesAsync(
+			include: "bundleId,devices",
+			limit: 5);
+		Assert.NotNull(profiles);
+		Assert.NotNull(profiles.Data);
+
+		// Check that relationships are present
+		if (profiles.Data.Any())
+		{
+			var firstProfile = profiles.Data.First();
+			Assert.NotNull(firstProfile.Relationships);
+		}
+	}
+
+	[SkippableFact]
+	public async Task ListProfiles_FilterByName()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		// Get first profile to use as filter
+		var allProfiles = await Client!.ListProfilesAsync(limit: 1);
+		Skip.If(!allProfiles.Data.Any(), "No profiles available for filtering test");
+
+		var firstName = allProfiles.Data.First().Attributes.Name;
+
+		var filteredProfiles = await Client!.ListProfilesAsync(
+			filterName: new[] { firstName });
+		Assert.NotNull(filteredProfiles);
+		Assert.NotEmpty(filteredProfiles.Data);
+		Assert.All(filteredProfiles.Data, profile =>
+			Assert.Equal(firstName, profile.Attributes.Name));
+	}
+
+	[SkippableFact]
+	public async Task ListProfiles_WithSort()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		var profiles = await Client!.ListProfilesAsync(sort: "name");
+		Assert.NotNull(profiles);
+		Assert.NotNull(profiles.Data);
+	}
+
+	[SkippableFact]
+	public async Task ListProfiles_WithDevices_FetchesDeviceInfo()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		// First, get profiles with device relationships
+		var profiles = await Client!.ListProfilesAsync(
+			include: "bundleId,devices",
+			limit: 10);
+		Assert.NotNull(profiles);
+		Assert.NotNull(profiles.Data);
+
+		// Find a profile that has devices
+		var profileWithDevices = profiles.Data
+			.FirstOrDefault(p => p.Relationships.TryGetValue("devices", out var devRel) &&
+			                     devRel?.Data != null &&
+			                     devRel.Data.Any());
+
+		Skip.If(profileWithDevices == null, "No profiles with devices found");
+
+		// Collect device IDs from the profile
+		var deviceIds = new HashSet<string>();
+		if (profileWithDevices.Relationships.TryGetValue("devices", out var devicesRel) && devicesRel?.Data != null)
+		{
+			foreach (var device in devicesRel.Data)
+			{
+				deviceIds.Add(device.Id);
+			}
+		}
+
+		Assert.NotEmpty(deviceIds);
+
+		// Fetch devices by ID
+		var devicesResponse = await Client!.ListDevicesAsync(
+			filterId: deviceIds.ToArray(),
+			limit: 200);
+
+		Assert.NotNull(devicesResponse);
+		Assert.NotNull(devicesResponse.Data);
+		Assert.NotEmpty(devicesResponse.Data);
+
+		// Verify each device has expected attributes
+		foreach (var device in devicesResponse.Data)
+		{
+			Assert.NotNull(device.Attributes);
+			Assert.NotNull(device.Attributes.Name);
+			Assert.NotNull(device.Attributes.Udid);
+			Assert.NotNull(device.Attributes.PlatformValue);
+		}
+	}
+
+	[SkippableFact]
+	public async Task ListProfiles_ProfileData_IsAvailable()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		// Get a profile
+		var profiles = await Client!.ListProfilesAsync(limit: 1);
+		Assert.NotNull(profiles);
+		Assert.NotEmpty(profiles.Data);
+
+		var profile = profiles.Data.First();
+		Assert.NotNull(profile.Attributes);
+		Assert.NotNull(profile.Attributes.ProfileContent);
+		Assert.NotEmpty(profile.Attributes.ProfileContent);
+
+		// Verify it's valid base64
+		var profileBytes = Convert.FromBase64String(profile.Attributes.ProfileContent);
+		Assert.NotEmpty(profileBytes);
+	}
+
+	// ===== INTEGRATION TESTS =====
+
+	[SkippableFact]
+	public async Task ListDevices_FilterById()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		// Get a device ID first
+		var allDevices = await Client!.ListDevicesAsync(limit: 1);
+		Skip.If(!allDevices.Data.Any(), "No devices available for filtering test");
+
+		var deviceId = allDevices.Data.First().Id;
+
+		// Filter by that ID
+		var filteredDevices = await Client!.ListDevicesAsync(
+			filterId: new[] { deviceId });
+		Assert.NotNull(filteredDevices);
+		Assert.Single(filteredDevices.Data);
+		Assert.Equal(deviceId, filteredDevices.Data.First().Id);
+	}
+
+	[SkippableFact]
+	public async Task ListCertificates_FilterById()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		// Get a certificate ID first
+		var allCerts = await Client!.ListCertificatesAsync(limit: 1);
+		Skip.If(!allCerts.Data.Any(), "No certificates available for filtering test");
+
+		var certId = allCerts.Data.First().Id;
+
+		// Filter by that ID
+		var filteredCerts = await Client!.ListCertificatesAsync(
+			filterId: new[] { certId });
+		Assert.NotNull(filteredCerts);
+		Assert.Single(filteredCerts.Data);
+		Assert.Equal(certId, filteredCerts.Data.First().Id);
+	}
+
+	[SkippableFact]
+	public async Task ListProfiles_FilterById()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		// Get a profile ID first
+		var allProfiles = await Client!.ListProfilesAsync(limit: 1);
+		Skip.If(!allProfiles.Data.Any(), "No profiles available for filtering test");
+
+		var profileId = allProfiles.Data.First().Id;
+
+		// Filter by that ID
+		var filteredProfiles = await Client!.ListProfilesAsync(
+			filterId: new[] { profileId });
+		Assert.NotNull(filteredProfiles);
+		Assert.Single(filteredProfiles.Data);
+		Assert.Equal(profileId, filteredProfiles.Data.First().Id);
+	}
+
+	[SkippableFact]
+	public async Task ListBundleIds_FilterById()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		// Get a bundle ID first
+		var allBundleIds = await Client!.ListBundleIdsAsync(limit: 1);
+		Skip.If(!allBundleIds.Data.Any(), "No bundle IDs available for filtering test");
+
+		var bundleId = allBundleIds.Data.First().Id;
+
+		// Filter by that ID
+		var filteredBundleIds = await Client!.ListBundleIdsAsync(
+			filterId: new[] { bundleId });
+		Assert.NotNull(filteredBundleIds);
+		Assert.Single(filteredBundleIds.Data);
+		Assert.Equal(bundleId, filteredBundleIds.Data.First().Id);
+	}
 	}
 }
