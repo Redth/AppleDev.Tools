@@ -4,7 +4,7 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 
 ## Implementation Status
 
-### ✅ Implemented (16 tools)
+### ✅ Implemented (18 tools)
 
 #### App Store Connect - Devices (3/3)
 - [x] ListDevices
@@ -32,9 +32,13 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 #### Physical Devices (1/1)
 - [x] ListDevicesAndSimulators
 
+#### Xcode (2/2)
+- [x] ListXcode
+- [x] LocateXcode
+
 ---
 
-## 📋 Pending Implementation (33 tools)
+## 📋 Pending Implementation (31 tools)
 
 ### App (3 tools)
 - [ ] **AppInfo** - Get information about an .app bundle
@@ -158,14 +162,7 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
   - Input: Simulator UDID, optional filters
   - Output: Log stream or log file
 
-### Xcode (2 tools)
-- [ ] **ListXcode** - List installed Xcode versions
-  - Input: None
-  - Output: Xcode installations (path, version, build number)
 
-- [ ] **LocateXcode** - Find the active Xcode installation
-  - Input: None
-  - Output: Active Xcode path and version
 
 
 
@@ -226,14 +223,14 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 ## Current Statistics
 
 - **Total CLI Commands**: 49
-- **Implemented in MCP**: 16 (32.7%)
-- **Pending Implementation**: 33 (67.3%)
+- **Implemented in MCP**: 18 (36.7%)
+- **Pending Implementation**: 31 (63.3%)
 
 ### By Category
 - App Store Connect: 15/15 (100%) ✅
 - Physical Devices: 1/1 (100%) ✅
+- Xcode: 2/2 (100%) ✅
 - Simulators: 0/15 (0%)
 - Keychain: 0/5 (0%)
 - CI/Provisioning: 0/5 (0%)
 - App Operations: 0/3 (0%)
-- Xcode: 0/2 (0%)
