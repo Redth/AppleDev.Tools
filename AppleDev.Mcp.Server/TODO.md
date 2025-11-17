@@ -4,7 +4,7 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 
 ## Implementation Status
 
-### ✅ Implemented (21 tools)
+### ✅ Implemented (36 tools)
 
 #### App Store Connect - Devices (3/3)
 - [x] ListDevices
@@ -41,9 +41,27 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 #### App (1/1)
 - [x] GetAppInfo
 
+#### Simulators (15/15)
+- [x] ListSimulators
+- [x] CreateSimulator
+- [x] DeleteSimulator
+- [x] BootSimulator
+- [x] ShutdownSimulator
+- [x] EraseSimulator
+- [x] OpenSimulator
+- [x] ListSimulatorDeviceTypes
+- [x] ListSimulatorApps
+- [x] InstallSimulatorApp
+- [x] UninstallSimulatorApp
+- [x] LaunchSimulatorApp
+- [x] TerminateSimulatorApp
+- [x] OpenUrlSimulator
+- [x] ScreenshotSimulator
+- [x] GetSimulatorLogs
+
 ---
 
-## 📋 Pending Implementation (23 tools)
+## 📋 Pending Implementation (8 tools)
 
 ### Keychain (5 tools)
 - [ ] **CreateKeychain** - Create a new keychain
@@ -65,71 +83,6 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 - [ ] **ImportPkcsKeychain** - Import PKCS12 certificate into keychain
   - Input: .p12 file path, password, keychain name
   - Output: Import status
-
-### Simulators (15 tools)
-- [ ] **ListSimulators** - List available simulators
-  - Input: Optional filters (runtime, device type, state)
-  - Output: Simulator list with UDID, name, state, runtime
-
-- [ ] **CreateSimulator** - Create a new simulator
-  - Input: Name, device type, runtime
-  - Output: Created simulator UDID
-
-- [ ] **DeleteSimulator** - Delete a simulator
-  - Input: Simulator UDID or name
-  - Output: Deletion status
-
-- [ ] **BootSimulator** - Boot a simulator
-  - Input: Simulator UDID
-  - Output: Boot status
-
-- [ ] **ShutdownSimulator** - Shutdown a simulator
-  - Input: Simulator UDID
-  - Output: Shutdown status
-
-- [ ] **EraseSimulator** - Erase all content from a simulator
-  - Input: Simulator UDID
-  - Output: Erase status
-
-- [ ] **OpenSimulator** - Open Simulator.app
-  - Input: Optional simulator UDID to open
-  - Output: Status
-
-- [ ] **DeviceTypesSimulator** - List available device types
-  - Input: Optional runtime filter
-  - Output: Device type list
-
-- [ ] **ListSimulatorApps** - List installed apps on a simulator
-  - Input: Simulator UDID
-  - Output: Installed app list (bundle ID, name, path)
-
-- [ ] **InstallSimulatorApp** - Install an app on a simulator
-  - Input: Simulator UDID, .app path
-  - Output: Installation status
-
-- [ ] **UninstallSimulatorApp** - Uninstall an app from a simulator
-  - Input: Simulator UDID, bundle identifier
-  - Output: Uninstall status
-
-- [ ] **LaunchSimulatorApp** - Launch an app on a simulator
-  - Input: Simulator UDID, bundle identifier, optional arguments
-  - Output: Launch status, process ID
-
-- [ ] **TerminateSimulatorApp** - Terminate an app on a simulator
-  - Input: Simulator UDID, bundle identifier
-  - Output: Termination status
-
-- [ ] **OpenUrlSimulator** - Open a URL in a simulator
-  - Input: Simulator UDID, URL
-  - Output: Status
-
-- [ ] **ScreenshotSimulator** - Take a screenshot of a simulator
-  - Input: Simulator UDID, output path
-  - Output: Screenshot file path
-
-- [ ] **LogsSimulator** - Stream or retrieve simulator logs
-  - Input: Simulator UDID, optional filters
-  - Output: Log stream or log file
 
 
 ---
@@ -155,14 +108,14 @@ This document tracks which CLI commands from AppleDev.Tool have been implemented
 ## Current Statistics
 
 - **Total Tools**: 44
-- **Implemented in MCP**: 21 (47.7%)
-- **Pending Implementation**: 23 (52.3%)
+- **Implemented in MCP**: 36 (81.8%)
+- **Pending Implementation**: 8 (18.2%)
 
 ### By Category
 - App Store Connect: 17/17 (100%) ✅
 - Physical Devices: 1/1 (100%) ✅
 - Xcode: 2/2 (100%) ✅
 - App Operations: 1/1 (100%) ✅
-- Simulators: 0/15 (0%)
+- Simulators: 15/15 (100%) ✅
 - Keychain: 0/5 (0%)
 
