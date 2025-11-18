@@ -12,6 +12,12 @@ namespace AppleDev;
 
 public class SimCtl : XCRun
 {
+	readonly JsonSerializerOptions _jsonOptions = new()
+	{
+		PropertyNameCaseInsensitive = true,
+		Converters = { new FlexibleStringConverter() }
+	};
+
 	public SimCtl() : base() { }
 
 	public SimCtl(ILogger<SimCtl> logger) : base(logger) { }
@@ -587,22 +593,167 @@ public class SimCtl : XCRun
 	/// <returns>Log output as a list of log entries</returns>
 	public async Task<List<SimCtlLogEntry>> GetLogsAsync(string target, string? predicate = null, DateTimeOffset? start = null, CancellationToken cancellationToken = default)
 	{
+		base.ThrowIfNotMacOS();
+
+		var xcrun = LocateOrThrow();
+		var logs = new List<SimCtlLogEntry>();
+
 		try
 		{
-			var output = await GetLogsInternalAsync(target, predicate, start, "json", cancellationToken).ConfigureAwait(false);
-
-			var allLogs = string.Concat(output);
-
-			var logs = JsonSerializer.Deserialize<List<SimCtlLogEntry>>(allLogs);
-			logs ??= new List<SimCtlLogEntry>();
-
-			return logs;
+			// Use the stream-based deserialization for better performance
+			logs = await GetLogsStreamAsync(xcrun.FullName, target, predicate, start, cancellationToken).ConfigureAwait(false);
 		}
 		catch (Exception ex)
 		{
-			Logger?.LogError("Error deserializing logs: {Exception}", ex.Message);
-			return new List<SimCtlLogEntry>();
+			Logger?.LogError("Error getting logs for target {Target}: {Exception}", target, ex.Message);
 		}
+
+		return logs;
+	}
+
+	async Task<List<SimCtlLogEntry>> GetLogsStreamAsync(string xcrunPath, string target, string? predicate = null, DateTimeOffset? start = null, CancellationToken cancellationToken = default)
+	{
+		var logs = new List<SimCtlLogEntry>();
+		var jsonContent = new StringBuilder();
+		var captureJson = false;
+		var jsonDepth = 0;
+
+		try
+		{
+			var psi = new ProcessStartInfo
+			{
+				FileName = xcrunPath,
+				UseShellExecute = false,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				CreateNoWindow = true
+			};
+
+			psi.ArgumentList.Add("simctl");
+			psi.ArgumentList.Add("spawn");
+			psi.ArgumentList.Add(target);
+			psi.ArgumentList.Add("log");
+			psi.ArgumentList.Add("show");
+
+			if (!string.IsNullOrEmpty(predicate))
+			{
+				psi.ArgumentList.Add("--predicate");
+				psi.ArgumentList.Add(predicate);
+			}
+
+			if (start.HasValue)
+			{
+				psi.ArgumentList.Add("--start");
+				psi.ArgumentList.Add(start.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
+			}
+
+			psi.ArgumentList.Add("--style");
+			psi.ArgumentList.Add("json");
+			psi.ArgumentList.Add("--color");
+			psi.ArgumentList.Add("none");
+			psi.ArgumentList.Add("--info");
+			psi.ArgumentList.Add("--debug");
+
+			using var process = new Process { StartInfo = psi };
+			process.Start();
+
+			// Read output and collect JSON
+			using var reader = process.StandardOutput;
+			string? line;
+			while ((line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false)) != null)
+			{
+				var trimmed = line.Trim();
+
+				// Skip empty lines
+				if (string.IsNullOrWhiteSpace(trimmed))
+					continue;
+
+				// Detect start of JSON (either array or object)
+				if (!captureJson && (trimmed.StartsWith("[") || trimmed.StartsWith("{")))
+				{
+					captureJson = true;
+					jsonDepth = 0;
+				}
+
+				if (captureJson)
+				{
+					jsonContent.AppendLine(line);
+
+					// Track JSON depth to know when we have a complete structure
+					// Need to handle strings that contain braces/brackets
+					bool inString = false;
+					bool escapeNext = false;
+
+					foreach (var ch in trimmed)
+					{
+						if (escapeNext)
+						{
+							escapeNext = false;
+							continue;
+						}
+
+						if (ch == '\\')
+						{
+							escapeNext = true;
+							continue;
+						}
+
+						if (ch == '"')
+						{
+							inString = !inString;
+							continue;
+						}
+
+						if (!inString)
+						{
+							if (ch == '[' || ch == '{') jsonDepth++;
+							else if (ch == ']' || ch == '}') jsonDepth--;
+						}
+					}
+
+					// If we've closed all brackets/braces, we have complete JSON
+					if (jsonDepth == 0)
+					{
+						var jsonText = jsonContent.ToString();
+						jsonContent.Clear();
+						captureJson = false;
+
+						// Try to deserialize as array first (most common for log show)
+						try
+						{
+							var entries = JsonSerializer.Deserialize<List<SimCtlLogEntry>>(jsonText, _jsonOptions);
+							if (entries != null)
+								logs.AddRange(entries);
+							continue;
+						}
+						catch (JsonException ex)
+						{
+							Logger?.LogDebug("Failed to parse JSON as array: {Error}", ex.Message);
+						}
+
+						// Try as single object
+						try
+						{
+							var entry = JsonSerializer.Deserialize<SimCtlLogEntry>(jsonText, _jsonOptions);
+							if (entry != null)
+								logs.Add(entry);
+						}
+						catch (JsonException ex)
+						{
+							Logger?.LogDebug("Failed to parse JSON log entry: {Error}", ex.Message);
+						}
+					}
+				}
+			}
+
+			await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+		}
+		catch (Exception ex)
+		{
+			Logger?.LogError("Error streaming logs for target {Target}: {Exception}", target, ex.Message);
+		}
+
+		return logs;
 	}
 
 	async Task<List<string>> GetLogsInternalAsync(string target, string? predicate = null, DateTimeOffset? start = null, string? style = null, CancellationToken cancellationToken = default)
@@ -642,14 +793,14 @@ public class SimCtl : XCRun
 
 			if (!success || output.Count == 0)
 			{
-				Logger?.LogWarning("Failed to get apps for target {Target}", target);
+				Logger?.LogWarning("Failed to get logs for target {Target}", target);
 			}
 
 			return output;
 		}
 		catch (Exception ex)
 		{
-			Logger?.LogWarning("ShowLogsAsync failed: {Exception}", ex.Message);
+			Logger?.LogWarning("GetLogsInternalAsync failed: {Exception}", ex.Message);
 			return new List<string>();
 		}
 	}
@@ -941,33 +1092,42 @@ public class SimCtlDevice
 public class SimCtlApp
 {
 	[JsonPropertyName("ApplicationType")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
 	public string? ApplicationType { get; set; }
 
 	[JsonPropertyName("Bundle")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
 	public string? Bundle { get; set; }
 
 	[JsonPropertyName("CFBundleDisplayName")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
 	public string? CFBundleDisplayName { get; set; }
 
 	[JsonPropertyName("CFBundleExecutable")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
 	public string? CFBundleExecutable { get; set; }
 
 	[JsonPropertyName("CFBundleIdentifier")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
 	public string? CFBundleIdentifier { get; set; }
 
 	[JsonPropertyName("CFBundleName")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
 	public string? CFBundleName { get; set; }
 
 	[JsonPropertyName("CFBundleVersion")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
 	public string? CFBundleVersion { get; set; }
 
 	[JsonPropertyName("DataContainer")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
 	public string? DataContainer { get; set; }
 
 	[JsonPropertyName("GroupContainers")]
 	public Dictionary<string, string>? GroupContainers { get; set; }
 
 	[JsonPropertyName("Path")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
 	public string? Path { get; set; }
 
 	[JsonPropertyName("SBAppTags")]
@@ -976,80 +1136,95 @@ public class SimCtlApp
 
 public class SimCtlLogEntry
 {
-    [JsonPropertyName("timezoneName")]
-    public string TimezoneName { get; set; } = string.Empty;
+	[JsonPropertyName("timezoneName")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string TimezoneName { get; set; } = string.Empty;
 
-    [JsonPropertyName("messageType")]
-    public string MessageType { get; set; } = string.Empty;
+	[JsonPropertyName("messageType")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string MessageType { get; set; } = string.Empty;
 
-    [JsonPropertyName("eventType")]
-    public string EventType { get; set; } = string.Empty;
+	[JsonPropertyName("eventType")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string EventType { get; set; } = string.Empty;
 
-    [JsonPropertyName("source")]
-    public string? Source { get; set; }
+	[JsonPropertyName("source")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string? Source { get; set; }
 
-    [JsonPropertyName("formatString")]
-    public string FormatString { get; set; } = string.Empty;
+	[JsonPropertyName("formatString")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string FormatString { get; set; } = string.Empty;
 
-    [JsonPropertyName("userID")]
-    public long UserID { get; set; }
+	[JsonPropertyName("userID")]
+	public long UserID { get; set; }
 
-    [JsonPropertyName("activityIdentifier")]
-    public long ActivityIdentifier { get; set; }
+	[JsonPropertyName("activityIdentifier")]
+	public long ActivityIdentifier { get; set; }
 
-    [JsonPropertyName("subsystem")]
-    public string Subsystem { get; set; } = string.Empty;
+	[JsonPropertyName("subsystem")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string Subsystem { get; set; } = string.Empty;
 
-    [JsonPropertyName("category")]
-    public string Category { get; set; } = string.Empty;
+	[JsonPropertyName("category")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string Category { get; set; } = string.Empty;
 
-    [JsonPropertyName("threadID")]
-    public long ThreadID { get; set; }
+	[JsonPropertyName("threadID")]
+	public long ThreadID { get; set; }
 
-    [JsonPropertyName("senderImageUUID")]
-    public string SenderImageUUID { get; set; } = string.Empty;
+	[JsonPropertyName("senderImageUUID")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string SenderImageUUID { get; set; } = string.Empty;
 
-    [JsonPropertyName("backtrace")]
-    public SimCtlLogEntryBacktrace? Backtrace { get; set; }
+	[JsonPropertyName("backtrace")]
+	public SimCtlLogEntryBacktrace? Backtrace { get; set; }
 
-    [JsonPropertyName("bootUUID")]
-    public string BootUUID { get; set; } = string.Empty;
+	[JsonPropertyName("bootUUID")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string BootUUID { get; set; } = string.Empty;
 
-    [JsonPropertyName("processImagePath")]
-    public string ProcessImagePath { get; set; } = string.Empty;
+	[JsonPropertyName("processImagePath")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string ProcessImagePath { get; set; } = string.Empty;
 
-    [JsonPropertyName("senderImagePath")]
-    public string SenderImagePath { get; set; } = string.Empty;
+	[JsonPropertyName("senderImagePath")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string SenderImagePath { get; set; } = string.Empty;
 
-    [JsonPropertyName("timestamp")]
-    public string Timestamp { get; set; } = string.Empty;
+	[JsonPropertyName("timestamp")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string Timestamp { get; set; } = string.Empty;
 
-    [JsonPropertyName("machTimestamp")]
-    public long MachTimestamp { get; set; }
+	[JsonPropertyName("machTimestamp")]
+	public long MachTimestamp { get; set; }
 
-    [JsonPropertyName("eventMessage")]
-    public string EventMessage { get; set; } = string.Empty;
+	[JsonPropertyName("eventMessage")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string EventMessage { get; set; } = string.Empty;
 
-    [JsonPropertyName("processImageUUID")]
-    public string ProcessImageUUID { get; set; } = string.Empty;
+	[JsonPropertyName("processImageUUID")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string ProcessImageUUID { get; set; } = string.Empty;
 
-    [JsonPropertyName("traceID")]
-    public string TraceID { get; set; } = string.Empty;
+	[JsonPropertyName("traceID")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
+	public string TraceID { get; set; } = string.Empty;
 
-    [JsonPropertyName("processID")]
-    public long ProcessID { get; set; }
+	[JsonPropertyName("processID")]
+	public long ProcessID { get; set; }
 
-    [JsonPropertyName("senderProgramCounter")]
-    public long SenderProgramCounter { get; set; }
+	[JsonPropertyName("senderProgramCounter")]
+	public long SenderProgramCounter { get; set; }
 
-    [JsonPropertyName("parentActivityIdentifier")]
-    public long ParentActivityIdentifier { get; set; }
+	[JsonPropertyName("parentActivityIdentifier")]
+	public long ParentActivityIdentifier { get; set; }
 }
 
 public class SimCtlLogEntryBacktrace
 {
-    [JsonPropertyName("frames")]
-    public List<SimCtlLogEntryBacktraceFrame> Frames { get; set; } = new List<SimCtlLogEntryBacktraceFrame>();
+	[JsonPropertyName("frames")]
+	public List<SimCtlLogEntryBacktraceFrame> Frames { get; set; } = new List<SimCtlLogEntryBacktraceFrame>();
 }
 
 public class SimCtlLogEntryBacktraceFrame
@@ -1058,5 +1233,36 @@ public class SimCtlLogEntryBacktraceFrame
 	public long ImageOffset { get; set; }
 
 	[JsonPropertyName("imageUUID")]
+	[JsonConverter(typeof(FlexibleStringConverter))]
 	public string ImageUUID { get; set; } = string.Empty;
+}
+
+public sealed class FlexibleStringConverter : JsonConverter<string?>
+{
+	public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	{
+		switch (reader.TokenType)
+		{
+			case JsonTokenType.String:
+				return reader.GetString();
+			case JsonTokenType.Null:
+				return null;
+			default:
+				using (var doc = JsonDocument.ParseValue(ref reader))
+				{
+					return doc.RootElement.ToString();
+				}
+		}
+	}
+
+	public override void Write(Utf8JsonWriter writer, string? value, JsonSerializerOptions options)
+	{
+		if (value is null)
+		{
+			writer.WriteNullValue();
+			return;
+		}
+
+		writer.WriteStringValue(value);
+	}
 }
