@@ -8,7 +8,7 @@ namespace AppleDev.Tool.Commands;
 
 public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateSimulatorCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateSimulatorCommandSettings settings, CancellationToken cancellationToken)
     {
         var data = context.GetData();
         var simctl = new SimCtl();

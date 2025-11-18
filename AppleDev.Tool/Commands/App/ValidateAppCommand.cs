@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class ValidateAppCommand : AsyncCommand<ValidateAppCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, ValidateAppCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, ValidateAppCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var altool = new ALTool();

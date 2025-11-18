@@ -6,7 +6,7 @@ namespace AppleDev.Tool.Commands;
 
 public class UnlockKeychainCommand : AsyncCommand<UnlockKeychainCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, UnlockKeychainCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, UnlockKeychainCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var keychain = new Keychain();

@@ -8,7 +8,7 @@ namespace AppleDev.Tool.Commands;
 
 public class ListInstalledProvisioningProfilesCommand : AsyncCommand<ListInstalledProvisioningProfilesCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, ListInstalledProvisioningProfilesCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, ListInstalledProvisioningProfilesCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 

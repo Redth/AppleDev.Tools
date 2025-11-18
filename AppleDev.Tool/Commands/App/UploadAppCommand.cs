@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class UploadAppCommand : AsyncCommand<UploadAppCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, UploadAppCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, UploadAppCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var altool = new ALTool();

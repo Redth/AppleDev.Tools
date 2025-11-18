@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class OpenUrlSimulatorCommand : AsyncCommand<OpenUrlSimulatorCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, OpenUrlSimulatorCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, OpenUrlSimulatorCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var simctl = new SimCtl();

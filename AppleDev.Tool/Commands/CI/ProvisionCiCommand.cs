@@ -9,7 +9,7 @@ namespace AppleDev.Tool.Commands;
 
 public class ProvisionCiCommand : AsyncCommand<ProvisionCiCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, ProvisionCiCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, ProvisionCiCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 

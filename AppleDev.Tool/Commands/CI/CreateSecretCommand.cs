@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class CreateSecretCommand : AsyncCommand<CreateSecretCommandSettings>
 {
-	public override Task<int> ExecuteAsync(CommandContext context, CreateSecretCommandSettings settings)
+	public override Task<int> ExecuteAsync(CommandContext context, CreateSecretCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var secret = string.Empty;
 

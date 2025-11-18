@@ -6,7 +6,7 @@ namespace AppleDev.Tool.Commands;
 
 public class ScreenshotSimulatorCommand : AsyncCommand<ScreenshotSimulatorCommandSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ScreenshotSimulatorCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ScreenshotSimulatorCommandSettings settings, CancellationToken cancellationToken)
     {
         var data = context.GetData();
         var simctl = new SimCtl();

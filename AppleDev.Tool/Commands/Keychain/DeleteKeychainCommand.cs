@@ -6,7 +6,7 @@ namespace AppleDev.Tool.Commands;
 
 public class DeleteKeychainCommand : AsyncCommand<DeleteKeychainCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, DeleteKeychainCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, DeleteKeychainCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var keychain = new Keychain();

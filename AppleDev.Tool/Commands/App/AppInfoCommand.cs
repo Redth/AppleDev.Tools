@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class AppInfoCommand : Command<AppInfoCommandSettings>
 {
-	public override int Execute(CommandContext context, AppInfoCommandSettings settings)
+	public override int Execute(CommandContext context, AppInfoCommandSettings settings, CancellationToken cancellationToken)
 	{
 		try
 		{

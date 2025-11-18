@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class ListXcodeCommand : AsyncCommand<ListXcodeCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, ListXcodeCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, ListXcodeCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var xcode = new Xcode();

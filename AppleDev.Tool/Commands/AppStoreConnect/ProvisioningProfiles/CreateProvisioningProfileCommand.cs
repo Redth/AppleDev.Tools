@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class CreateProvisioningProfileCommand : AsyncCommand<CreateProvisioningProfileCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, CreateProvisioningProfileCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, CreateProvisioningProfileCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var config = new AppStoreConnectConfiguration(settings.GetKeyId(), settings.GetIssuerId(), settings.GetPrivateKeyBase64());

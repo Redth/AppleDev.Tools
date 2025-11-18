@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class TerminateSimulatorAppCommand : AsyncCommand<TerminateSimulatorAppCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, TerminateSimulatorAppCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, TerminateSimulatorAppCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var simctl = new SimCtl();

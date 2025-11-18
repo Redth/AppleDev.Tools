@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class UninstallSimulatorAppCommand : AsyncCommand<UninstallSimulatorAppCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, UninstallSimulatorAppCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, UninstallSimulatorAppCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var simctl = new SimCtl();

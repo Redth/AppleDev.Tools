@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class RevokeCertificateCommand : AsyncCommand<RevokeCertificateCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, RevokeCertificateCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, RevokeCertificateCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var config = new AppStoreConnectConfiguration(settings.GetKeyId(), settings.GetIssuerId(), settings.GetPrivateKeyBase64());

@@ -6,7 +6,7 @@ namespace AppleDev.Tool.Commands;
 
 public class ImportPkcs12KeychainCommand : AsyncCommand<ImportPkcs12KeychainCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, ImportPkcs12KeychainCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, ImportPkcs12KeychainCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var keychain = new Keychain();

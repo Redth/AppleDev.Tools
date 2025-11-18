@@ -9,7 +9,7 @@ namespace AppleDev.Tool.Commands;
 
 public class LogsSimulatorCommand : AsyncCommand<LogsSimulatorCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, LogsSimulatorCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, LogsSimulatorCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var simctl = new SimCtl();

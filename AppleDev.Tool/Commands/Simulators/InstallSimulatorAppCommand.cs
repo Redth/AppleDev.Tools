@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class InstallSimulatorAppCommand : AsyncCommand<InstallSimulatorAppCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, InstallSimulatorAppCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, InstallSimulatorAppCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var simctl = new SimCtl();

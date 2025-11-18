@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class DeleteBundleIdCommand : AsyncCommand<DeleteBundleIdCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, DeleteBundleIdCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, DeleteBundleIdCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var config = new AppStoreConnectConfiguration(settings.GetKeyId(), settings.GetIssuerId(), settings.GetPrivateKeyBase64());

@@ -6,7 +6,7 @@ namespace AppleDev.Tool.Commands;
 
 public class SetDefaultKeychainCommand : AsyncCommand<SetDefaultKeychainCommandSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, SetDefaultKeychainCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, SetDefaultKeychainCommandSettings settings, CancellationToken cancellationToken)
     {
         var data = context.GetData();
         var keychain = new Keychain();

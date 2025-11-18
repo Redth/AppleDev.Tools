@@ -6,7 +6,7 @@ namespace AppleDev.Tool.Commands;
 
 public class ListAscDevicesCommand : AsyncCommand<ListAscDevicesCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, ListAscDevicesCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, ListAscDevicesCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var config = new AppStoreConnectConfiguration(settings.GetKeyId(), settings.GetIssuerId(), settings.GetPrivateKeyBase64());

@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class UpdateDeviceCommand : AsyncCommand<UpdateDeviceCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, UpdateDeviceCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, UpdateDeviceCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var config = new AppStoreConnectConfiguration(settings.GetKeyId(), settings.GetIssuerId(), settings.GetPrivateKeyBase64());

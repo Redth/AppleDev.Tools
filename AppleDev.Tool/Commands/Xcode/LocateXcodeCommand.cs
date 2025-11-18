@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class LocateXcodeCommand : AsyncCommand<LocateXcodeCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, LocateXcodeCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, LocateXcodeCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var xcode = new Xcode();

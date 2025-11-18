@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class DeleteProvisioningProfileCommand : AsyncCommand<DeleteProvisioningProfileCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, DeleteProvisioningProfileCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, DeleteProvisioningProfileCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var config = new AppStoreConnectConfiguration(settings.GetKeyId(), settings.GetIssuerId(), settings.GetPrivateKeyBase64());

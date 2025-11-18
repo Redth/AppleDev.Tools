@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class EnvironmentVariableToFileCommand : AsyncCommand<EnvironmentVariableToFileCommandSettings>
 {
-    public override Task<int> ExecuteAsync(CommandContext context, EnvironmentVariableToFileCommandSettings settings)
+    public override Task<int> ExecuteAsync(CommandContext context, EnvironmentVariableToFileCommandSettings settings, CancellationToken cancellationToken)
     {
         var v = Environment.GetEnvironmentVariable(settings.EnvironmentVariable);
 
