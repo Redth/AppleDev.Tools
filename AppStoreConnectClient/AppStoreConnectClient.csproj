@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
@@ -29,8 +29,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="JWT" Version="10.0.2" />
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143" PrivateAssets="all" />
+    <PackageReference Include="JWT" Version="11.0.0" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

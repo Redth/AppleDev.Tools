@@ -163,11 +163,11 @@ public class SimCtlTests
 		Assert.Contains("\"SBAppTags\":         [\n		]", result); // Empty arrays
 
 		// Try to parse as JSON to ensure it's valid
-		var exception = Record.Exception(() => Newtonsoft.Json.JsonConvert.DeserializeObject(result));
+		var exception = Record.Exception(() => System.Text.Json.JsonSerializer.Deserialize<object>(result));
 		Assert.Null(exception);
 
 		// Additionally, try to deserialize to the expected structure
-		var parsed = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(result);
+		var parsed = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(result);
 		Assert.NotNull(parsed);
 		Assert.Contains("com.apple.Bridge", parsed.Keys);
 		Assert.Contains("com.apple.webapp", parsed.Keys);

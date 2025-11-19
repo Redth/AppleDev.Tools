@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Globalization;
 
 namespace AppleDev.Tool;

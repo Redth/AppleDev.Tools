@@ -6,7 +6,7 @@ namespace AppleDev.Tool.Commands;
 
 public class EraseSimulatorCommand : AsyncCommand<EraseSimulatorCommandSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, EraseSimulatorCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, EraseSimulatorCommandSettings settings, CancellationToken cancellationToken)
     {
         var data = context.GetData();
         var simctl = new SimCtl();

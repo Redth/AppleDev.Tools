@@ -1,6 +1,5 @@
 using Claunia.PropertyList;
 using System.Security.Cryptography.Pkcs;
-using Newtonsoft.Json;
 
 namespace AppleDev;
 
@@ -71,7 +70,7 @@ public static class ProvisioningProfiles
 				? "provisionprofile"
 				: "mobileprovision";
 
-		var profileFilename = Path.Combine(directory.FullName, $"{profile.Uuid}.{extension}");
+		var profileFilename = Path.Combine(directory!.FullName, $"{profile.Uuid}.{extension}");
 
 			// Write the file
 		await File.WriteAllBytesAsync(profileFilename, profileData).ConfigureAwait(false);

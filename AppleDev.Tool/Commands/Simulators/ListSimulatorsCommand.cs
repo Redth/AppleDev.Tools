@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class ListSimulatorsCommand : AsyncCommand<ListSimulatorsCommandSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListSimulatorsCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListSimulatorsCommandSettings settings, CancellationToken cancellationToken)
     {
         var data = context.GetData();
         

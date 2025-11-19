@@ -6,7 +6,7 @@ namespace AppleDev.Tool.Commands;
 
 public class DeleteSimulatorCommand : AsyncCommand<DeleteSimulatorCommandSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteSimulatorCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteSimulatorCommandSettings settings, CancellationToken cancellationToken)
     {
         var data = context.GetData();
         var simctl = new SimCtl();

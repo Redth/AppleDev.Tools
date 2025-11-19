@@ -24,6 +24,7 @@ jobs:
         dotnet pack --output ./artifacts --configuration Release ./AppleDev/AppleDev.csproj
         dotnet pack --output ./artifacts --configuration Release ./AppStoreConnectClient/AppStoreConnectClient.csproj
         dotnet pack --output ./artifacts --configuration Release ./AppleDev.Tool/AppleDev.Tool.csproj
+        dotnet pack --output ./artifacts --configuration Release ./AppleDev.Mcp.Server/AppleDev.Mcp.Server.csproj
 
     - name: 📤 Upload Artifacts
       uses: actions/upload-artifact@v5

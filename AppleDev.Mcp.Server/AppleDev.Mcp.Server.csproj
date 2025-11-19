@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <!-- .NET Tool Configuration -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>appledev-mcp</ToolCommandName>
+    
+    <!-- Package Metadata -->
+    <PackageId>AppleDev.Mcp.Server</PackageId>
+    <Title>Apple Developer Tools MCP Server</Title>
+    <Description>Model Context Protocol (MCP) server providing 44 tools for Apple development automation including App Store Connect API, iOS simulators, Xcode, keychains, and more. Enables AI assistants to manage iOS/macOS/tvOS/watchOS/visionOS development environments.</Description>
+    <Authors>Jonathan Dick</Authors>
+    <PackageTags>mcp;model-context-protocol;apple;ios;macos;xcode;simulator;app-store-connect;provisioning;certificate;ai;assistant;claude</PackageTags>
+    <PackageProjectUrl>https://github.com/Redth/AppleDev.Tools</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Redth/AppleDev.Tools</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="ModelContextProtocol" Version="0.4.0-preview.3" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AppStoreConnectClient\AppStoreConnectClient.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Commands;
 
 public class Base64ToFileCommand : AsyncCommand<Base64ToFileCommandSettings>
 {
-	public override Task<int> ExecuteAsync(CommandContext context, Base64ToFileCommandSettings settings)
+	public override Task<int> ExecuteAsync(CommandContext context, Base64ToFileCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var b = Convert.FromBase64String(settings.Base64);
 		

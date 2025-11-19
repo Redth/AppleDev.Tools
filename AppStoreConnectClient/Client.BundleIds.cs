@@ -49,8 +49,18 @@ partial class AppStoreConnectClient
 		qs.Fields("bundleIdCapabilities", fieldBundleIdCapabilities);
 		qs.Fields("apps", fieldsApps);
 
-		return await RequestAsync<BundleIdResponse>(BUNDLEIDS_TYPE, qs, cancellationToken).ConfigureAwait(false)
+		var response = await RequestAsync<BundleIdResponse>(BUNDLEIDS_TYPE, qs, cancellationToken).ConfigureAwait(false)
 			?? new BundleIdResponse();
+
+		// Apply client-side platform filter if the server didn't properly filter
+		// This is necessary because the Apple API doesn't always honor the platform filter parameter
+		if (filterPlatform is not null && filterPlatform.Length > 0 && response.Data is not null)
+		{
+			var platformNames = filterPlatform.Select(p => p.ToString()).ToHashSet();
+			response.Data = response.Data.Where(b => platformNames.Contains(b.Attributes.PlatformValue)).ToList();
+		}
+
+		return response;
 	}
 
 	public async Task<ItemResponse<BundleId, BundleIdAttributes>> CreateBundleIdAsync(
