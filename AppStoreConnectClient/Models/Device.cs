@@ -5,6 +5,12 @@ namespace AppleAppStoreConnect;
 public class DeviceAttributes
 {
 	public DeviceAttributes() { }
+	public DeviceAttributes(string name, Platform platform, string udid)
+	{
+		Name = name;
+		PlatformValue = platform.ToString();
+		Udid = udid;
+	}
 
 	[JsonPropertyName("deviceClass")]
 	public string DeviceClass { get; set; } = string.Empty;
@@ -19,7 +25,7 @@ public class DeviceAttributes
 	public Platform Platform
 	{
 		get => Enum.TryParse<Platform>(PlatformValue, out var v) ? v : Platform.Unknown;
-		set => value.ToString();
+		set => PlatformValue = value.ToString();
 	}
 
 
@@ -33,7 +39,7 @@ public class DeviceAttributes
 	public DeviceStatus Status
 	{
 		get => Enum.TryParse<DeviceStatus>(StatusValue, out var v) ? v : DeviceStatus.Unknown;
-		set => value.ToString();
+		set => StatusValue = value.ToString();
 	}
 
 	[JsonPropertyName("udid")]
@@ -47,13 +53,10 @@ public class Device : Item<DeviceAttributes>
 {
 	public const string TYPE = "devices";
 
-	public Device() : base(new DeviceAttributes())
-	{
-	}
+	public Device() : base(new DeviceAttributes()) { }
 
 	[JsonPropertyName("type")]
 	public override string Type { get; set; } = TYPE;
-
 }
 
 public class DeviceResponse : ListResponse<Device, DeviceAttributes>

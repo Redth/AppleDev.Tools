@@ -20,6 +20,7 @@ jobs:
       with:
         dotnet-version: |
           8.0.x
+          9.0.x
     - name: Pack
       shell: pwsh
       run: |
@@ -27,6 +28,7 @@ jobs:
         dotnet pack --output ./artifacts --configuration Release ./AppleDev/AppleDev.csproj
         dotnet pack --output ./artifacts --configuration Release ./AppStoreConnectClient/AppStoreConnectClient.csproj
         dotnet pack --output ./artifacts --configuration Release ./AppleDev.Tool/AppleDev.Tool.csproj
+        dotnet pack --output ./artifacts --configuration Release ./AppleDev.Mcp.Server/AppleDev.Mcp.Server.csproj
 
     - name: Artifacts
       uses: actions/upload-artifact@v4
@@ -36,6 +38,10 @@ jobs:
 
   test:
     name: Test
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     env:
       APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
       APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -52,8 +58,18 @@ jobs:
       with:
         dotnet-version: |
           8.0.x
+          9.0.x
     - name: Test
-      run: dotnet test ./AppleDev.Test/AppleDev.Test.csproj --logger "console;verbosity=detailed"
+      run: dotnet test ./AppleDev.Test/AppleDev.Test.csproj --logger "trx;LogFileName=test-results.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
+
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: './TestResults/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
 
   publish:
     name: Publish
@@ -68,7 +84,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            8.0.x
+            9.0.x
       - name: Push NuGet
         run: |
           dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_ORG_API_KEY }}

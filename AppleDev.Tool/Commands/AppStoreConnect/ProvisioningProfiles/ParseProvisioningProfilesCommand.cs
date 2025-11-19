@@ -5,7 +5,7 @@ namespace AppleDev.Tool.Commands;
 
 public class ParseProvisioningProfileCommand : AsyncCommand<ParseProvisioningProfileCommandSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ParseProvisioningProfileCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ParseProvisioningProfileCommandSettings settings, CancellationToken cancellationToken)
     {
         var data = context.GetData();
 

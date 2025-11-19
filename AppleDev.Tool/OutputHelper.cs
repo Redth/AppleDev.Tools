@@ -167,19 +167,12 @@ static class OutputHelper
 
 	static string JsonSerialize<T>(T obj)
 	{
-		return Newtonsoft.Json.JsonConvert.SerializeObject(obj, Newtonsoft.Json.Formatting.Indented);
-
-		//var s = new DataContractJsonSerializerSettings();
-		//s.UseSimpleDictionaryFormat = true;
-
-		//var js = new DataContractJsonSerializer(typeof(T), s);
-		//using (var ms = new MemoryStream())
-		//{
-		//	js.WriteObject(ms, obj);
-		//	ms.Position = 0;
-		//	using (var sr = new StreamReader(ms))
-		//		return sr.ReadToEnd();
-		//}
+		var options = new System.Text.Json.JsonSerializerOptions
+		{
+			WriteIndented = true,
+			DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+		};
+		return System.Text.Json.JsonSerializer.Serialize(obj, options);
 	}
 
 	static string XmlSerialize<T>(T obj)

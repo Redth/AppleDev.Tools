@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace AppleDev;
 
@@ -12,36 +12,36 @@ public class Device
 	public const string PlatformiPhone = "com.apple.platform.iphoneos";
 	public const string PlatformWatch = "com.apple.platform.watchos";
 
-	[JsonProperty("simulator")]
+	[JsonPropertyName("simulator")]
 	public bool Simulator { get; set; }
 
-	[JsonProperty("operatingSystemVersion")]
+	[JsonPropertyName("operatingSystemVersion")]
 	public string? OperatingSystemVersion { get; set; }
 
-	[JsonProperty("available")]
+	[JsonPropertyName("available")]
 	public bool Available { get; set; }
 
-	[JsonProperty("platform")]
+	[JsonPropertyName("platform")]
 	public string? Platform { get; set; }
 
-	[JsonProperty("modelCode")]
+	[JsonPropertyName("modelCode")]
 	public string? ModelCode { get; set; }
 
-	[JsonProperty("identifier")]
+	[JsonPropertyName("identifier")]
 	public string? Identifier { get; set; }
 
-	[JsonProperty("architecture")]
+	[JsonPropertyName("architecture")]
 	public string? Architecture { get; set; }
 
-	[JsonProperty("modelUTI")]
+	[JsonPropertyName("modelUTI")]
 	public string? ModelUTI { get; set; }
 
-	[JsonProperty("modelName")]
+	[JsonPropertyName("modelName")]
 	public string? ModelName { get; set; }
 
-	[JsonProperty("name")]
+	[JsonPropertyName("name")]
 	public string? Name { get; set; }
 
-	[JsonProperty("interface")]
+	[JsonPropertyName("interface")]
 	public string? Interface { get; set; }
 }

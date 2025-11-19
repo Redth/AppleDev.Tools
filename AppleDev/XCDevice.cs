@@ -1,8 +1,8 @@
 ﻿using CliWrap;
 using CliWrap.Buffered;
-using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
 namespace AppleDev;
@@ -57,7 +57,7 @@ public partial class XCDevice : XCRun
 
 		try
 		{
-			devices = JsonConvert.DeserializeObject<List<Device>>(stdout.ToString());
+			devices = JsonSerializer.Deserialize<List<Device>>(stdout.ToString());
 		}
 		catch { }
 	

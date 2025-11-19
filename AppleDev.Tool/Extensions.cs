@@ -37,8 +37,12 @@ static class Extensions
 		if (ci == CIType.GitHub)
 		{
 			var file = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
-			var content = System.IO.File.ReadAllText(file);
-			System.IO.File.WriteAllText(file, content + $"{key}={value}" + "\n");
+			if (string.IsNullOrWhiteSpace(file))
+				return;
+			if (!File.Exists(file))
+				return;
+			var content = File.ReadAllText(file);
+			File.WriteAllText(file, content + $"{key}={value}" + "\n");
 		}
 		else if (ci == CIType.Azure)
 		{

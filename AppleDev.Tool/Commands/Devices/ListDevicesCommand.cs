@@ -6,7 +6,7 @@ namespace AppleDev.Tool.Commands;
 
 public class ListDevicesCommand : AsyncCommand<ListDevicesCommandSettings>
 {
-	public override async Task<int> ExecuteAsync(CommandContext context, ListDevicesCommandSettings settings)
+	public override async Task<int> ExecuteAsync(CommandContext context, ListDevicesCommandSettings settings, CancellationToken cancellationToken)
 	{
 		var data = context.GetData();
 		var xcdevice = new XCDevice();

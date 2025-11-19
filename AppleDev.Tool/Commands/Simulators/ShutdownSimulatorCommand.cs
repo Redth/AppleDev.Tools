@@ -6,7 +6,7 @@ namespace AppleDev.Tool.Commands;
 
 public class ShutdownSimulatorCommand : AsyncCommand<ShutdownSimulatorCommandSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ShutdownSimulatorCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ShutdownSimulatorCommandSettings settings, CancellationToken cancellationToken)
     {
         var data = context.GetData();
         

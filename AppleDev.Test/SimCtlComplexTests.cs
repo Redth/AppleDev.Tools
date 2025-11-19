@@ -31,15 +31,23 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.True(success);
 	}
 
+	private bool _isBooted = false;
+
 	async Task BootAndWaitAsync()
 	{
+		// Skip if already booted
+		if (_isBooted)
+			return;
+
 		// Boot the simulator
 		var bootSuccess = await _simCtl.BootAsync(_testSimName);
 		Assert.True(bootSuccess, "Failed to boot the simulator");
 
-		// Wait for boot to complete
-		var waitSuccess = await _simCtl.WaitForBootedAsync(_testSimName, TimeSpan.FromSeconds(120));
+		// Wait for boot to complete with reduced timeout
+		var waitSuccess = await _simCtl.WaitForBootedAsync(_testSimName, TimeSpan.FromSeconds(60));
 		Assert.True(waitSuccess, "Failed to wait for the simulator to boot");
+
+		_isBooted = true;
 	}
 
 	public async Task DisposeAsync()
@@ -268,7 +276,8 @@ public class SimCtlComplexTests : IAsyncLifetime
 	{
 		await BootAndWaitAsync();
 
-		await Task.Delay(5000); // Allow some time for logs to accumulate
+		// Reduced delay - simulator boot already generated plenty of logs
+		await Task.Delay(1000);
 
 		// Get logs with a predicate filter
 		var logs = await _simCtl.GetLogsAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
@@ -296,7 +305,8 @@ public class SimCtlComplexTests : IAsyncLifetime
 	{
 		await BootAndWaitAsync();
 
-		await Task.Delay(5000); // Allow some time for logs to accumulate
+		// Reduced delay - simulator boot already generated plenty of logs
+		await Task.Delay(1000);
 
 		// Get logs with a predicate filter
 		var logs = await _simCtl.GetLogsPlainAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
@@ -307,7 +317,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 		{
 			Assert.Contains(logs, log => log.Contains("[com.apple.Maps:GeneralMapsWidget]"));
 			Assert.DoesNotContain(logs, log => log.Contains("Clock"));
-		
+
 		}
 		catch
 		{
