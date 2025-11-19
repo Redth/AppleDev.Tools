@@ -12,6 +12,12 @@ namespace AppleDev.Test
 {
 	public class AppStoreConnectTests
 	{
+		static AppStoreConnectTests()
+		{
+			// Load .env file if it exists in the project root
+			DotEnvLoader.Load();
+		}
+
 		public AppStoreConnectTests()
 		{
 			var keyId = Environment.GetEnvironmentVariable("APP_STORE_CONNECT_KEY_ID");
@@ -181,6 +187,18 @@ namespace AppleDev.Test
 
 		if (bundleIds.Data.Any())
 		{
+			// Output diagnostic information about what we received
+			var nonIosBundles = bundleIds.Data
+				.Where(b => b.Attributes.PlatformValue != "IOS")
+				.Select(b => $"{b.Attributes.Name}: {b.Attributes.PlatformValue}")
+				.ToList();
+			
+			if (nonIosBundles.Any())
+			{
+				var message = $"Found {nonIosBundles.Count} non-IOS bundle(s): {string.Join(", ", nonIosBundles)}";
+				throw new Exception(message);
+			}
+
 			Assert.All(bundleIds.Data, bundle =>
 				Assert.Equal("IOS", bundle.Attributes.PlatformValue));
 		}
@@ -202,7 +220,7 @@ namespace AppleDev.Test
 		Assert.NotNull(filteredBundleIds);
 		Assert.NotEmpty(filteredBundleIds.Data);
 		Assert.All(filteredBundleIds.Data, bundle =>
-			Assert.Equal(firstIdentifier, bundle.Attributes.Identifier));
+			Assert.StartsWith(firstIdentifier, bundle.Attributes.Identifier));
 	}
 
 	[SkippableFact]

@@ -886,5 +886,28 @@ apple provisioning list --format json --verbose
 ## Contributing
 Contributions welcome! Submit issues, feature requests, or pull requests.
 
+### Running Tests
+
+The test suite includes tests for App Store Connect API integration. To run these tests:
+
+1. Copy `.env.example` to `.env` in the project root:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` and add your App Store Connect API credentials:
+   ```
+   APP_STORE_CONNECT_KEY_ID=your_key_id_here
+   APP_STORE_CONNECT_ISSUER_ID=your_issuer_id_here
+   APP_STORE_CONNECT_PRIVATE_KEY=your_base64_encoded_private_key_here
+   ```
+
+3. Run the tests:
+   ```bash
+   dotnet test
+   ```
+
+Tests that require credentials will be automatically skipped if the `.env` file is not present or credentials are not configured. See [AppleDev.Test/README.md](AppleDev.Test/README.md) for more details.
+
 ## License
 See the [LICENSE](LICENSE) file for license information.
