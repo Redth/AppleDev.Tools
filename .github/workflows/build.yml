@@ -8,19 +8,16 @@ on:
 
 jobs:
   build:
-    name: Build
-    runs-on: windows-latest
+    name: 🔨 Build
+    runs-on: macos-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    - name: 📥 Checkout
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: |
-          8.0.x
-    - name: Pack
+    - name: ⚙️ Setup .NET
+      uses: actions/setup-dotnet@v5
+    - name: 📦 Pack
       shell: pwsh
       run: |
         New-Item -ItemType Directory -Force -Path .\artifacts
@@ -28,47 +25,56 @@ jobs:
         dotnet pack --output ./artifacts --configuration Release ./AppStoreConnectClient/AppStoreConnectClient.csproj
         dotnet pack --output ./artifacts --configuration Release ./AppleDev.Tool/AppleDev.Tool.csproj
 
-    - name: Artifacts
-      uses: actions/upload-artifact@v4
+    - name: 📤 Upload Artifacts
+      uses: actions/upload-artifact@v5
       with:
         name: NuGet
         path: ./artifacts
 
   test:
-    name: Test
+    if: github.event_name != 'release'
+    name: 🧪 Test
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     env:
       APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
       APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
       APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
     needs: build
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+    - name: 📥 Checkout
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+    - name: ⚙️ Setup .NET
+      uses: actions/setup-dotnet@v5
+    - name: 🧪 Run Tests
+      run: dotnet test ./AppleDev.Test/AppleDev.Test.csproj --logger "trx;LogFileName=test-results.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
+
+    - name: 📊 Publish Test Results
+      uses: dorny/test-reporter@v2
+      if: always() && github.event_name != 'release'
       with:
-        dotnet-version: |
-          8.0.x
-    - name: Test
-      run: dotnet test ./AppleDev.Test/AppleDev.Test.csproj --logger "console;verbosity=detailed"
+        name: Test Results
+        path: './TestResults/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
 
   publish:
-    name: Publish
+    name: 🚀 Publish
     needs: test
-    runs-on: windows-latest
+    runs-on: macos-latest
     if: github.event_name == 'release'
     steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4.1.7
+      - name: 📥 Download Artifacts
+        uses: actions/download-artifact@v5
         with:
           name: NuGet
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-      - name: Push NuGet
+      - name: ⚙️ Setup .NET
+        uses: actions/setup-dotnet@v5
+      - name: 🚀 Push NuGet
         run: |
           dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_ORG_API_KEY }}
