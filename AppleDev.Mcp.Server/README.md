@@ -25,8 +25,10 @@ dotnet tool run --global appledev-mcp
 #### Option 3: Run with `dnx` (Download and Run in One Shot)
 
 ```bash
-dnx run appledev-mcp
+dotnet dnx -y AppleDev.Mcp.Server
 ```
+
+> NOTE: Requires .NET 10 SDK for the dotnet dnx command
 
 This downloads and runs the tool without installing it globally.
 
@@ -59,8 +61,8 @@ After installing with `dotnet tool install -g AppleDev.Mcp.Server`:
 {
   "mcpServers": {
     "apple-dev": {
-      "command": "dnx",
-      "args": ["run", "appledev-mcp"],
+      "command": "dotnet",
+      "args": ["dnx", "-y", "AppleDev.Mcp.Server"],
       "env": {
         "APP_STORE_CONNECT_KEY_ID": "your-key-id",
         "APP_STORE_CONNECT_ISSUER_ID": "your-issuer-id",
