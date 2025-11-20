@@ -33,9 +33,9 @@ public class ListProvisioningProfilesCommand : AsyncCommand<ListProvisioningProf
 
 		// Collect all unique device IDs from all profiles
 		var allDeviceIds = new HashSet<string>();
-		foreach (var profile in profiles.Data)
+		foreach (var profile in profiles.Data!)
 		{
-			if (profile.Relationships.TryGetValue("devices", out var devRel) && devRel?.Data != null)
+			if (profile.Relationships?.TryGetValue("devices", out var devRel) == true && devRel?.Data != null)
 			{
 				foreach (var device in devRel.Data)
 				{
@@ -63,16 +63,16 @@ public class ListProvisioningProfilesCommand : AsyncCommand<ListProvisioningProf
 				AnsiConsole.MarkupLine($"[dim]Received {deviceResponse.Data?.Count() ?? 0} devices[/]");
 			}
 
-			foreach (var device in deviceResponse.Data)
+			foreach (var device in deviceResponse.Data!)
 			{
 				deviceLookup[device.Id] = device.Attributes;
 			}
 		}
 
-		foreach (var profile in profiles.Data)
+		foreach (var profile in profiles.Data!)
 		{
 			// Get the Bundle ID for this specific profile via relationships
-			string? bundleIdId = profile.Relationships.TryGetValue("bundleId", out var bundleIdRel) && bundleIdRel.Data?.Count > 0
+			string? bundleIdId = profile.Relationships?.TryGetValue("bundleId", out var bundleIdRel) == true && bundleIdRel?.Data?.Count > 0
 				? bundleIdRel.Data[0].Id
 				: null;
 
@@ -82,7 +82,7 @@ public class ListProvisioningProfilesCommand : AsyncCommand<ListProvisioningProf
 
 			// Get devices for this profile via relationships
 			var deviceIds = new List<string>();
-			if (profile.Relationships.TryGetValue("devices", out var devRel) && devRel?.Data != null)
+			if (profile.Relationships?.TryGetValue("devices", out var devRel) == true && devRel?.Data != null)
 			{
 				deviceIds = devRel.Data.Select(d => d.Id).ToList();
 			}
