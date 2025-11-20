@@ -896,12 +896,14 @@ public class SimCtl : XCRun
 		try
 		{
 			var result = await Cli.Wrap(xcrun.FullName)
+				.WithValidation(CommandResultValidation.None)
 				.WithArguments(args =>
 				{
 					args.Add("simctl");
 					argsBuilder?.Invoke(args);
 				})
-				.ExecuteAsync(cancellationToken).ConfigureAwait(false);
+				.ExecuteAsync(cancellationToken)
+				.ConfigureAwait(false);
 
 			return result.ExitCode == 0;
 		}
