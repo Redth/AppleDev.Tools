@@ -124,8 +124,8 @@ For Claude Desktop specifically, edit the configuration file:
 {
   "mcpServers": {
     "apple-dev": {
-      "command": "dnx",
-      "args": ["run", "appledev-mcp"],
+      "command": "dotnet",
+      "args": ["dnx", "-y", "AppleDev.Mcp.Server"],
       "env": {
         "APP_STORE_CONNECT_KEY_ID": "ABCD1234",
         "APP_STORE_CONNECT_ISSUER_ID": "12345678-1234-1234-1234-123456789012",
@@ -144,8 +144,7 @@ Support multiple Apple Developer accounts:
 {
   "mcpServers": {
     "apple-dev": {
-      "command": "dotnet",
-      "args": ["run", "--project", "/path/to/AppleDev.Mcp.Server/AppleDev.Mcp.Server.csproj"],
+      "command": "appledev-mcp",
       "env": {
         "APP_STORE_CONNECT_KEY_ID": "default-key",
         "APP_STORE_CONNECT_ISSUER_ID": "default-issuer",
