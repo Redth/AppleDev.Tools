@@ -16,7 +16,7 @@ public class XCDeviceTests
     [Fact]
     public async Task LocateXCDevice()
     {
-        var path = await _xcdevice.LocateAsync().ConfigureAwait(false);
+        var path = await _xcdevice.LocateAsync();
         
         Assert.NotNull(path);
         Assert.True(path.Exists);
@@ -25,7 +25,7 @@ public class XCDeviceTests
     [Fact]
     public async Task GetAnyDevices()
     {
-        var devices = await _xcdevice.GetDevicesAsync().ConfigureAwait(false);
+        var devices = await _xcdevice.GetDevicesAsync();
         
         Assert.NotNull(devices);
         Assert.NotEmpty(devices);
@@ -37,7 +37,7 @@ public class XCDeviceTests
     public async Task GetAnyDevicesWithTimeout(int timeoutSeconds)
     {
         var ts = TimeSpan.FromSeconds(timeoutSeconds);
-        var devices = await _xcdevice.GetDevicesAsync(timeout: ts).ConfigureAwait(false);
+        var devices = await _xcdevice.GetDevicesAsync(timeout: ts);
         
         Assert.NotNull(devices);
         Assert.NotEmpty(devices);
@@ -74,7 +74,7 @@ public class XCDeviceTests
 
             _testOutputHelper.WriteLine(line);
             return Task.CompletedTask;
-        }).ConfigureAwait(false);
+        });
 
         Assert.True(await tcs.Task || wasAtLeastListeningAtAll, "No devices were attached/detached, nor was xcdevice listening for devices.");
     }

@@ -6,7 +6,7 @@ public class XcodeTests
     public async Task LocateXcode()
     {
         var xcode = new AppleDev.Xcode();
-        var path = await xcode.LocateAsync().ConfigureAwait(false);
+        var path = await xcode.LocateAsync();
 
         Assert.NotNull(path);
         Assert.True(path.Exists);
