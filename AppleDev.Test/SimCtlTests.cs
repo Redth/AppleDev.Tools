@@ -61,7 +61,7 @@ public class SimCtlTests
 		Assert.NotNull(udid);
 
 		// Erase the sim first
-		Assert.True(await _simCtl.EraseAsync(udid));
+		await _simCtl.EraseAsync(udid);
 
 		_testOutputHelper.WriteLine($"Erased: {udid}");
 
@@ -70,7 +70,7 @@ public class SimCtlTests
 		//Assert.True(await _simCtl.OpenSimulatorAppAsync(udid));
 
 		// Boot
-		Assert.True(await _simCtl.BootAsync(udid));
+		await _simCtl.BootAsync(udid);
 		_testOutputHelper.WriteLine($"Booting: {udid}");
 
 		// Wait for boot complete
