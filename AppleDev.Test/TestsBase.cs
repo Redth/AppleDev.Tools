@@ -20,10 +20,9 @@ public abstract class TestsBase
 	{
 		get
 		{
-			var codeBase = typeof(TestsBase).Assembly.CodeBase;
-			var uri = new UriBuilder(codeBase);
-			var path = Uri.UnescapeDataString(uri.Path);
-			return Path.GetDirectoryName(path);
+			var location = typeof(TestsBase).Assembly.Location;
+			var path = Path.GetDirectoryName(location);
+			return path ?? string.Empty;
 		}
 	}
 
