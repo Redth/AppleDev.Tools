@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -10,9 +11,9 @@ public class ListSimulatorsCommand : AsyncCommand<ListSimulatorsCommandSettings>
     public override async Task<int> ExecuteAsync(CommandContext context, ListSimulatorsCommandSettings settings, CancellationToken cancellationToken)
     {
         var data = context.GetData();
-        
+
         var simctl = new SimCtl();
-        var sims = await simctl.GetSimulatorsAsync(availableOnly: false, cancellationToken: data.CancellationToken).ConfigureAwait(false);
+        var sims = await simctl.GetSimulatorsAsync(availableOnly: false, includeScreenInfo: settings.IncludeScreenInfo, cancellationToken: data.CancellationToken).ConfigureAwait(false);
 
         if (settings.Available)
             sims = sims.Where(sim => sim.IsAvailable).ToList();
@@ -31,7 +32,8 @@ public class ListSimulatorsCommand : AsyncCommand<ListSimulatorsCommandSettings>
         if (!string.IsNullOrEmpty(settings.ProductFamily))
             sims = sims.Where(sim => sim.DeviceType?.ProductFamily?.Equals(settings.ProductFamily, StringComparison.OrdinalIgnoreCase) == true).ToList();
 
-        OutputHelper.Output(sims, settings.Format, settings.Verbose,
+        var columns = new List<Col>
+        {
             new Col("Name", d => d.Name),
             new Col("UDID", d => d.Udid),
             new Col("State", d => d.State),
@@ -39,8 +41,28 @@ public class ListSimulatorsCommand : AsyncCommand<ListSimulatorsCommandSettings>
             new Col("Runtime", d => d.Runtime?.Name),
             new Col("Runtime Version", d => d.Runtime?.Version, true),
             new Col("Data Path", d => d.DataPath, true),
-            new Col("Log Path", d => d.LogPath, true));
-    
+            new Col("Log Path", d => d.LogPath, true)
+        };
+
+        if (settings.IncludeScreenInfo)
+        {
+            columns.Insert(4, new Col("Screen", d => d.DeviceType?.Screen != null ?
+                $"{d.DeviceType.Screen.Width}x{d.DeviceType.Screen.Height}@{d.DeviceType.Screen.Scale}x" : "N/A"));
+        }
+
+        if (settings.IncludeScreenInfo && settings.Verbose)
+        {
+            columns.Add(new Col("Pixel Size", d => d.DeviceType?.Screen != null ?
+                $"{d.DeviceType.Screen.PixelWidth}x{d.DeviceType.Screen.PixelHeight}" : "N/A", true));
+            columns.Add(new Col("DPI", d => d.DeviceType?.Screen != null ?
+                $"{d.DeviceType.Screen.WidthDPI}x{d.DeviceType.Screen.HeightDPI}" : "N/A", true));
+            columns.Add(new Col("Colorspace", d => d.DeviceType?.Screen?.Colorspace ?? "N/A", true));
+            columns.Add(new Col("Model ID", d => d.DeviceType?.ModelIdentifier, true));
+            columns.Add(new Col("Product Class", d => d.DeviceType?.ProductClass, true));
+        }
+
+        OutputHelper.Output(sims, settings.Format, settings.Verbose, columns.ToArray());
+
         return this.ExitCode();
     }
 }
@@ -81,6 +103,11 @@ public class ListSimulatorsCommandSettings : FormattableOutputCommandSettings
     [Description("Show only simulators with the specified product family (e.g., 'iPhone' or 'Apple TV')")]
     [CommandOption("--product-family")]
     public string? ProductFamily { get; set; }
+
+    [Description("Include device type screen information")]
+    [CommandOption("--include-screen-info")]
+    [DefaultValue(false)]
+    public bool IncludeScreenInfo { get; set; }
 
     public override ValidationResult Validate()
     {

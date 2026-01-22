@@ -1,6 +1,7 @@
-﻿using CliWrap;
+using CliWrap;
 using CliWrap.Builders;
 using CliWrap.Exceptions;
+using Claunia.PropertyList;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -438,16 +439,16 @@ public class SimCtl : XCRun
 		return result.ToString();
 	}
 	
-	public async Task<List<SimCtlDevice>> GetSimulatorsAsync(bool availableOnly = true, CancellationToken cancellationToken = default)
+	public async Task<List<SimCtlDevice>> GetSimulatorsAsync(bool availableOnly = true, bool includeScreenInfo = false, CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();
-		
+
 		var results = new List<SimCtlDevice>();
 
 		// Set is dictionary of runtime keys and device list values
 		var deviceSets = await GetSimulatorDevices(cancellationToken).ConfigureAwait(false);
 
-		var deviceTypes = await GetSimulatorDeviceTypes(cancellationToken);
+		var deviceTypes = await GetSimulatorDeviceTypes(includeScreenInfo, cancellationToken);
 		var runtimes = await GetSimulatorRuntimes(cancellationToken).ConfigureAwait(false);
 
 		foreach (var deviceSet in deviceSets)
@@ -474,10 +475,10 @@ public class SimCtl : XCRun
 		return results;
 	}
 
-	public async Task<List<SimCtlDeviceType>> GetSimulatorGroupsAsync(CancellationToken cancellationToken = default)
+	public async Task<List<SimCtlDeviceType>> GetSimulatorGroupsAsync(bool includeScreenInfo = false, CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();
-		
+
 		var results = new List<SimCtlDeviceType>();
 
 		List<SimCtlDeviceType> deviceTypes = new ();
@@ -485,7 +486,7 @@ public class SimCtl : XCRun
 		Dictionary<string, List<SimCtlDevice>> deviceSets = new ();
 
 		await Task.WhenAll(
-			Task.Run(async () => deviceTypes = await GetSimulatorDeviceTypes(cancellationToken)),
+			Task.Run(async () => deviceTypes = await GetSimulatorDeviceTypes(includeScreenInfo, cancellationToken)),
 			Task.Run(async () => runtimes = await GetSimulatorRuntimes(cancellationToken)),
 			Task.Run(async () => deviceSets = await GetSimulatorDevices(cancellationToken)));
 
@@ -521,10 +522,18 @@ public class SimCtl : XCRun
 		return results;
 	}
 
-	async Task<List<SimCtlDeviceType>> GetSimulatorDeviceTypes(CancellationToken cancellationToken = default)
+	internal async Task<List<SimCtlDeviceType>> GetSimulatorDeviceTypes(bool includeScreenInfo = false, CancellationToken cancellationToken = default)
 	{
 		var deviceTypes = await WrapSimCtl<List<SimCtlDeviceType>>("devicetypes", cancellationToken).ConfigureAwait(false);
-		return deviceTypes ?? new List<SimCtlDeviceType>();
+		deviceTypes ??= new List<SimCtlDeviceType>();
+
+		if (includeScreenInfo)
+		{
+			var tasks = deviceTypes.Select(dt => PopulateScreenInfoAsync(dt, cancellationToken));
+			await Task.WhenAll(tasks).ConfigureAwait(false);
+		}
+
+		return deviceTypes;
 	}
 
 	async Task<List<SimCtlRuntime>> GetSimulatorRuntimes(CancellationToken cancellationToken = default)
@@ -538,6 +547,87 @@ public class SimCtl : XCRun
 	{
 		var devices = await WrapSimCtl<Dictionary<string, List<SimCtlDevice>>>("devices", cancellationToken).ConfigureAwait(false);
 		return devices ?? new Dictionary<string, List<SimCtlDevice>>();
+	}
+
+	async Task PopulateScreenInfoAsync(SimCtlDeviceType deviceType, CancellationToken cancellationToken)
+	{
+		if (string.IsNullOrEmpty(deviceType?.BundlePath))
+			return;
+
+		var profilePath = Path.Combine(deviceType.BundlePath, "Contents", "Resources", "profile.plist");
+		if (!File.Exists(profilePath))
+		{
+			Logger?.LogDebug("Profile.plist not found for device type: {DeviceType}", deviceType.Name);
+			return;
+		}
+
+		try
+		{
+			var plist = PropertyListParser.Parse(profilePath);
+			if (plist is NSDictionary dict)
+			{
+				var screen = new SimCtlScreenInfo();
+
+				var widthNum = dict["mainScreenWidth"] as NSNumber;
+				if (widthNum != null)
+				{
+					screen.Width = (int)widthNum;
+					Logger?.LogDebug("Set screen Width to {Width} for device type {DeviceType}", screen.Width, deviceType.Name);
+				}
+
+				var heightNum = dict["mainScreenHeight"] as NSNumber;
+				if (heightNum != null)
+				{
+					screen.Height = (int)heightNum;
+					Logger?.LogDebug("Set screen Height to {Height} for device type {DeviceType}", screen.Height, deviceType.Name);
+				}
+
+				var scaleNum = dict["mainScreenScale"] as NSNumber;
+				if (scaleNum != null)
+				{
+					screen.Scale = scaleNum.ToDouble();
+					Logger?.LogDebug("Set screen Scale to {Scale} for device type {DeviceType}", screen.Scale, deviceType.Name);
+				}
+
+				var widthDPINum = dict["mainScreenWidthDPI"] as NSNumber;
+				if (widthDPINum != null)
+				{
+					screen.WidthDPI = (int)widthDPINum;
+					Logger?.LogDebug("Set screen WidthDPI to {WidthDPI} for device type {DeviceType}", screen.WidthDPI, deviceType.Name);
+				}
+
+				var heightDPINum = dict["mainScreenHeightDPI"] as NSNumber;
+				if (heightDPINum != null)
+				{
+					screen.HeightDPI = (int)heightDPINum;
+					Logger?.LogDebug("Set screen HeightDPI to {HeightDPI} for device type {DeviceType}", screen.HeightDPI, deviceType.Name);
+				}
+
+				var colorString = dict["mainScreenColorspace"] as NSString;
+				if (colorString != null)
+					screen.Colorspace = colorString.Content;
+
+				var modelIdString = dict["modelIdentifier"] as NSString;
+				if (modelIdString != null)
+					deviceType.ModelIdentifier = modelIdString.Content;
+
+				var productClassString = dict["productClass"] as NSString;
+				if (productClassString != null)
+					deviceType.ProductClass = productClassString.Content;
+
+				deviceType.Screen = screen;
+				Logger?.LogDebug("Screen info populated for device type {DeviceType}: Width={Width}, Height={Height}, Scale={Scale}", deviceType.Name, screen.Width, screen.Height, screen.Scale);
+			}
+			else
+			{
+				Logger?.LogWarning("Profile.plist is not a NSDictionary for device type: {DeviceType}", deviceType.Name);
+			}
+		}
+		catch (Exception ex)
+		{
+			Logger?.LogWarning("Failed to parse profile.plist for device type {DeviceType}: {Error}",
+				deviceType?.Name, ex.Message);
+		}
 	}
 
 	async Task<T?> WrapSimCtl<T>(string cmd, CancellationToken cancellationToken = default)
@@ -1030,6 +1120,33 @@ public class SimCtlRuntime
 	public string? Name { get; set; }
 }
 
+public class SimCtlScreenInfo
+{
+	[JsonPropertyName("width")]
+	public int Width { get; set; }
+
+	[JsonPropertyName("height")]
+	public int Height { get; set; }
+
+	[JsonPropertyName("scale")]
+	public double Scale { get; set; }
+
+	[JsonPropertyName("widthDPI")]
+	public int WidthDPI { get; set; }
+
+	[JsonPropertyName("heightDPI")]
+	public int HeightDPI { get; set; }
+
+	[JsonPropertyName("colorspace")]
+	public string? Colorspace { get; set; }
+
+	[JsonIgnore]
+	public int PixelWidth => (int)(Width * Scale);
+
+	[JsonIgnore]
+	public int PixelHeight => (int)(Height * Scale);
+}
+
 public class SimCtlDeviceType
 {
 	[JsonPropertyName("minRuntimeVersion")]
@@ -1050,8 +1167,17 @@ public class SimCtlDeviceType
 	[JsonPropertyName("productFamily")]
 	public string? ProductFamily { get; set; }
 
+	[JsonPropertyName("modelIdentifier")]
+	public string? ModelIdentifier { get; set; }
+
+	[JsonPropertyName("productClass")]
+	public string? ProductClass { get; set; }
+
 	[JsonPropertyName("devices")]
 	public List<SimCtlDevice> Devices { get; set; } = new List<SimCtlDevice>();
+
+	[JsonIgnore]
+	public SimCtlScreenInfo? Screen { get; set; }
 }
 
 public class SimCtlDevice
