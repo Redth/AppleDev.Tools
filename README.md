@@ -42,7 +42,7 @@ dotnet add package AppleDev
 The `apple` command provides comprehensive tooling for Apple development workflows:
 
 ### Simulator Management
-
+ 
 Manage iOS, watchOS, tvOS, and visionOS simulators.
 
 #### `apple simulator list`
@@ -59,14 +59,237 @@ Lists simulators with powerful filtering options.
 - `--product-family <family>` - Filter by product family (e.g., "iPhone", "Apple TV")
 - `--format <format>` - Output format: table (default), json, or verbose
 - `--verbose` - Show additional details
+- `--include-screen-info` - Include device type screen information (size, scale, DPI, pixel dimensions, model identifier)
 
 **Examples:**
 ```bash
 apple simulator list
 apple simulator list --available --runtime "iOS 18.4"
 apple simulator list --booted --format json
-apple simulator list --product-family "iPhone"
+apple simulator list --product-family iPhone
 ```
+
+#### `apple simulator create <name>`
+Creates a new simulator.
+
+**Arguments:**
+- `<name>` - Name for the new simulator
+
+**Options:**
+- `-d, --device-type <type>` - Device type identifier (required, e.g., "iPhone 15")
+- `-r, --runtime <runtime>` - Runtime identifier (optional, uses newest compatible if omitted)
+
+**Examples:**
+```bash
+apple simulator create "My iPhone 16" --device-type "iPhone 16"
+apple simulator create "Test Device" --device-type "iPhone 15 Pro" --runtime "iOS 17.0"
+```
+
+#### `apple simulator boot <target>`
+Boots a simulator.
+
+**Arguments:**
+- `<target>` - Simulator UDID or name
+
+**Options:**
+- `--wait` - Wait until simulator is fully booted
+- `--timeout <seconds>` - Timeout for wait (default: 120)
+
+**Examples:**
+```bash
+apple simulator boot "My iPhone 16"
+apple simulator boot --wait --timeout 180 ABCD1234-1234-1234-123456789ABC
+```
+
+#### `apple simulator shutdown <target>`
+Shuts down running simulators.
+
+**Arguments:**
+- `<target>` - Simulator UDID, name, "booted", or "all"
+
+**Examples:**
+```bash
+apple simulator shutdown "My iPhone 16"
+apple simulator shutdown booted
+apple simulator shutdown all
+```
+
+#### `apple simulator erase <target>`
+Erases simulator content and settings (factory reset).
+
+**Arguments:**
+- `<target>` - Simulator UDID, name, "booted", or "all"
+
+**Examples:**
+```bash
+apple simulator erase "My iPhone 16"
+apple simulator erase all
+```
+
+#### `apple simulator delete <target>`
+Permanently deletes simulators.
+
+**Arguments:**
+- `<target>` - Simulator UDID, name, "unavailable", or "all"
+
+**Examples:**
+```bash
+apple simulator delete "Old Test Device"
+apple simulator delete unavailable
+apple simulator delete all
+```
+
+#### `apple simulator screenshot <target>`
+Captures a screenshot from a running simulator.
+
+**Arguments:**
+- `<target>` - Simulator UDID or name
+- `-o, --output <path>` - Output file or directory path
+
+**Examples:**
+```bash
+apple simulator screenshot "My iPhone 16"
+apple simulator screenshot --output ~/Desktop/screenshot.png "My iPhone 16"
+```
+
+#### `apple simulator app install <target> <app-path>`
+Installs an app (.app bundle) on a simulator.
+
+**Arguments:**
+- `<target>` - Simulator UDID or name
+- `<app-path>` - Path to .app bundle
+
+**Examples:**
+```bash
+apple simulator app install "My iPhone 16" ~/MyApp.app
+apple simulator app install booted /path/to/MyApp.app
+```
+
+#### `apple simulator app uninstall <target> <bundle-id>`
+Uninstalls an app from a simulator.
+
+**Arguments:**
+- `<target>` - Simulator UDID or name
+- `<bundle-id>` - Bundle identifier of the app
+
+**Examples:**
+```bash
+apple simulator app uninstall "My iPhone 16" com.mycompany.myapp
+apple simulator app uninstall booted com.example.app
+```
+
+#### `apple simulator app launch <target> <bundle-id>`
+Launches an installed app on a simulator.
+
+**Arguments:**
+- `<target>` - Simulator UDID or name
+- `<bundle-id>` - Bundle identifier of the app
+
+**Examples:**
+```bash
+apple simulator app launch "My iPhone 16" com.mycompany.myapp
+apple simulator app launch booted com.example.app
+```
+
+#### `apple simulator app terminate <target> <bundle-id>`
+Terminates a running app on a simulator.
+
+**Arguments:**
+- `<target>` - Simulator UDID or name
+- `<bundle-id>` - Bundle identifier of the app
+
+**Examples:**
+```bash
+apple simulator app terminate "My iPhone 16" com.mycompany.myapp
+apple simulator app terminate booted com.example.app
+```
+
+#### `apple simulator app list <target>`
+Lists all installed apps on a simulator.
+
+**Arguments:**
+- `<target>` - Simulator UDID or name
+- `--format <format>` - Output format: table (default), json, or verbose
+- `--verbose` - Show additional details
+
+**Examples:**
+```bash
+apple simulator app list "My iPhone 16"
+apple simulator app list booted --format json
+apple simulator app list --verbose
+```
+
+#### `apple simulator open [udid]`
+Opens the Simulator.app, optionally to a specific simulator.
+
+**Arguments:**
+- `[udid]` - Optional simulator UDID (if omitted, just opens Simulator.app)
+
+**Examples:**
+```bash
+apple simulator open
+apple simulator open ABCD1234-1234-1234-123456789ABC
+```
+
+#### `apple simulator open-url <target> <url>`
+Opens a URL on a simulator (for deep linking and URL scheme testing).
+
+**Arguments:**
+- `<target>` - Simulator UDID or name
+- `<url>` - URL to open
+
+**Examples:**
+```bash
+apple simulator open-url "My iPhone 16" "myapp://profile/123"
+apple simulator open-url booted "https://example.com"
+```
+
+#### `apple simulator logs <target>`
+Retrieves and displays logs from a simulator.
+
+**Arguments:**
+- `<target>` - Simulator UDID or name
+- `--predicate <predicate>` - NSPredicate filter for logs (e.g., "eventMessage contains 'error'")
+- `--start <timestamp>` - Start timestamp for logs (e.g., "2025-10-30 10:00:00")
+- `--format <format>` - Output format: table (default), json, or verbose
+- `--verbose` - Show additional details
+
+**Examples:**
+```bash
+apple simulator logs "My iPhone 16"
+apple simulator logs booted --predicate "eventMessage contains 'error'"
+apple simulator logs "My iPhone 16" --start "2025-10-30 10:00:00"
+apple simulator logs "My iPhone 16" --format json
+apple simulator logs booted --verbose
+```
+
+#### `apple simulator device-types`
+Lists available simulator device types and runtime versions with optional screen information.
+
+**Options:**
+- `--format <format>` - Output format: table (default), json, or verbose
+- `--verbose` - Show additional details
+- `--include-screen-info` - Include device type screen information (size, scale, DPI, pixel dimensions, model identifier, product class)
+
+**Screen Information:**
+When `--include-screen-info` is specified, the following additional columns are shown:
+- Screen Size - Width and height in points (e.g., "1206x2622")
+- Scale - Display scale factor (e.g., "3" for @3x Retina displays)
+- Pixel Size - Physical pixel dimensions (calculated as width * scale)
+- DPI - Display dots per inch for width and height
+- Model Identifier - Device model code (e.g., "iPhone17,1")
+- Product Class - Product class code (e.g., "D93")
+- Colorspace - Display colorspace (e.g., "DisplayP3" for Vision Pro)
+
+**Examples:**
+```bash
+apple simulator device-types
+apple simulator device-types --include-screen-info
+apple simulator device-types --format json
+apple simulator device-types --verbose
+```
+
+### Device Management
 
 #### `apple simulator create <name>`
 Creates a new simulator.
