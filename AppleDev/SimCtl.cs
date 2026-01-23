@@ -629,7 +629,7 @@ public class SimCtl : XCRun
 		catch (Exception ex)
 		{
 			Logger?.LogWarning("Failed to parse profile.plist for device type {DeviceType}: {Error}",
-				deviceType?.Name, ex.Message);
+				deviceType.Name, ex.Message);
 		}
 	}
 
