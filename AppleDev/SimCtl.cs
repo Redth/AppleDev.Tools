@@ -1183,7 +1183,7 @@ public class SimCtlDeviceType
 	[JsonPropertyName("devices")]
 	public List<SimCtlDevice> Devices { get; set; } = new List<SimCtlDevice>();
 
-	[JsonIgnore]
+	[JsonPropertyName("screen")]
 	public SimCtlScreenInfo? Screen { get; set; }
 }
 
