@@ -181,16 +181,16 @@ public class SimCtlTests
 		Assert.NotNull(deviceTypes);
 		Assert.NotEmpty(deviceTypes);
 
-		var iPhone = deviceTypes.FirstOrDefault(dt => dt.Name?.Contains("iPhone") == true);
-		Assert.NotNull(iPhone);
-		Assert.NotNull(iPhone.Screen);
-		Assert.True(iPhone.Screen.Width > 0);
-		Assert.True(iPhone.Screen.Height > 0);
-		Assert.True(iPhone.Screen.Scale > 0);
-		Assert.True(iPhone.Screen.WidthDPI > 0);
-		Assert.True(iPhone.Screen.HeightDPI > 0);
-		Assert.NotNull(iPhone.ModelIdentifier);
-		Assert.NotNull(iPhone.ProductClass);
+		var iphoneDeviceType = deviceTypes.FirstOrDefault(dt => dt.Name?.Contains("iPhone") == true);
+		Assert.NotNull(iphoneDeviceType);
+		Assert.NotNull(iphoneDeviceType.Screen);
+		Assert.True(iphoneDeviceType.Screen.Width > 0);
+		Assert.True(iphoneDeviceType.Screen.Height > 0);
+		Assert.True(iphoneDeviceType.Screen.Scale > 0);
+		Assert.True(iphoneDeviceType.Screen.WidthDPI > 0);
+		Assert.True(iphoneDeviceType.Screen.HeightDPI > 0);
+		Assert.NotNull(iphoneDeviceType.ModelIdentifier);
+		Assert.NotNull(iphoneDeviceType.ProductClass);
 	}
 
 	[Fact]

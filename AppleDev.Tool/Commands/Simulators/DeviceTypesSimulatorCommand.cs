@@ -42,15 +42,12 @@ public class DeviceTypesSimulatorCommand : AsyncCommand<DeviceTypesSimulatorComm
 				columns.Add(new Col("DPI", d => d.Screen != null ? $"{d.Screen.WidthDPI}x{d.Screen.HeightDPI}" : "N/A"));
 			}
 
-			if (settings.Verbose)
-			{
-				if (settings.IncludeScreenInfo)
-				{
-					columns.Add(new Col("Colorspace", d => d.Screen?.Colorspace ?? "N/A", true));
-					columns.Add(new Col("Model ID", d => d.ModelIdentifier, true));
-					columns.Add(new Col("Product Class", d => d.ProductClass, true));
-				}
-			}
+			if (settings.Verbose && settings.IncludeScreenInfo)
+		{
+			columns.Add(new Col("Colorspace", d => d.Screen?.Colorspace ?? "N/A", true));
+			columns.Add(new Col("Model ID", d => d.ModelIdentifier, true));
+			columns.Add(new Col("Product Class", d => d.ProductClass, true));
+		}
 
 			OutputHelper.Output(deviceTypes, settings.Format, settings.Verbose, columns.ToArray());
 
