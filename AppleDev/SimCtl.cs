@@ -549,16 +549,18 @@ public class SimCtl : XCRun
 		return devices ?? new Dictionary<string, List<SimCtlDevice>>();
 	}
 
-	async Task PopulateScreenInfoAsync(SimCtlDeviceType deviceType, CancellationToken cancellationToken)
+	Task PopulateScreenInfoAsync(SimCtlDeviceType deviceType, CancellationToken cancellationToken)
 	{
 		if (string.IsNullOrEmpty(deviceType?.BundlePath))
-			return;
+			return Task.CompletedTask;
+
+		cancellationToken.ThrowIfCancellationRequested();
 
 		var profilePath = Path.Combine(deviceType.BundlePath, "Contents", "Resources", "profile.plist");
 		if (!File.Exists(profilePath))
 		{
 			Logger?.LogDebug("Profile.plist not found for device type: {DeviceType}", deviceType.Name);
-			return;
+			return Task.CompletedTask;
 		}
 
 		try
@@ -603,26 +605,26 @@ public class SimCtl : XCRun
 					Logger?.LogDebug("Set screen HeightDPI to {HeightDPI} for device type {DeviceType}", screen.HeightDPI, deviceType.Name);
 				}
 
-		if (dict.ContainsKey("mainScreenColorspace"))
-		{
-			var colorspaceObj = dict["mainScreenColorspace"];
-			if (colorspaceObj is NSString colorString)
-				screen.Colorspace = colorString.Content;
-		}
+				if (dict.ContainsKey("mainScreenColorspace"))
+				{
+					var colorspaceObj = dict["mainScreenColorspace"];
+					if (colorspaceObj is NSString colorString)
+						screen.Colorspace = colorString.Content;
+				}
 
-		if (dict.ContainsKey("modelIdentifier"))
-		{
-			var modelIdObj = dict["modelIdentifier"];
-			if (modelIdObj is NSString modelIdString)
-				deviceType.ModelIdentifier = modelIdString.Content;
-		}
+				if (dict.ContainsKey("modelIdentifier"))
+				{
+					var modelIdObj = dict["modelIdentifier"];
+					if (modelIdObj is NSString modelIdString)
+						deviceType.ModelIdentifier = modelIdString.Content;
+				}
 
-		if (dict.ContainsKey("productClass"))
-		{
-			var productClassObj = dict["productClass"];
-			if (productClassObj is NSString productClassString)
-				deviceType.ProductClass = productClassString.Content;
-		}
+				if (dict.ContainsKey("productClass"))
+				{
+					var productClassObj = dict["productClass"];
+					if (productClassObj is NSString productClassString)
+						deviceType.ProductClass = productClassString.Content;
+				}
 
 				deviceType.Screen = screen;
 				Logger?.LogDebug("Screen info populated for device type {DeviceType}: Width={Width}, Height={Height}, Scale={Scale}", deviceType.Name, screen.Width, screen.Height, screen.Scale);
@@ -635,8 +637,10 @@ public class SimCtl : XCRun
 		catch (Exception ex)
 		{
 			Logger?.LogWarning("Failed to parse profile.plist for device type {DeviceType}: {Error}",
-				deviceType?.Name, ex.Message);
+				deviceType.Name, ex.Message);
 		}
+
+		return Task.CompletedTask;
 	}
 
 	async Task<T?> WrapSimCtl<T>(string cmd, CancellationToken cancellationToken = default)
