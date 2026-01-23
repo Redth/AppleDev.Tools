@@ -603,17 +603,26 @@ public class SimCtl : XCRun
 					Logger?.LogDebug("Set screen HeightDPI to {HeightDPI} for device type {DeviceType}", screen.HeightDPI, deviceType.Name);
 				}
 
-				var colorString = dict["mainScreenColorspace"] as NSString;
-				if (colorString != null)
-					screen.Colorspace = colorString.Content;
+		if (dict.ContainsKey("mainScreenColorspace"))
+		{
+			var colorspaceObj = dict["mainScreenColorspace"];
+			if (colorspaceObj is NSString colorString)
+				screen.Colorspace = colorString.Content;
+		}
 
-				var modelIdString = dict["modelIdentifier"] as NSString;
-				if (modelIdString != null)
-					deviceType.ModelIdentifier = modelIdString.Content;
+		if (dict.ContainsKey("modelIdentifier"))
+		{
+			var modelIdObj = dict["modelIdentifier"];
+			if (modelIdObj is NSString modelIdString)
+				deviceType.ModelIdentifier = modelIdString.Content;
+		}
 
-				var productClassString = dict["productClass"] as NSString;
-				if (productClassString != null)
-					deviceType.ProductClass = productClassString.Content;
+		if (dict.ContainsKey("productClass"))
+		{
+			var productClassObj = dict["productClass"];
+			if (productClassObj is NSString productClassString)
+				deviceType.ProductClass = productClassString.Content;
+		}
 
 				deviceType.Screen = screen;
 				Logger?.LogDebug("Screen info populated for device type {DeviceType}: Width={Width}, Height={Height}, Scale={Scale}", deviceType.Name, screen.Width, screen.Height, screen.Scale);

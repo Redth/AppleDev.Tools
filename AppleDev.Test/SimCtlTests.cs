@@ -182,15 +182,15 @@ public class SimCtlTests
 		Assert.NotEmpty(deviceTypes);
 
 		var iPhone = deviceTypes.FirstOrDefault(dt => dt.Name?.Contains("iPhone") == true);
-		Assert.NotNull(iPhone, "iPhone device not found");
-		Assert.NotNull(iPhone.Screen, "Screen info not populated for iPhone");
+		Assert.NotNull(iPhone);
+		Assert.NotNull(iPhone.Screen);
 		Assert.True(iPhone.Screen.Width > 0);
 		Assert.True(iPhone.Screen.Height > 0);
 		Assert.True(iPhone.Screen.Scale > 0);
 		Assert.True(iPhone.Screen.WidthDPI > 0);
 		Assert.True(iPhone.Screen.HeightDPI > 0);
-		Assert.NotNull(iPhone.ModelIdentifier, "ModelIdentifier not set");
-		Assert.NotNull(iPhone.ProductClass, "ProductClass not set");
+		Assert.NotNull(iPhone.ModelIdentifier);
+		Assert.NotNull(iPhone.ProductClass);
 	}
 
 	[Fact]
