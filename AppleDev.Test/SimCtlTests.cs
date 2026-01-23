@@ -1,4 +1,4 @@
-﻿using Xunit.Abstractions;
+using Xunit.Abstractions;
 
 namespace AppleDev.Test;
 
@@ -171,5 +171,42 @@ public class SimCtlTests
 		Assert.NotNull(parsed);
 		Assert.Contains("com.apple.Bridge", parsed.Keys);
 		Assert.Contains("com.apple.webapp", parsed.Keys);
+	}
+
+	[Fact]
+	public async Task GetDeviceTypeScreenInfo()
+	{
+		var deviceTypes = await _simCtl.GetSimulatorDeviceTypes(includeScreenInfo: true);
+
+		Assert.NotNull(deviceTypes);
+		Assert.NotEmpty(deviceTypes);
+
+		var iphoneDeviceType = deviceTypes.FirstOrDefault(dt => dt.Name?.Contains("iPhone") == true);
+		Assert.NotNull(iphoneDeviceType);
+		Assert.NotNull(iphoneDeviceType.Screen);
+		Assert.True(iphoneDeviceType.Screen.Width > 0);
+		Assert.True(iphoneDeviceType.Screen.Height > 0);
+		Assert.True(iphoneDeviceType.Screen.Scale > 0);
+		Assert.True(iphoneDeviceType.Screen.WidthDPI > 0);
+		Assert.True(iphoneDeviceType.Screen.HeightDPI > 0);
+		Assert.NotNull(iphoneDeviceType.ModelIdentifier);
+		Assert.NotNull(iphoneDeviceType.ProductClass);
+	}
+
+	[Fact]
+	public async Task GetSimulatorsWithScreenInfo()
+	{
+		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: true, includeScreenInfo: true);
+
+		Assert.NotNull(sims);
+		Assert.NotEmpty(sims);
+
+		var simWithScreen = sims.FirstOrDefault(s => s.DeviceType?.Screen != null);
+		Assert.NotNull(simWithScreen);
+
+		var screen = simWithScreen.DeviceType!.Screen;
+		Assert.NotNull(screen);
+		Assert.True(screen.PixelWidth > 0);
+		Assert.True(screen.PixelHeight > 0);
 	}
 }
