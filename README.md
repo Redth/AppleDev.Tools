@@ -32,9 +32,16 @@ Install the global CLI tool:
 dotnet tool install -g AppleDev.Tool
 ```
 
-Install the library package:
+Install the library packages:
 ```bash
+# Core Apple development tools
 dotnet add package AppleDev
+
+# App Store Connect API client
+dotnet add package AppStoreConnectClient
+
+# IDB (iOS Development Bridge) client
+dotnet add package AppleDev.FbIdb
 ```
 
 ## CLI Tool Features
