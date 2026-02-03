@@ -47,9 +47,6 @@ partial class AppStoreConnectClient
         List<CapabilitySettingRequest>? settings = null,
         CancellationToken cancellationToken = default)
     {
-        var token = Configuration.AccessToken;
-        http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
         var request = new BundleIdCapabilityCreateRequest
         {
             Data = new BundleIdCapabilityCreateRequestData
@@ -74,22 +71,12 @@ partial class AppStoreConnectClient
             }
         };
 
-        var httpResponse = await http.PostAsJsonAsync(
-            UrlBase.TrimEnd('/') + $"/{BUNDLEIDCAPABILITIES_TYPE}", 
-            request, 
-            JsonSerializerOptions,
+        var response = await PostJsonAsync<BundleIdCapability, BundleIdCapabilityAttributes, BundleIdCapabilityCreateRequest>(
+            BUNDLEIDCAPABILITIES_TYPE,
+            request,
             cancellationToken).ConfigureAwait(false);
 
-        var content = await httpResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        var parsed = JsonSerializer.Deserialize<ItemResponse<BundleIdCapability, BundleIdCapabilityAttributes>>(content, JsonSerializerOptions);
-
-        if (!httpResponse.IsSuccessStatusCode || (parsed?.HasErrors ?? false))
-        {
-            var errors = parsed?.Errors ?? TryParseErrors(content);
-            throw new AppleApiException((int)httpResponse.StatusCode, content, errors);
-        }
-
-        return parsed ?? new ItemResponse<BundleIdCapability, BundleIdCapabilityAttributes>();
+        return response ?? new ItemResponse<BundleIdCapability, BundleIdCapabilityAttributes>();
     }
 
     /// <summary>
@@ -106,9 +93,6 @@ partial class AppStoreConnectClient
         List<CapabilitySettingRequest>? settings = null,
         CancellationToken cancellationToken = default)
     {
-        var token = Configuration.AccessToken;
-        http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
         var request = new BundleIdCapabilityUpdateRequest
         {
             Data = new BundleIdCapabilityUpdateRequestData
@@ -123,22 +107,12 @@ partial class AppStoreConnectClient
             }
         };
 
-        var httpResponse = await http.PatchAsJsonAsync(
-            UrlBase.TrimEnd('/') + $"/{BUNDLEIDCAPABILITIES_TYPE}/{capabilityId}", 
-            request, 
-            JsonSerializerOptions,
+        var response = await PatchJsonAsync<BundleIdCapability, BundleIdCapabilityAttributes, BundleIdCapabilityUpdateRequest>(
+            $"{BUNDLEIDCAPABILITIES_TYPE}/{capabilityId}",
+            request,
             cancellationToken).ConfigureAwait(false);
 
-        var content = await httpResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        var parsed = JsonSerializer.Deserialize<ItemResponse<BundleIdCapability, BundleIdCapabilityAttributes>>(content, JsonSerializerOptions);
-
-        if (!httpResponse.IsSuccessStatusCode || (parsed?.HasErrors ?? false))
-        {
-            var errors = parsed?.Errors ?? TryParseErrors(content);
-            throw new AppleApiException((int)httpResponse.StatusCode, content, errors);
-        }
-
-        return parsed ?? new ItemResponse<BundleIdCapability, BundleIdCapabilityAttributes>();
+        return response ?? new ItemResponse<BundleIdCapability, BundleIdCapabilityAttributes>();
     }
 
     /// <summary>

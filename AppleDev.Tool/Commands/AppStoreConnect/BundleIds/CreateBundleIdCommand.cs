@@ -18,7 +18,7 @@ public class CreateBundleIdCommand : AsyncCommand<CreateBundleIdCommandSettings>
 		{
 			Name = settings.Name,
 			Identifier = settings.Identifier,
-			Platform = settings.Platform,
+			PlatformValue = settings.Platform.ToString(),
 			SeedId = settings.SeedId ?? string.Empty
 		};
 
