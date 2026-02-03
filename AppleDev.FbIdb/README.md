@@ -79,7 +79,7 @@ await client.SetLocationAsync(37.7749, -122.4194); // San Francisco
 - `ListAppsAsync()` - List installed apps
 
 ### Media & Screenshots
-- `ScreenshotAsync()` - Take a screenshot
+- `ScreenshotAsync()` - Take a screenshot (automatically falls back to simctl for simulators)
 - `AddMediaAsync()` - Add photos/videos to the device
 
 ### Interaction (HID)

@@ -151,6 +151,224 @@ app.Configure(config =>
 				.WithExample(new[] { "simulator", "logs", "booted", "--predicate", "\"eventMessage contains 'error'\"" })
 				.WithExample(new[] { "simulator", "logs", "\"My iPhone 16\"", "--start", "\"2025-10-30 10:00:00\"" })
 				.WithExample(new[] { "simulator", "logs", "booted", "--format", "json" });
+
+			// Location commands
+			sim.AddBranch("location", loc =>
+			{
+				loc.AddCommand<SetLocationSimulatorCommand>("set")
+					.WithData(data)
+					.WithDescription("Sets a simulated GPS location on the simulator")
+					.WithExample(new[] { "simulator", "location", "set", "booted", "37.7749", "-122.4194" })
+					.WithExample(new[] { "simulator", "location", "set", "\"My iPhone 16\"", "51.5074", "-0.1278" });
+
+				loc.AddCommand<ClearLocationSimulatorCommand>("clear")
+					.WithData(data)
+					.WithDescription("Clears the simulated GPS location")
+					.WithExample(new[] { "simulator", "location", "clear", "booted" });
+			});
+
+			// Push notification command
+			sim.AddCommand<PushSimulatorCommand>("push")
+				.WithData(data)
+				.WithDescription("Sends a simulated push notification to an app")
+				.WithExample(new[] { "simulator", "push", "booted", "com.example.app", "--title", "\"Hello\"", "--body", "\"World\"" })
+				.WithExample(new[] { "simulator", "push", "booted", "com.example.app", "--payload", "notification.json" })
+				.WithExample(new[] { "simulator", "push", "booted", "com.example.app", "--json", "\"{\\\"aps\\\":{\\\"alert\\\":\\\"Hello\\\"}}\"" });
+
+			// Privacy commands
+			sim.AddBranch("privacy", priv =>
+			{
+				priv.AddCommand<GrantPrivacySimulatorCommand>("grant")
+					.WithData(data)
+					.WithDescription("Grants a privacy permission to an app")
+					.WithExample(new[] { "simulator", "privacy", "grant", "booted", "photos", "com.example.app" })
+					.WithExample(new[] { "simulator", "privacy", "grant", "booted", "camera", "com.example.app" })
+					.WithExample(new[] { "simulator", "privacy", "grant", "booted", "location", "com.example.app" });
+
+				priv.AddCommand<RevokePrivacySimulatorCommand>("revoke")
+					.WithData(data)
+					.WithDescription("Revokes a privacy permission from an app")
+					.WithExample(new[] { "simulator", "privacy", "revoke", "booted", "photos", "com.example.app" });
+
+				priv.AddCommand<ResetPrivacySimulatorCommand>("reset")
+					.WithData(data)
+					.WithDescription("Resets a privacy permission (prompts user again)")
+					.WithExample(new[] { "simulator", "privacy", "reset", "booted", "all" })
+					.WithExample(new[] { "simulator", "privacy", "reset", "booted", "photos", "com.example.app" });
+			});
+
+			// Keychain command
+			sim.AddCommand<ResetKeychainSimulatorCommand>("reset-keychain")
+				.WithData(data)
+				.WithDescription("Resets the simulator's keychain")
+				.WithExample(new[] { "simulator", "reset-keychain", "booted" });
+
+			// Status bar commands
+			sim.AddBranch("status-bar", sb =>
+			{
+				sb.AddCommand<SetStatusBarSimulatorCommand>("set")
+					.WithData(data)
+					.WithDescription("Overrides status bar values (time, battery, signal, etc.)")
+					.WithExample(new[] { "simulator", "status-bar", "set", "booted", "--time", "9:41" })
+					.WithExample(new[] { "simulator", "status-bar", "set", "booted", "--battery-level", "100", "--battery-state", "charged" })
+					.WithExample(new[] { "simulator", "status-bar", "set", "booted", "--cellular-bars", "4", "--wifi-bars", "3" });
+
+				sb.AddCommand<ClearStatusBarSimulatorCommand>("clear")
+					.WithData(data)
+					.WithDescription("Clears status bar overrides")
+					.WithExample(new[] { "simulator", "status-bar", "clear", "booted" });
+			});
+
+			// Clipboard commands
+			sim.AddBranch("clipboard", cb =>
+			{
+				cb.AddCommand<CopyClipboardSimulatorCommand>("copy")
+					.WithData(data)
+					.WithDescription("Copies text to the simulator's clipboard")
+					.WithExample(new[] { "simulator", "clipboard", "copy", "booted", "\"Hello, World!\"" });
+
+				cb.AddCommand<PasteClipboardSimulatorCommand>("paste")
+					.WithData(data)
+					.WithDescription("Gets text from the simulator's clipboard")
+					.WithExample(new[] { "simulator", "clipboard", "paste", "booted" })
+					.WithExample(new[] { "simulator", "clipboard", "paste", "booted", "--raw" });
+			});
+
+			// IDB-specific commands (require idb_companion)
+			sim.AddBranch("idb", idb =>
+			{
+				idb.AddCommand<IdbMemoryWarningCommand>("memory-warning")
+					.WithData(data)
+					.WithDescription("Simulates a memory warning (requires idb_companion)")
+					.WithExample(new[] { "simulator", "idb", "memory-warning", "<udid>" });
+
+				idb.AddCommand<IdbTapCommand>("tap")
+					.WithData(data)
+					.WithDescription("Taps at screen coordinates (requires idb_companion)")
+					.WithExample(new[] { "simulator", "idb", "tap", "<udid>", "100", "200" })
+					.WithExample(new[] { "simulator", "idb", "tap", "<udid>", "100", "200", "--duration", "500" });
+
+				idb.AddCommand<IdbSwipeCommand>("swipe")
+					.WithData(data)
+					.WithDescription("Performs a swipe gesture (requires idb_companion)")
+					.WithExample(new[] { "simulator", "idb", "swipe", "<udid>", "100", "500", "100", "100" })
+					.WithExample(new[] { "simulator", "idb", "swipe", "<udid>", "100", "500", "100", "100", "--duration", "300" });
+
+				idb.AddCommand<IdbKeyCommand>("key")
+					.WithData(data)
+					.WithDescription("Sends keyboard input (requires idb_companion)")
+					.WithExample(new[] { "simulator", "idb", "key", "<udid>", "--text", "Hello" })
+					.WithExample(new[] { "simulator", "idb", "key", "<udid>", "--key-code", "40" });
+
+				idb.AddCommand<IdbButtonCommand>("button")
+					.WithData(data)
+					.WithDescription("Presses a hardware button (requires idb_companion)")
+					.WithExample(new[] { "simulator", "idb", "button", "<udid>", "home" })
+					.WithExample(new[] { "simulator", "idb", "button", "<udid>", "lock" });
+
+				idb.AddCommand<IdbFocusCommand>("focus")
+					.WithData(data)
+					.WithDescription("Focuses the simulator window (requires idb_companion)")
+					.WithExample(new[] { "simulator", "idb", "focus", "<udid>" });
+
+				idb.AddCommand<IdbKeyboardCommand>("keyboard")
+					.WithData(data)
+					.WithDescription("Toggles hardware keyboard (requires idb_companion)")
+					.WithExample(new[] { "simulator", "idb", "keyboard", "<udid>", "--enable" })
+					.WithExample(new[] { "simulator", "idb", "keyboard", "<udid>", "--disable" });
+
+				idb.AddCommand<IdbAccessibilityCommand>("accessibility")
+					.WithData(data)
+					.WithDescription("Gets accessibility info (requires idb_companion)")
+					.WithExample(new[] { "simulator", "idb", "accessibility", "<udid>" })
+					.WithExample(new[] { "simulator", "idb", "accessibility", "<udid>", "-x", "100", "-y", "200" });
+
+				// File operations
+				idb.AddBranch("files", files =>
+				{
+					files.AddCommand<IdbFilesListCommand>("list")
+						.WithData(data)
+						.WithDescription("Lists files in app container")
+						.WithExample(new[] { "simulator", "idb", "files", "list", "<udid>", "com.example.app" })
+						.WithExample(new[] { "simulator", "idb", "files", "list", "<udid>", "com.example.app", "/Documents" });
+
+					files.AddCommand<IdbFilesPushCommand>("push")
+						.WithData(data)
+						.WithDescription("Pushes file to app container")
+						.WithExample(new[] { "simulator", "idb", "files", "push", "<udid>", "com.example.app", "local.txt", "/Documents/remote.txt" });
+
+					files.AddCommand<IdbFilesPullCommand>("pull")
+						.WithData(data)
+						.WithDescription("Pulls file from app container")
+						.WithExample(new[] { "simulator", "idb", "files", "pull", "<udid>", "com.example.app", "/Documents/data.db", "local.db" });
+
+					files.AddCommand<IdbFilesMkdirCommand>("mkdir")
+						.WithData(data)
+						.WithDescription("Creates directory in app container")
+						.WithExample(new[] { "simulator", "idb", "files", "mkdir", "<udid>", "com.example.app", "/Documents/cache" });
+
+					files.AddCommand<IdbFilesRemoveCommand>("rm")
+						.WithData(data)
+						.WithDescription("Removes file/directory from app container")
+						.WithExample(new[] { "simulator", "idb", "files", "rm", "<udid>", "com.example.app", "/Documents/old.txt" });
+				});
+
+				// Crash log operations
+				idb.AddBranch("crashes", crashes =>
+				{
+					crashes.AddCommand<IdbCrashesListCommand>("list")
+						.WithData(data)
+						.WithDescription("Lists crash logs")
+						.WithExample(new[] { "simulator", "idb", "crashes", "list", "<udid>" })
+						.WithExample(new[] { "simulator", "idb", "crashes", "list", "<udid>", "--query", "MyApp" });
+
+					crashes.AddCommand<IdbCrashesGetCommand>("get")
+						.WithData(data)
+						.WithDescription("Gets crash log content")
+						.WithExample(new[] { "simulator", "idb", "crashes", "get", "<udid>", "crash_name.ips" })
+						.WithExample(new[] { "simulator", "idb", "crashes", "get", "<udid>", "crash_name.ips", "-o", "crash.txt" });
+
+					crashes.AddCommand<IdbCrashesDeleteCommand>("delete")
+						.WithData(data)
+						.WithDescription("Deletes crash logs")
+						.WithExample(new[] { "simulator", "idb", "crashes", "delete", "<udid>", "--all" })
+						.WithExample(new[] { "simulator", "idb", "crashes", "delete", "<udid>", "--query", "MyApp" });
+				});
+
+				// Test operations
+				idb.AddBranch("tests", tests =>
+				{
+					tests.AddCommand<IdbTestsListCommand>("list")
+						.WithData(data)
+						.WithDescription("Lists tests in xctest bundle")
+						.WithExample(new[] { "simulator", "idb", "tests", "list", "<udid>", "MyTests.xctest" });
+
+					tests.AddCommand<IdbTestsRunCommand>("run")
+						.WithData(data)
+						.WithDescription("Runs tests from xctest bundle")
+						.WithExample(new[] { "simulator", "idb", "tests", "run", "<udid>", "MyTests.xctest" })
+						.WithExample(new[] { "simulator", "idb", "tests", "run", "<udid>", "MyTests.xctest", "-f", "MyTestClass/testMethod" });
+				});
+
+				// Settings operations
+				idb.AddBranch("settings", settings =>
+				{
+					settings.AddCommand<IdbSettingsListCommand>("list")
+						.WithData(data)
+						.WithDescription("Lists device settings")
+						.WithExample(new[] { "simulator", "idb", "settings", "list", "<udid>" });
+
+					settings.AddCommand<IdbSettingsGetCommand>("get")
+						.WithData(data)
+						.WithDescription("Gets a device setting")
+						.WithExample(new[] { "simulator", "idb", "settings", "get", "<udid>", "locale" });
+
+					settings.AddCommand<IdbSettingsSetCommand>("set")
+						.WithData(data)
+						.WithDescription("Sets a device setting")
+						.WithExample(new[] { "simulator", "idb", "settings", "set", "<udid>", "locale", "en_US" });
+				});
+			});
 		});
 
 		config.AddBranch("device", devices =>
@@ -284,7 +502,9 @@ app.Configure(config =>
 			.WithData(data)
 			.WithDescription("Creates a new bundle ID in App Store Connect")
 			.WithExample(new[] { "bundleids", "create", "My App", "com.mycompany.myapp", "IOS" })
-			.WithExample(new[] { "bundleids", "create", "Mac App", "com.mycompany.macapp", "MAC_OS" });
+			.WithExample(new[] { "bundleids", "create", "My App", "com.mycompany.myapp", "UNIVERSAL" })
+			.WithExample(new[] { "bundleids", "create", "Wildcard App", "com.mycompany.*", "IOS" })
+			.WithExample(new[] { "bundleids", "create", "Mac App", "com.mycompany.macapp", "MAC_OS", "--seed-id", "ABCD1234" });
 		
 		bundleids.AddCommand<UpdateBundleIdCommand>("update")
 			.WithData(data)
@@ -295,6 +515,27 @@ app.Configure(config =>
 			.WithData(data)
 			.WithDescription("Deletes a bundle ID from App Store Connect")
 			.WithExample(new[] { "bundleids", "delete", "ABC123" });
+	});
+
+	config.AddBranch("capabilities", capabilities =>
+	{
+		capabilities.AddCommand<ListBundleIdCapabilitiesCommand>("list")
+			.WithData(data)
+			.WithDescription("Lists capabilities enabled for a bundle ID")
+			.WithExample(new[] { "capabilities", "list", "BUNDLEID123" })
+			.WithExample(new[] { "capabilities", "list", "BUNDLEID123", "--format", "json" });
+		
+		capabilities.AddCommand<EnableBundleIdCapabilityCommand>("enable")
+			.WithData(data)
+			.WithDescription("Enables a capability for a bundle ID")
+			.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "PUSH_NOTIFICATIONS" })
+			.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "ICLOUD" })
+			.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "GAME_CENTER" });
+		
+		capabilities.AddCommand<DisableBundleIdCapabilityCommand>("disable")
+			.WithData(data)
+			.WithDescription("Disables (removes) a capability from a bundle ID")
+			.WithExample(new[] { "capabilities", "disable", "CAPID456" });
 	});
 
 	config.AddBranch("certificate", certificates =>

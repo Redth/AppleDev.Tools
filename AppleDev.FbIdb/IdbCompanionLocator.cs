@@ -175,4 +175,28 @@ public class IdbCompanionLocator
 			return false;
 		}
 	}
+
+	/// <summary>
+	/// Attempts to find the idb_companion binary.
+	/// </summary>
+	/// <param name="path">The path to the binary if found.</param>
+	/// <returns>True if found, false otherwise.</returns>
+	public static bool TryFindIdbCompanion(out string? path)
+	{
+		path = null;
+
+		if (!OperatingSystem.IsMacOS())
+			return false;
+
+		var locator = new IdbCompanionLocator();
+		try
+		{
+			path = locator.Locate();
+			return true;
+		}
+		catch
+		{
+			return false;
+		}
+	}
 }

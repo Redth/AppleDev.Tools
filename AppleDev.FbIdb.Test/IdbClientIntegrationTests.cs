@@ -47,7 +47,7 @@ public class SimulatorFixture : IAsyncLifetime
 		var availableSim = simulators
 			.Where(s => s.IsAvailable == true)
 			.Where(s => s.DeviceType?.ProductFamily?.Contains("iPhone") == true)
-			.OrderByDescending(s => s.Runtime) // Prefer newer iOS versions
+			.OrderByDescending(s => s.Runtime?.Version ?? string.Empty) // Prefer newer iOS versions
 			.FirstOrDefault();
 
 		if (availableSim == null)
@@ -205,7 +205,7 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 		Assert.NotEmpty(apps);
 	}
 
-	[SkippableFact(Skip = "Known compatibility issue between .NET gRPC client and Swift gRPC server for large responses")]
+	[SkippableFact]
 	public async Task ScreenshotAsync_TakesScreenshot()
 	{
 		SkipIfNotReady();

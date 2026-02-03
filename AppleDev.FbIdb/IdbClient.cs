@@ -424,18 +424,74 @@ public sealed class IdbClient : IIdbClient
 	#region Media & Screenshots
 
 	/// <inheritdoc />
+	/// <remarks>
+	/// Due to a known HTTP/2 compatibility issue between .NET's gRPC client and Swift gRPC servers,
+	/// this method uses xcrun simctl as a fallback when the gRPC call fails for simulators.
+	/// </remarks>
 	public async Task<Screenshot> ScreenshotAsync(CancellationToken cancellationToken = default)
 	{
 		await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
-		var request = new ScreenshotRequest();
-		var response = await GetClient().screenshotAsync(request, GetCallOptions(cancellationToken)).ConfigureAwait(false);
-
-		return new Screenshot
+		try
 		{
-			ImageData = response.ImageData.ToByteArray(),
-			ImageFormat = response.ImageFormat
-		};
+			var request = new ScreenshotRequest();
+			var response = await GetClient().screenshotAsync(request, GetCallOptions(cancellationToken)).ConfigureAwait(false);
+
+			return new Screenshot
+			{
+				ImageData = response.ImageData.ToByteArray(),
+				ImageFormat = response.ImageFormat
+			};
+		}
+		catch (Grpc.Core.RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.Internal && 
+			ex.Message.Contains("PROTOCOL_ERROR"))
+		{
+			// Fallback to simctl for simulators due to .NET/Swift gRPC HTTP/2 incompatibility
+			_logger.LogDebug("gRPC screenshot failed with PROTOCOL_ERROR, falling back to simctl");
+			return await ScreenshotViaSimctlAsync(cancellationToken).ConfigureAwait(false);
+		}
+	}
+
+	private async Task<Screenshot> ScreenshotViaSimctlAsync(CancellationToken cancellationToken)
+	{
+		if (string.IsNullOrEmpty(TargetUdid))
+			throw new InvalidOperationException("Target UDID is not set");
+
+		var tempFile = Path.Combine(Path.GetTempPath(), $"idb_screenshot_{Guid.NewGuid():N}.png");
+		try
+		{
+			var startInfo = new System.Diagnostics.ProcessStartInfo
+			{
+				FileName = "xcrun",
+				ArgumentList = { "simctl", "io", TargetUdid, "screenshot", tempFile },
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				UseShellExecute = false
+			};
+
+			using var process = System.Diagnostics.Process.Start(startInfo);
+			if (process == null)
+				throw new InvalidOperationException("Failed to start simctl process");
+
+			await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+
+			if (process.ExitCode != 0)
+			{
+				var stderr = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+				throw new InvalidOperationException($"simctl screenshot failed: {stderr}");
+			}
+
+			var imageData = await File.ReadAllBytesAsync(tempFile, cancellationToken).ConfigureAwait(false);
+			return new Screenshot
+			{
+				ImageData = imageData,
+				ImageFormat = "png"
+			};
+		}
+		finally
+		{
+			try { File.Delete(tempFile); } catch { }
+		}
 	}
 
 	/// <inheritdoc />
