@@ -73,13 +73,11 @@ public class IdbCompanionLocator
 			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".idb", "idb_companion")
 		};
 
-		foreach (var path in commonPaths)
+		var foundPath = commonPaths.Where(File.Exists).FirstOrDefault();
+		if (foundPath is not null)
 		{
-			if (File.Exists(path))
-			{
-				_logger.LogDebug("Found companion at common path: {Path}", path);
-				return path;
-			}
+			_logger.LogDebug("Found companion at common path: {Path}", foundPath);
+			return foundPath;
 		}
 
 		throw new FileNotFoundException(

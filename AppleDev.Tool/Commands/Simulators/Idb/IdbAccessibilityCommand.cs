@@ -77,7 +77,7 @@ public class IdbAccessibilityCommandSettings : CommandSettings
 
 		// Both X and Y must be provided together, or neither
 		if ((X.HasValue && !Y.HasValue) || (!X.HasValue && Y.HasValue))
-			return ValidationResult.Error("Both --x and --y must be provided together, or neither");
+			return ValidationResult.Error("Both --point-x and --point-y must be provided together, or neither");
 
 		return ValidationResult.Success();
 	}

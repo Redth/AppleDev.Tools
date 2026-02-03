@@ -3,7 +3,14 @@ set -e
 
 # Script to update idb_companion binary from Facebook's IDB GitHub releases
 # Usage: ./scripts/update-idb-companion.sh [version]
-# If no version specified, fetches the latest release
+# 
+# SECURITY NOTICE:
+# - For production use, always specify a version explicitly (e.g., ./update-idb-companion.sh v1.2.3)
+# - Avoid using "latest" to prevent supply-chain attacks if the upstream release is compromised
+# - The script will verify checksums when available to ensure binary integrity
+# - Pin specific versions in CI/CD pipelines for reproducible builds
+#
+# If no version specified, fetches the latest release (not recommended for production)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -52,6 +59,34 @@ trap "rm -rf $TEMP_DIR" EXIT
 
 # Download the tarball
 curl -sL "$DOWNLOAD_URL" -o "$TEMP_DIR/idb-companion.tar.gz"
+
+# Verify checksum if available
+CHECKSUM_URL=$(echo "$RELEASE_INFO" | grep -o '"browser_download_url": "[^"]*checksums\.txt"' | head -1 | cut -d'"' -f4)
+if [ -n "$CHECKSUM_URL" ]; then
+	echo "🔐 Verifying checksum..."
+	curl -sL "$CHECKSUM_URL" -o "$TEMP_DIR/checksums.txt"
+	
+	# Extract checksum for the companion tarball
+	TARBALL_NAME=$(basename "$DOWNLOAD_URL")
+	EXPECTED_CHECKSUM=$(grep "$TARBALL_NAME" "$TEMP_DIR/checksums.txt" | awk '{print $1}')
+	
+	if [ -n "$EXPECTED_CHECKSUM" ]; then
+		ACTUAL_CHECKSUM=$(shasum -a 256 "$TEMP_DIR/idb-companion.tar.gz" | awk '{print $1}')
+		
+		if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]; then
+			echo "❌ Checksum verification failed!"
+			echo "   Expected: $EXPECTED_CHECKSUM"
+			echo "   Actual:   $ACTUAL_CHECKSUM"
+			exit 1
+		fi
+		echo "✅ Checksum verified successfully"
+	else
+		echo "⚠️  Warning: Checksum not found in checksums.txt for $TARBALL_NAME"
+	fi
+else
+	echo "⚠️  Warning: No checksums.txt file available for release $VERSION"
+	echo "   Proceeding without checksum verification (not recommended for production)"
+fi
 
 echo "📂 Extracting..."
 

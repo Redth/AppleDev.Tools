@@ -45,7 +45,7 @@ public class SimulatorFixture : IAsyncLifetime
 
 		// Find an available iPhone simulator to boot
 		var availableSim = simulators
-			.Where(s => s.IsAvailable == true)
+			.Where(s => s.IsAvailable)
 			.Where(s => s.DeviceType?.ProductFamily?.Contains("iPhone") == true)
 			.OrderByDescending(s => s.Runtime?.Version ?? string.Empty) // Prefer newer iOS versions
 			.FirstOrDefault();

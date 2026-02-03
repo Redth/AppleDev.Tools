@@ -490,7 +490,14 @@ public sealed class IdbClient : IIdbClient
 		}
 		finally
 		{
-			try { File.Delete(tempFile); } catch { }
+			try
+			{
+				File.Delete(tempFile);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogWarning(ex, "Failed to delete temporary screenshot file {TempFile}", tempFile);
+			}
 		}
 	}
 

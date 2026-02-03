@@ -246,6 +246,9 @@ public sealed partial class IdbCompanionProcess : IAsyncDisposable, IDisposable
 					_process.Kill(entireProcessTree: true);
 					_process.WaitForExit((int)_options.ShutdownTimeout.TotalMilliseconds);
 				}
+				
+				_process.OutputDataReceived -= OnOutputDataReceived;
+				_process.ErrorDataReceived -= OnErrorDataReceived;
 			}
 			catch (Exception ex)
 			{
@@ -253,8 +256,6 @@ public sealed partial class IdbCompanionProcess : IAsyncDisposable, IDisposable
 			}
 			finally
 			{
-				_process.OutputDataReceived -= OnOutputDataReceived;
-				_process.ErrorDataReceived -= OnErrorDataReceived;
 				_process.Dispose();
 				_process = null;
 			}
