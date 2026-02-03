@@ -93,6 +93,22 @@ public partial class AppStoreConnectClient
 		return parsed;
 	}
 
+	async Task<ItemResponse<TItem, TAttributes>?> PatchJsonAsync<TItem, TAttributes, TRequest>(string path, TRequest request, CancellationToken cancellationToken = default) where TItem : Item<TAttributes> where TAttributes : class
+	{
+		var token = Configuration.AccessToken;
+		http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+		var httpResponse = await http.PatchAsJsonAsync(UrlBase.TrimEnd('/') + $"/{path}", request, JsonSerializerOptions, cancellationToken).ConfigureAwait(false);
+		var content = await httpResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+		var parsed = System.Text.Json.JsonSerializer.Deserialize<ItemResponse<TItem, TAttributes>>(content, JsonSerializerOptions);
+		if (!httpResponse.IsSuccessStatusCode || (parsed?.HasErrors ?? false))
+		{
+			var errors = parsed?.Errors ?? TryParseErrors(content);
+			throw new AppleApiException((int)httpResponse.StatusCode, content, errors);
+		}
+		return parsed;
+	}
+
 	async Task<ItemResponse<TItem, TAttributes>?> PatchAsync<TItem, TAttributes>(string path, TAttributes attributes, CancellationToken cancellationToken = default) where TItem : Item<TAttributes> where TAttributes : class
 	{
 		var token = Configuration.AccessToken;
