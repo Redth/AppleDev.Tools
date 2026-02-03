@@ -486,5 +486,112 @@ namespace AppleDev.Test
 		Assert.Single(filteredBundleIds.Data);
 		Assert.Equal(bundleId, filteredBundleIds.Data.First().Id);
 	}
+
+	// ===== BUNDLE ID CAPABILITY TESTS =====
+
+	[SkippableFact]
+	public async Task ListBundleIdCapabilities()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		// Get a bundle ID first
+		var bundleIds = await Client!.ListBundleIdsAsync(limit: 1);
+		Skip.If(!bundleIds.Data.Any(), "No bundle IDs available for capability test");
+
+		var bundleIdResourceId = bundleIds.Data.First().Id;
+
+		// List capabilities for that bundle ID
+		var capabilities = await Client!.ListBundleIdCapabilitiesAsync(bundleIdResourceId);
+		Assert.NotNull(capabilities);
+		Assert.NotNull(capabilities.Data);
+		// Note: A bundle ID may have no capabilities, so we don't assert NotEmpty
+	}
+
+	[SkippableFact]
+	public async Task ListBundleIdCapabilities_ReturnsCapabilityDetails()
+	{
+		Skip.IfNot(HasCredentials, "App Store Connect credentials not configured");
+
+		// Get a bundle ID first
+		var bundleIds = await Client!.ListBundleIdsAsync(limit: 1);
+		Skip.If(!bundleIds.Data.Any(), "No bundle IDs available for capability test");
+
+		var bundleIdResourceId = bundleIds.Data.First().Id;
+
+		// List capabilities
+		var capabilities = await Client!.ListBundleIdCapabilitiesAsync(bundleIdResourceId);
+		Assert.NotNull(capabilities);
+		Assert.NotNull(capabilities.Data);
+		
+		// If there are capabilities, verify they have the expected structure
+		if (capabilities.Data.Any())
+		{
+			var capability = capabilities.Data.First();
+			Assert.NotNull(capability.Id);
+			Assert.NotNull(capability.Type);
+			Assert.Equal(BundleIdCapability.TYPE, capability.Type);
+			Assert.NotNull(capability.Attributes);
+			Assert.NotEmpty(capability.Attributes.CapabilityTypeValue);
+		}
+	}
+
+	[Fact]
+	public void GetAvailableCapabilityTypes_ReturnsAllTypes()
+	{
+		var types = AppStoreConnectClient.GetAvailableCapabilityTypes();
+		Assert.NotNull(types);
+		Assert.NotEmpty(types);
+		Assert.DoesNotContain(CapabilityType.Unknown, types);
+		Assert.Contains(CapabilityType.PUSH_NOTIFICATIONS, types);
+		Assert.Contains(CapabilityType.ICLOUD, types);
+		Assert.Contains(CapabilityType.GAME_CENTER, types);
+	}
+
+	[Fact]
+	public void CapabilityType_EnumHasExpectedValues()
+	{
+		// Verify common capability types exist
+		Assert.True(Enum.IsDefined(typeof(CapabilityType), CapabilityType.PUSH_NOTIFICATIONS));
+		Assert.True(Enum.IsDefined(typeof(CapabilityType), CapabilityType.ICLOUD));
+		Assert.True(Enum.IsDefined(typeof(CapabilityType), CapabilityType.GAME_CENTER));
+		Assert.True(Enum.IsDefined(typeof(CapabilityType), CapabilityType.IN_APP_PURCHASE));
+		Assert.True(Enum.IsDefined(typeof(CapabilityType), CapabilityType.APP_GROUPS));
+		Assert.True(Enum.IsDefined(typeof(CapabilityType), CapabilityType.APPLE_PAY));
+		Assert.True(Enum.IsDefined(typeof(CapabilityType), CapabilityType.ASSOCIATED_DOMAINS));
+		Assert.True(Enum.IsDefined(typeof(CapabilityType), CapabilityType.HEALTHKIT));
+		Assert.True(Enum.IsDefined(typeof(CapabilityType), CapabilityType.HOMEKIT));
+		Assert.True(Enum.IsDefined(typeof(CapabilityType), CapabilityType.SIRIKIT));
+	}
+
+	[Fact]
+	public void BundleIdCapabilityAttributes_CapabilityTypeParsesCorrectly()
+	{
+		var attrs = new BundleIdCapabilityAttributes
+		{
+			CapabilityTypeValue = "PUSH_NOTIFICATIONS"
+		};
+
+		Assert.Equal(CapabilityType.PUSH_NOTIFICATIONS, attrs.CapabilityType);
+	}
+
+	[Fact]
+	public void BundleIdCapabilityAttributes_UnknownCapabilityType_ReturnsUnknown()
+	{
+		var attrs = new BundleIdCapabilityAttributes
+		{
+			CapabilityTypeValue = "SOME_FUTURE_CAPABILITY"
+		};
+
+		Assert.Equal(CapabilityType.Unknown, attrs.CapabilityType);
+	}
+
+	[Fact]
+	public void BundleIdCapabilityAttributes_SetCapabilityType_UpdatesValue()
+	{
+		var attrs = new BundleIdCapabilityAttributes();
+		attrs.CapabilityType = CapabilityType.GAME_CENTER;
+
+		Assert.Equal("GAME_CENTER", attrs.CapabilityTypeValue);
+	}
 	}
 }

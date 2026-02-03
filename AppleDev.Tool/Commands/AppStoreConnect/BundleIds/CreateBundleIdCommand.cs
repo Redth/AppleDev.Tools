@@ -18,7 +18,8 @@ public class CreateBundleIdCommand : AsyncCommand<CreateBundleIdCommandSettings>
 		{
 			Name = settings.Name,
 			Identifier = settings.Identifier,
-			Platform = settings.Platform
+			Platform = settings.Platform,
+			SeedId = settings.SeedId ?? string.Empty
 		};
 
 		var response = await appStoreConnect.CreateBundleIdAsync(
@@ -52,10 +53,14 @@ public class CreateBundleIdCommandSettings : AppStoreConnectApiCommandSettings
 	[CommandArgument(1, "<identifier>")]
 	public string Identifier { get; set; } = string.Empty;
 
-	[Description("Platform (IOS, MAC_OS)")]
+	[Description("Platform (IOS, MAC_OS, UNIVERSAL)")]
 	[CommandArgument(2, "<platform>")]
 	[TypeConverter(typeof(StringEnumTypeConverter<Platform>))]
 	public Platform Platform { get; set; } = Platform.IOS;
+
+	[Description("App ID Prefix / Seed ID (optional, defaults to Team ID)")]
+	[CommandOption("--seed-id <seedid>")]
+	public string? SeedId { get; set; }
 
 	public override ValidationResult Validate()
 	{
@@ -64,6 +69,10 @@ public class CreateBundleIdCommandSettings : AppStoreConnectApiCommandSettings
 		
 		if (string.IsNullOrWhiteSpace(Identifier))
 			return ValidationResult.Error("Bundle identifier is required");
+
+		// Validate identifier format
+		if (Identifier.Contains("*") && !Identifier.EndsWith(".*"))
+			return ValidationResult.Error("Wildcard bundle identifiers must end with '.*' (e.g., com.example.*)");
 		
 		return base.Validate();
 	}
