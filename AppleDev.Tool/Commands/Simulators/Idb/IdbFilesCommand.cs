@@ -35,7 +35,7 @@ public class IdbFilesListCommand : AsyncCommand<IdbFilesListCommandSettings>
 			{
 				foreach (var file in files)
 				{
-					AnsiConsole.WriteLine(file.Path ?? file.ToString() ?? "");
+					AnsiConsole.WriteLine(file.Path ?? "(unknown)");
 				}
 			}
 

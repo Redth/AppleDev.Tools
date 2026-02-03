@@ -948,7 +948,8 @@ public class SimCtl : XCRun
 			args.Add("location");
 			args.Add(target);
 			args.Add("set");
-			args.Add($"{latitude},{longitude}");
+			args.Add(latitude.ToString(System.Globalization.CultureInfo.InvariantCulture));
+			args.Add(longitude.ToString(System.Globalization.CultureInfo.InvariantCulture));
 		}, cancellationToken);
 
 	/// <summary>

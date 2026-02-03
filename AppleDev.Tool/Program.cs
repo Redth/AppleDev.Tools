@@ -245,20 +245,17 @@ app.Configure(config =>
 				idb.AddCommand<IdbTapCommand>("tap")
 					.WithData(data)
 					.WithDescription("Taps at screen coordinates (requires idb_companion)")
-					.WithExample(new[] { "simulator", "idb", "tap", "<udid>", "100", "200" })
-					.WithExample(new[] { "simulator", "idb", "tap", "<udid>", "100", "200", "--duration", "500" });
+					.WithExample(new[] { "simulator", "idb", "tap", "<udid>", "100", "200" });
 
 				idb.AddCommand<IdbSwipeCommand>("swipe")
 					.WithData(data)
 					.WithDescription("Performs a swipe gesture (requires idb_companion)")
-					.WithExample(new[] { "simulator", "idb", "swipe", "<udid>", "100", "500", "100", "100" })
-					.WithExample(new[] { "simulator", "idb", "swipe", "<udid>", "100", "500", "100", "100", "--duration", "300" });
+					.WithExample(new[] { "simulator", "idb", "swipe", "<udid>", "100", "500", "100", "100" });
 
 				idb.AddCommand<IdbKeyCommand>("key")
 					.WithData(data)
 					.WithDescription("Sends keyboard input (requires idb_companion)")
-					.WithExample(new[] { "simulator", "idb", "key", "<udid>", "--text", "Hello" })
-					.WithExample(new[] { "simulator", "idb", "key", "<udid>", "--key-code", "40" });
+					.WithExample(new[] { "simulator", "idb", "key", "<udid>", "40" });
 
 				idb.AddCommand<IdbButtonCommand>("button")
 					.WithData(data)
@@ -281,7 +278,7 @@ app.Configure(config =>
 					.WithData(data)
 					.WithDescription("Gets accessibility info (requires idb_companion)")
 					.WithExample(new[] { "simulator", "idb", "accessibility", "<udid>" })
-					.WithExample(new[] { "simulator", "idb", "accessibility", "<udid>", "-x", "100", "-y", "200" });
+					.WithExample(new[] { "simulator", "idb", "accessibility", "<udid>", "--point-x", "100", "--point-y", "200" });
 
 				// File operations
 				idb.AddBranch("files", files =>
@@ -320,7 +317,7 @@ app.Configure(config =>
 						.WithData(data)
 						.WithDescription("Lists crash logs")
 						.WithExample(new[] { "simulator", "idb", "crashes", "list", "<udid>" })
-						.WithExample(new[] { "simulator", "idb", "crashes", "list", "<udid>", "--query", "MyApp" });
+						.WithExample(new[] { "simulator", "idb", "crashes", "list", "<udid>", "--bundle-id", "com.example.MyApp" });
 
 					crashes.AddCommand<IdbCrashesGetCommand>("get")
 						.WithData(data)
@@ -331,8 +328,8 @@ app.Configure(config =>
 					crashes.AddCommand<IdbCrashesDeleteCommand>("delete")
 						.WithData(data)
 						.WithDescription("Deletes crash logs")
-						.WithExample(new[] { "simulator", "idb", "crashes", "delete", "<udid>", "--all" })
-						.WithExample(new[] { "simulator", "idb", "crashes", "delete", "<udid>", "--query", "MyApp" });
+						.WithExample(new[] { "simulator", "idb", "crashes", "delete", "<udid>", "--bundle-id", "com.example.MyApp" })
+						.WithExample(new[] { "simulator", "idb", "crashes", "delete", "<udid>", "--name", "crash.ips" });
 				});
 
 				// Test operations
@@ -517,26 +514,27 @@ app.Configure(config =>
 			.WithExample(new[] { "bundleids", "delete", "ABC123" });
 	});
 
-	config.AddBranch("capabilities", capabilities =>
-	{
-		capabilities.AddCommand<ListBundleIdCapabilitiesCommand>("list")
-			.WithData(data)
-			.WithDescription("Lists capabilities enabled for a bundle ID")
-			.WithExample(new[] { "capabilities", "list", "BUNDLEID123" })
-			.WithExample(new[] { "capabilities", "list", "BUNDLEID123", "--format", "json" });
-		
-		capabilities.AddCommand<EnableBundleIdCapabilityCommand>("enable")
-			.WithData(data)
-			.WithDescription("Enables a capability for a bundle ID")
-			.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "PUSH_NOTIFICATIONS" })
-			.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "ICLOUD" })
-			.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "GAME_CENTER" });
-		
-		capabilities.AddCommand<DisableBundleIdCapabilityCommand>("disable")
-			.WithData(data)
-			.WithDescription("Disables (removes) a capability from a bundle ID")
-			.WithExample(new[] { "capabilities", "disable", "CAPID456" });
-	});
+	// TODO: Implement these capability commands
+	// config.AddBranch("capabilities", capabilities =>
+	// {
+	// 	capabilities.AddCommand<ListBundleIdCapabilitiesCommand>("list")
+	// 		.WithData(data)
+	// 		.WithDescription("Lists capabilities enabled for a bundle ID")
+	// 		.WithExample(new[] { "capabilities", "list", "BUNDLEID123" })
+	// 		.WithExample(new[] { "capabilities", "list", "BUNDLEID123", "--format", "json" });
+	// 	
+	// 	capabilities.AddCommand<EnableBundleIdCapabilityCommand>("enable")
+	// 		.WithData(data)
+	// 		.WithDescription("Enables a capability for a bundle ID")
+	// 		.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "PUSH_NOTIFICATIONS" })
+	// 		.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "ICLOUD" })
+	// 		.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "GAME_CENTER" });
+	// 	
+	// 	capabilities.AddCommand<DisableBundleIdCapabilityCommand>("disable")
+	// 		.WithData(data)
+	// 		.WithDescription("Disables (removes) a capability from a bundle ID")
+	// 		.WithExample(new[] { "capabilities", "disable", "CAPID456" });
+	// });
 
 	config.AddBranch("certificate", certificates =>
 	{
