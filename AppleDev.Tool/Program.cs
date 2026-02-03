@@ -514,26 +514,27 @@ app.Configure(config =>
 			.WithExample(new[] { "bundleids", "delete", "ABC123" });
 	});
 
-	config.AddBranch("capabilities", capabilities =>
-	{
-		capabilities.AddCommand<ListBundleIdCapabilitiesCommand>("list")
-			.WithData(data)
-			.WithDescription("Lists capabilities enabled for a bundle ID")
-			.WithExample(new[] { "capabilities", "list", "BUNDLEID123" })
-			.WithExample(new[] { "capabilities", "list", "BUNDLEID123", "--format", "json" });
-		
-		capabilities.AddCommand<EnableBundleIdCapabilityCommand>("enable")
-			.WithData(data)
-			.WithDescription("Enables a capability for a bundle ID")
-			.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "PUSH_NOTIFICATIONS" })
-			.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "ICLOUD" })
-			.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "GAME_CENTER" });
-		
-		capabilities.AddCommand<DisableBundleIdCapabilityCommand>("disable")
-			.WithData(data)
-			.WithDescription("Disables (removes) a capability from a bundle ID")
-			.WithExample(new[] { "capabilities", "disable", "CAPID456" });
-	});
+	// TODO: Implement these capability commands
+	// config.AddBranch("capabilities", capabilities =>
+	// {
+	// 	capabilities.AddCommand<ListBundleIdCapabilitiesCommand>("list")
+	// 		.WithData(data)
+	// 		.WithDescription("Lists capabilities enabled for a bundle ID")
+	// 		.WithExample(new[] { "capabilities", "list", "BUNDLEID123" })
+	// 		.WithExample(new[] { "capabilities", "list", "BUNDLEID123", "--format", "json" });
+	// 	
+	// 	capabilities.AddCommand<EnableBundleIdCapabilityCommand>("enable")
+	// 		.WithData(data)
+	// 		.WithDescription("Enables a capability for a bundle ID")
+	// 		.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "PUSH_NOTIFICATIONS" })
+	// 		.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "ICLOUD" })
+	// 		.WithExample(new[] { "capabilities", "enable", "BUNDLEID123", "GAME_CENTER" });
+	// 	
+	// 	capabilities.AddCommand<DisableBundleIdCapabilityCommand>("disable")
+	// 		.WithData(data)
+	// 		.WithDescription("Disables (removes) a capability from a bundle ID")
+	// 		.WithExample(new[] { "capabilities", "disable", "CAPID456" });
+	// });
 
 	config.AddBranch("certificate", certificates =>
 	{
