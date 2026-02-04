@@ -695,5 +695,37 @@ namespace AppleDev.Test
 
 		Assert.Equal(Platform.Unknown, attrs.Platform);
 	}
+
+	[Fact]
+	public void ProfileAttributes_Platform_ReturnsNullWhenNull()
+	{
+		var attrs = new ProfileAttributes
+		{
+			PlatformValue = null!
+		};
+
+		Assert.Null(attrs.Platform);
+	}
+
+	[Fact]
+	public void ProfileAttributes_SetPlatform_UpdatesValue()
+	{
+		var attrs = new ProfileAttributes();
+		attrs.Platform = Platform.MAC_OS;
+
+		Assert.Equal("MAC_OS", attrs.PlatformValue);
+	}
+
+	[Fact]
+	public void ProfileAttributes_SetPlatformNull_ClearsValue()
+	{
+		var attrs = new ProfileAttributes
+		{
+			PlatformValue = "IOS"
+		};
+		attrs.Platform = null;
+
+		Assert.Equal(string.Empty, attrs.PlatformValue);
+	}
 	}
 }
