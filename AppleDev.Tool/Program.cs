@@ -295,6 +295,26 @@ app.Configure(config =>
 			.WithData(data)
 			.WithDescription("Deletes a bundle ID from App Store Connect")
 			.WithExample(new[] { "bundleids", "delete", "ABC123" });
+		
+		bundleids.AddBranch("capabilities", capabilities =>
+		{
+			capabilities.AddCommand<ListBundleIdCapabilitiesCommand>("list")
+				.WithData(data)
+				.WithDescription("Lists capabilities for a specific bundle ID")
+				.WithExample(new[] { "bundleids", "capabilities", "list", "ABC123" })
+				.WithExample(new[] { "bundleids", "capabilities", "list", "ABC123", "--format", "json" });
+			
+			capabilities.AddCommand<EnableBundleIdCapabilityCommand>("enable")
+				.WithData(data)
+				.WithDescription("Enables a capability for a bundle ID")
+				.WithExample(new[] { "bundleids", "capabilities", "enable", "ABC123", "PUSH_NOTIFICATIONS" })
+				.WithExample(new[] { "bundleids", "capabilities", "enable", "ABC123", "ICLOUD" });
+			
+			capabilities.AddCommand<DisableBundleIdCapabilityCommand>("disable")
+				.WithData(data)
+				.WithDescription("Disables a capability from a bundle ID")
+				.WithExample(new[] { "bundleids", "capabilities", "disable", "CAP123" });
+		});
 	});
 
 	config.AddBranch("certificate", certificates =>
