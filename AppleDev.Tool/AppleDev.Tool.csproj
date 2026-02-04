@@ -41,6 +41,7 @@
     <ItemGroup>
         <ProjectReference Include="..\AppleDev\AppleDev.csproj" />
         <ProjectReference Include="..\AppStoreConnectClient\AppStoreConnectClient.csproj" />
+        <ProjectReference Include="..\AppleDev.FbIdb\AppleDev.FbIdb.csproj" />
     </ItemGroup>
 
 <!--    <PropertyGroup>-->

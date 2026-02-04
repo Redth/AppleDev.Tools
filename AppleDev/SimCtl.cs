@@ -932,6 +932,301 @@ public class SimCtl : XCRun
 			}
 		}, cancellationToken: cancellationToken);
 
+	#region Location
+
+	/// <summary>
+	/// Sets the simulated location for the target simulator.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="latitude">Latitude coordinate</param>
+	/// <param name="longitude">Longitude coordinate</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> SetLocationAsync(string target, double latitude, double longitude, CancellationToken cancellationToken = default)
+		=> RunSimCtlCmdAsync(args =>
+		{
+			args.Add("location");
+			args.Add(target);
+			args.Add("set");
+			args.Add(latitude.ToString(System.Globalization.CultureInfo.InvariantCulture));
+			args.Add(longitude.ToString(System.Globalization.CultureInfo.InvariantCulture));
+		}, cancellationToken);
+
+	/// <summary>
+	/// Clears the simulated location for the target simulator.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> ClearLocationAsync(string target, CancellationToken cancellationToken = default)
+		=> RunSimCtlCmdAsync(args =>
+		{
+			args.Add("location");
+			args.Add(target);
+			args.Add("clear");
+		}, cancellationToken);
+
+	#endregion
+
+	#region Push Notifications
+
+	/// <summary>
+	/// Sends a simulated push notification to the target simulator.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="bundleId">The bundle identifier of the app to receive the notification</param>
+	/// <param name="payloadFile">Path to JSON payload file</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> SendPushNotificationAsync(string target, string bundleId, FileInfo payloadFile, CancellationToken cancellationToken = default)
+		=> RunSimCtlCmdAsync(args =>
+		{
+			args.Add("push");
+			args.Add(target);
+			args.Add(bundleId);
+			args.Add(payloadFile.FullName);
+		}, cancellationToken);
+
+	/// <summary>
+	/// Sends a simulated push notification to the target simulator using inline JSON.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="bundleId">The bundle identifier of the app to receive the notification</param>
+	/// <param name="payloadJson">JSON payload string</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public async Task<bool> SendPushNotificationAsync(string target, string bundleId, string payloadJson, CancellationToken cancellationToken = default)
+	{
+		base.ThrowIfNotMacOS();
+
+		// Create a temporary file for the payload
+		var tempFile = Path.GetTempFileName();
+		try
+		{
+			await File.WriteAllTextAsync(tempFile, payloadJson, cancellationToken).ConfigureAwait(false);
+			return await SendPushNotificationAsync(target, bundleId, new FileInfo(tempFile), cancellationToken).ConfigureAwait(false);
+		}
+		finally
+		{
+			try { File.Delete(tempFile); } catch { /* ignore */ }
+		}
+	}
+
+	#endregion
+
+	#region Privacy / Permissions
+
+	/// <summary>
+	/// Grants a privacy permission to an app on the target simulator.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="permission">The permission to grant (e.g., 'photos', 'camera', 'location')</param>
+	/// <param name="bundleId">The bundle identifier of the app</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> GrantPrivacyAsync(string target, string permission, string bundleId, CancellationToken cancellationToken = default)
+		=> RunSimCtlCmdAsync(args =>
+		{
+			args.Add("privacy");
+			args.Add(target);
+			args.Add("grant");
+			args.Add(permission);
+			args.Add(bundleId);
+		}, cancellationToken);
+
+	/// <summary>
+	/// Revokes a privacy permission from an app on the target simulator.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="permission">The permission to revoke (e.g., 'photos', 'camera', 'location')</param>
+	/// <param name="bundleId">The bundle identifier of the app</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> RevokePrivacyAsync(string target, string permission, string bundleId, CancellationToken cancellationToken = default)
+		=> RunSimCtlCmdAsync(args =>
+		{
+			args.Add("privacy");
+			args.Add(target);
+			args.Add("revoke");
+			args.Add(permission);
+			args.Add(bundleId);
+		}, cancellationToken);
+
+	/// <summary>
+	/// Resets a privacy permission on the target simulator.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="permission">The permission to reset (e.g., 'photos', 'camera', 'location', or 'all')</param>
+	/// <param name="bundleId">Optional bundle identifier. If null, resets for all apps.</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> ResetPrivacyAsync(string target, string permission, string? bundleId = null, CancellationToken cancellationToken = default)
+		=> RunSimCtlCmdAsync(args =>
+		{
+			args.Add("privacy");
+			args.Add(target);
+			args.Add("reset");
+			args.Add(permission);
+			if (!string.IsNullOrEmpty(bundleId))
+				args.Add(bundleId);
+		}, cancellationToken);
+
+	#endregion
+
+	#region Keychain
+
+	/// <summary>
+	/// Resets the keychain on the target simulator.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> ResetKeychainAsync(string target, CancellationToken cancellationToken = default)
+		=> RunSimCtlCmdAsync(args =>
+		{
+			args.Add("keychain");
+			args.Add(target);
+			args.Add("reset");
+		}, cancellationToken);
+
+	#endregion
+
+	#region Status Bar
+
+	/// <summary>
+	/// Overrides status bar values on the target simulator.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="options">Status bar override options</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> SetStatusBarAsync(string target, StatusBarOptions options, CancellationToken cancellationToken = default)
+		=> RunSimCtlCmdAsync(args =>
+		{
+			args.Add("status_bar");
+			args.Add(target);
+			args.Add("override");
+
+			if (!string.IsNullOrEmpty(options.Time))
+			{
+				args.Add("--time");
+				args.Add(options.Time);
+			}
+			if (!string.IsNullOrEmpty(options.DataNetwork))
+			{
+				args.Add("--dataNetwork");
+				args.Add(options.DataNetwork);
+			}
+			if (!string.IsNullOrEmpty(options.WifiMode))
+			{
+				args.Add("--wifiMode");
+				args.Add(options.WifiMode);
+			}
+			if (options.WifiBars.HasValue)
+			{
+				args.Add("--wifiBars");
+				args.Add(options.WifiBars.Value.ToString());
+			}
+			if (!string.IsNullOrEmpty(options.CellularMode))
+			{
+				args.Add("--cellularMode");
+				args.Add(options.CellularMode);
+			}
+			if (options.CellularBars.HasValue)
+			{
+				args.Add("--cellularBars");
+				args.Add(options.CellularBars.Value.ToString());
+			}
+			if (!string.IsNullOrEmpty(options.OperatorName))
+			{
+				args.Add("--operatorName");
+				args.Add(options.OperatorName);
+			}
+			if (!string.IsNullOrEmpty(options.BatteryState))
+			{
+				args.Add("--batteryState");
+				args.Add(options.BatteryState);
+			}
+			if (options.BatteryLevel.HasValue)
+			{
+				args.Add("--batteryLevel");
+				args.Add(options.BatteryLevel.Value.ToString());
+			}
+		}, cancellationToken);
+
+	/// <summary>
+	/// Clears status bar overrides on the target simulator.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> ClearStatusBarAsync(string target, CancellationToken cancellationToken = default)
+		=> RunSimCtlCmdAsync(args =>
+		{
+			args.Add("status_bar");
+			args.Add(target);
+			args.Add("clear");
+		}, cancellationToken);
+
+	#endregion
+
+	#region Pasteboard / Clipboard
+
+	/// <summary>
+	/// Copies text to the simulator's pasteboard.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="text">Text to copy to the pasteboard</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public async Task<bool> CopyToPasteboardAsync(string target, string text, CancellationToken cancellationToken = default)
+	{
+		base.ThrowIfNotMacOS();
+
+		var xcrun = LocateOrThrow();
+
+		try
+		{
+			var result = await Cli.Wrap(xcrun.FullName)
+				.WithValidation(CommandResultValidation.None)
+				.WithArguments(args =>
+				{
+					args.Add("simctl");
+					args.Add("pbcopy");
+					args.Add(target);
+				})
+				.WithStandardInputPipe(PipeSource.FromString(text))
+				.ExecuteAsync(cancellationToken)
+				.ConfigureAwait(false);
+
+			return result.ExitCode == 0;
+		}
+		catch (Exception ex)
+		{
+			Logger?.LogWarning("CopyToPasteboardAsync failed: {Exception}", ex.Message);
+			return false;
+		}
+	}
+
+	/// <summary>
+	/// Gets text from the simulator's pasteboard.
+	/// </summary>
+	/// <param name="target">The target UDID or 'booted'</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>The pasteboard contents, or null if failed.</returns>
+	public async Task<string?> GetPasteboardAsync(string target, CancellationToken cancellationToken = default)
+	{
+		var (success, output) = await RunSimCtlCmdWithOutputAsync(args =>
+		{
+			args.Add("pbpaste");
+			args.Add(target);
+		}, cancellationToken).ConfigureAwait(false);
+
+		return success ? output : null;
+	}
+
+	#endregion
+
 	async Task<bool> RunLogSpawnProcessAsync(string target, Action<Collection<string>> logArgsBuilder, CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();
@@ -1267,6 +1562,57 @@ public class SimCtlApp
 
 	[JsonPropertyName("SBAppTags")]
 	public List<string>? SBAppTags { get; set; }
+}
+
+/// <summary>
+/// Options for customizing the simulator status bar.
+/// </summary>
+public class StatusBarOptions
+{
+	/// <summary>
+	/// The time to display in the status bar (e.g., "9:41").
+	/// </summary>
+	public string? Time { get; set; }
+
+	/// <summary>
+	/// Data network type: "wifi", "3g", "4g", "lte", "lte-a", "lte+", "5g", "5g-uwb", "5g+", "5g-uc"
+	/// </summary>
+	public string? DataNetwork { get; set; }
+
+	/// <summary>
+	/// WiFi mode: "searching", "failed", "active"
+	/// </summary>
+	public string? WifiMode { get; set; }
+
+	/// <summary>
+	/// Number of WiFi bars to display (0-3).
+	/// </summary>
+	public int? WifiBars { get; set; }
+
+	/// <summary>
+	/// Cellular mode: "notSupported", "searching", "failed", "active"
+	/// </summary>
+	public string? CellularMode { get; set; }
+
+	/// <summary>
+	/// Number of cellular bars to display (0-4).
+	/// </summary>
+	public int? CellularBars { get; set; }
+
+	/// <summary>
+	/// The carrier/operator name to display.
+	/// </summary>
+	public string? OperatorName { get; set; }
+
+	/// <summary>
+	/// Battery state: "charging", "charged", "discharging"
+	/// </summary>
+	public string? BatteryState { get; set; }
+
+	/// <summary>
+	/// Battery level percentage (0-100).
+	/// </summary>
+	public int? BatteryLevel { get; set; }
 }
 
 public class SimCtlLogEntry
