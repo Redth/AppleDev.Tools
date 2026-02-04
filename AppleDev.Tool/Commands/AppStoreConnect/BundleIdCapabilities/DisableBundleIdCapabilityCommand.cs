@@ -46,7 +46,7 @@ public class DisableBundleIdCapabilityCommand : AsyncCommand<DisableBundleIdCapa
 
 public class DisableBundleIdCapabilityCommandSettings : AppStoreConnectApiCommandSettings
 {
-	[Description("The resource ID of the capability to disable (use 'capabilities list' to find it)")]
+	[Description("The resource ID of the capability to disable (use 'bundleids capabilities list <bundle-id-resource-id>' to find it)")]
 	[CommandArgument(0, "<capability-id>")]
 	public string CapabilityId { get; set; } = string.Empty;
 
