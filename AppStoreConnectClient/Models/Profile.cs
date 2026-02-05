@@ -38,10 +38,10 @@ public class ProfileAttributes
 	public string PlatformValue { get; set; } = string.Empty;
 
 	[JsonIgnore]
-	public Platform Platform
+	public Platform? Platform
 	{
-		get => Enum.TryParse<Platform>(PlatformValue, out var v) ? v : Platform.Unknown;
-		set => value.ToString();
+		get => string.IsNullOrEmpty(PlatformValue) ? null : Enum.TryParse<Platform>(PlatformValue, out var v) ? v : AppleAppStoreConnect.Platform.Unknown;
+		set => PlatformValue = value?.ToString() ?? string.Empty;
 	}
 
 

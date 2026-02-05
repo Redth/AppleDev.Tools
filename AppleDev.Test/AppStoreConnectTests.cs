@@ -593,5 +593,139 @@ namespace AppleDev.Test
 
 		Assert.Equal("GAME_CENTER", attrs.CapabilityTypeValue);
 	}
+
+	// ===== CERTIFICATE PLATFORM TESTS =====
+
+	[Fact]
+	public void CertificateAttributes_Platform_ReturnsNullWhenEmpty()
+	{
+		var attrs = new CertificateAttributes
+		{
+			PlatformValue = string.Empty
+		};
+
+		Assert.Null(attrs.Platform);
+	}
+
+	[Fact]
+	public void CertificateAttributes_Platform_ReturnsNullWhenNull()
+	{
+		var attrs = new CertificateAttributes
+		{
+			PlatformValue = null!
+		};
+
+		Assert.Null(attrs.Platform);
+	}
+
+	[Fact]
+	public void CertificateAttributes_Platform_ReturnsValueWhenValid()
+	{
+		var attrs = new CertificateAttributes
+		{
+			PlatformValue = "MAC_OS"
+		};
+
+		Assert.Equal(Platform.MAC_OS, attrs.Platform);
+	}
+
+	[Fact]
+	public void CertificateAttributes_Platform_ReturnsUnknownWhenUnrecognized()
+	{
+		var attrs = new CertificateAttributes
+		{
+			PlatformValue = "SOME_FUTURE_PLATFORM"
+		};
+
+		Assert.Equal(Platform.Unknown, attrs.Platform);
+	}
+
+	[Fact]
+	public void CertificateAttributes_SetPlatform_UpdatesValue()
+	{
+		var attrs = new CertificateAttributes();
+		attrs.Platform = Platform.IOS;
+
+		Assert.Equal("IOS", attrs.PlatformValue);
+	}
+
+	[Fact]
+	public void CertificateAttributes_SetPlatformNull_ClearsValue()
+	{
+		var attrs = new CertificateAttributes
+		{
+			PlatformValue = "IOS"
+		};
+		attrs.Platform = null;
+
+		Assert.Equal(string.Empty, attrs.PlatformValue);
+	}
+
+	// ===== PROFILE PLATFORM TESTS =====
+
+	[Fact]
+	public void ProfileAttributes_Platform_ReturnsNullWhenEmpty()
+	{
+		var attrs = new ProfileAttributes
+		{
+			PlatformValue = string.Empty
+		};
+
+		Assert.Null(attrs.Platform);
+	}
+
+	[Fact]
+	public void ProfileAttributes_Platform_ReturnsValueWhenValid()
+	{
+		var attrs = new ProfileAttributes
+		{
+			PlatformValue = "IOS"
+		};
+
+		Assert.Equal(Platform.IOS, attrs.Platform);
+	}
+
+	[Fact]
+	public void ProfileAttributes_Platform_ReturnsUnknownWhenUnrecognized()
+	{
+		var attrs = new ProfileAttributes
+		{
+			PlatformValue = "SOME_FUTURE_PLATFORM"
+		};
+
+		Assert.Equal(Platform.Unknown, attrs.Platform);
+	}
+
+	[Fact]
+	public void ProfileAttributes_Platform_ReturnsNullWhenNull()
+	{
+		var attrs = new ProfileAttributes
+		{
+			PlatformValue = null!
+		};
+
+		Assert.Null(attrs.Platform);
+	}
+
+	[Fact]
+	public void ProfileAttributes_SetPlatform_UpdatesValue()
+	{
+		var attrs = new ProfileAttributes();
+		attrs.Platform = Platform.MAC_OS;
+
+		Assert.Equal("MAC_OS", attrs.PlatformValue);
+	}
+
+	[Fact]
+	public void ProfileAttributes_SetPlatformNull_ClearsValue()
+	{
+		var attrs = new ProfileAttributes
+		{
+			PlatformValue = "IOS"
+		};
+		attrs.Platform = null;
+
+		Assert.Equal(string.Empty, attrs.PlatformValue);
+	}
 	}
 }
