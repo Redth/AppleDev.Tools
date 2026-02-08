@@ -67,7 +67,7 @@ partial class AppStoreConnectClient
 		BundleIdAttributes bundleIdAttributes,
 		CancellationToken cancellationToken = default)
 	{
-		return await PostAsync<BundleId, BundleIdAttributes>(BUNDLEIDS_TYPE, bundleIdAttributes, cancellationToken).ConfigureAwait(false)
+		return await PostAsync<BundleId, BundleIdAttributes, BundleIdAttributes>(BUNDLEIDS_TYPE, bundleIdAttributes, cancellationToken).ConfigureAwait(false)
 			?? new ItemResponse<BundleId, BundleIdAttributes>();
 	}
 
@@ -76,8 +76,8 @@ partial class AppStoreConnectClient
 		BundleIdAttributes bundleIdAttributes,
 		CancellationToken cancellationToken = default)
 	{
-		
-		return await PatchAsync<BundleId, BundleIdAttributes>($"{BUNDLEIDS_TYPE}/{id}", bundleIdAttributes, cancellationToken).ConfigureAwait(false)
+		var request = new Request<BundleIdAttributes>(new RequestData<BundleIdAttributes>(bundleIdAttributes) { Type = BUNDLEIDS_TYPE });
+		return await PatchJsonAsync<BundleId, BundleIdAttributes, Request<BundleIdAttributes>>($"{BUNDLEIDS_TYPE}/{id}", request, cancellationToken).ConfigureAwait(false)
 			?? new ItemResponse<BundleId, BundleIdAttributes>();
 	}
 

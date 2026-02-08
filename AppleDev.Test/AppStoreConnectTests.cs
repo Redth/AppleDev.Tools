@@ -727,5 +727,83 @@ namespace AppleDev.Test
 
 		Assert.Equal(string.Empty, attrs.PlatformValue);
 	}
+
+	// ===== BUNDLE ID PLATFORM TESTS =====
+
+	[Fact]
+	public void BundleIdAttributes_Platform_ReturnsNullWhenEmpty()
+	{
+		var attrs = new BundleIdAttributes
+		{
+			PlatformValue = string.Empty
+		};
+
+		Assert.Null(attrs.Platform);
+	}
+
+	[Fact]
+	public void BundleIdAttributes_Platform_ReturnsNullWhenNull()
+	{
+		var attrs = new BundleIdAttributes
+		{
+			PlatformValue = null!
+		};
+
+		Assert.Null(attrs.Platform);
+	}
+
+	[Fact]
+	public void BundleIdAttributes_Platform_ReturnsValueWhenValid()
+	{
+		var attrs = new BundleIdAttributes
+		{
+			PlatformValue = "IOS"
+		};
+
+		Assert.Equal(Platform.IOS, attrs.Platform);
+	}
+
+	[Fact]
+	public void BundleIdAttributes_Platform_ReturnsUniversal()
+	{
+		var attrs = new BundleIdAttributes
+		{
+			PlatformValue = "UNIVERSAL"
+		};
+
+		Assert.Equal(Platform.UNIVERSAL, attrs.Platform);
+	}
+
+	[Fact]
+	public void BundleIdAttributes_Platform_ReturnsUnknownWhenUnrecognized()
+	{
+		var attrs = new BundleIdAttributes
+		{
+			PlatformValue = "SOME_FUTURE_PLATFORM"
+		};
+
+		Assert.Equal(Platform.Unknown, attrs.Platform);
+	}
+
+	[Fact]
+	public void BundleIdAttributes_SetPlatform_UpdatesValue()
+	{
+		var attrs = new BundleIdAttributes();
+		attrs.Platform = Platform.UNIVERSAL;
+
+		Assert.Equal("UNIVERSAL", attrs.PlatformValue);
+	}
+
+	[Fact]
+	public void BundleIdAttributes_SetPlatformNull_ClearsValue()
+	{
+		var attrs = new BundleIdAttributes
+		{
+			PlatformValue = "IOS"
+		};
+		attrs.Platform = null;
+
+		Assert.Equal(string.Empty, attrs.PlatformValue);
+	}
 	}
 }
