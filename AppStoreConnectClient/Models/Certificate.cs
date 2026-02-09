@@ -36,7 +36,7 @@ public class CertificateAttributes
 	public CertificateType CertificateType
 	{
 		get => Enum.TryParse<CertificateType>(CertificateTypeValue, out var v) ? v : CertificateType.Unknown;
-		set => value.ToString();
+		set => CertificateTypeValue = value.ToString();
 	}
 }
 
@@ -82,7 +82,7 @@ public class CreateCertificateRequestAttributes
 	public CertificateType CertificateType
 	{
 		get => Enum.TryParse<CertificateType>(CertificateTypeValue, out var v) ? v : CertificateType.Unknown;
-		set => value.ToString();
+		set => CertificateTypeValue = value.ToString();
 	}
 }
 
