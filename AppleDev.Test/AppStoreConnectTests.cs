@@ -805,5 +805,41 @@ namespace AppleDev.Test
 
 		Assert.Equal(string.Empty, attrs.PlatformValue);
 	}
+
+	// ===== CERTIFICATE TYPE SETTER TESTS =====
+
+	[Fact]
+	public void CertificateAttributes_SetCertificateType_UpdatesValue()
+	{
+		var attrs = new CertificateAttributes();
+		attrs.CertificateType = CertificateType.DEVELOPER_ID_APPLICATION;
+
+		Assert.Equal("DEVELOPER_ID_APPLICATION", attrs.CertificateTypeValue);
+	}
+
+	[Fact]
+	public void CertificateAttributes_SetCertificateType_RoundTrips()
+	{
+		var attrs = new CertificateAttributes();
+		attrs.CertificateType = CertificateType.IOS_DISTRIBUTION;
+
+		Assert.Equal(CertificateType.IOS_DISTRIBUTION, attrs.CertificateType);
+	}
+
+	[Fact]
+	public void CreateCertificateRequestAttributes_EnumConstructor_SetsCertificateTypeValue()
+	{
+		var attrs = new CreateCertificateRequestAttributes("csr-content", CertificateType.DEVELOPER_ID_APPLICATION);
+
+		Assert.Equal("DEVELOPER_ID_APPLICATION", attrs.CertificateTypeValue);
+	}
+
+	[Fact]
+	public void CreateCertificateRequestAttributes_StringConstructor_SetsCertificateTypeValue()
+	{
+		var attrs = new CreateCertificateRequestAttributes("csr-content", "MAC_APP_DISTRIBUTION");
+
+		Assert.Equal("MAC_APP_DISTRIBUTION", attrs.CertificateTypeValue);
+	}
 	}
 }
