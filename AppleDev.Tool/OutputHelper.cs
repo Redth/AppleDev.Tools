@@ -32,9 +32,9 @@ static class OutputHelper
 		else
 		{
 			if (format == OutputFormat.Json)
-				AnsiConsole.WriteLine(JsonSerialize(item));
+				Console.WriteLine(JsonSerialize(item));
 			else if (format == OutputFormat.Xml)
-				AnsiConsole.WriteLine(XmlSerialize(item));
+				Console.WriteLine(XmlSerialize(item));
 		}
 	}
 
@@ -47,9 +47,9 @@ static class OutputHelper
 		else
 		{
 			if (format == OutputFormat.Json)
-				AnsiConsole.WriteLine(JsonSerialize(items));
+				Console.WriteLine(JsonSerialize(items));
 			else if (format == OutputFormat.Xml)
-				AnsiConsole.WriteLine(XmlSerialize(items));
+				Console.WriteLine(XmlSerialize(items));
 		}
 	}
 	
@@ -62,9 +62,9 @@ static class OutputHelper
 		else
 		{
 			if (format == OutputFormat.Json)
-				AnsiConsole.WriteLine(JsonSerialize<T>(item));
+				Console.WriteLine(JsonSerialize<T>(item));
 			else if (format == OutputFormat.Xml)
-				AnsiConsole.WriteLine(XmlSerialize<T>(item));
+				Console.WriteLine(XmlSerialize<T>(item));
 		}
 	}
 

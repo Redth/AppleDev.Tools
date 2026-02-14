@@ -308,6 +308,31 @@ public class SimCtl : XCRun
 		}, cancellationToken);
 
 	/// <summary>
+	/// Creates a new simulator device and returns the UDID of the created simulator.
+	/// </summary>
+	/// <param name="name">The name for the new simulator device.</param>
+	/// <param name="deviceTypeId">The device type identifier (e.g., "com.apple.CoreSimulator.SimDeviceType.iPhone-15" or "iPhone 15").</param>
+	/// <param name="runtimeId">Optional runtime identifier. If not specified, the newest compatible runtime is used.</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>The UDID of the created simulator, or null if creation failed.</returns>
+	public async Task<string?> CreateAndGetUdidAsync(string name, string deviceTypeId, string? runtimeId = null, CancellationToken cancellationToken = default)
+	{
+		var (success, output) = await RunSimCtlCmdWithOutputAsync(args =>
+		{
+			args.Add("create");
+			args.Add(name);
+			args.Add(deviceTypeId);
+			if (!string.IsNullOrEmpty(runtimeId))
+				args.Add(runtimeId);
+		}, cancellationToken).ConfigureAwait(false);
+
+		if (!success)
+			return null;
+
+		return output.Trim();
+	}
+
+	/// <summary>
 	/// Gets the list of apps installed on the target simulator(s).
 	/// </summary>
 	/// <param name="target">The target UDID, Simulator Name, or 'booted' for all booted simulators</param>
@@ -1284,6 +1309,7 @@ public class SimCtl : XCRun
 		base.ThrowIfNotMacOS();
 		
 		var xcrun = LocateOrThrow();
+		var stderr = new StringBuilder();
 
 		try
 		{
@@ -1294,8 +1320,18 @@ public class SimCtl : XCRun
 					args.Add("simctl");
 					argsBuilder?.Invoke(args);
 				})
+				.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
 				.ExecuteAsync(cancellationToken)
 				.ConfigureAwait(false);
+
+			if (result.ExitCode != 0)
+			{
+				var stderrText = stderr.ToString().Trim();
+				if (!string.IsNullOrEmpty(stderrText))
+					Logger?.LogError("simctl command failed (exit code {ExitCode}): {StdErr}", result.ExitCode, stderrText);
+				else
+					Logger?.LogError("simctl command failed with exit code {ExitCode}", result.ExitCode);
+			}
 
 			return result.ExitCode == 0;
 		}
@@ -1312,17 +1348,29 @@ public class SimCtl : XCRun
 		
 		var xcrun = LocateOrThrow();
 		var stdout = new StringBuilder();
+		var stderr = new StringBuilder();
 
 		try
 		{
 			var result = await Cli.Wrap(xcrun.FullName)
+				.WithValidation(CommandResultValidation.None)
 				.WithArguments(args =>
 				{
 					args.Add("simctl");
 					argsBuilder?.Invoke(args);
 				})
 				.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
+				.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
 				.ExecuteAsync(cancellationToken).ConfigureAwait(false);
+
+			if (result.ExitCode != 0)
+			{
+				var stderrText = stderr.ToString().Trim();
+				if (!string.IsNullOrEmpty(stderrText))
+					Logger?.LogError("simctl command failed (exit code {ExitCode}): {StdErr}", result.ExitCode, stderrText);
+				else
+					Logger?.LogError("simctl command failed with exit code {ExitCode}", result.ExitCode);
+			}
 
 			return (result.ExitCode == 0, stdout.ToString());
 		}

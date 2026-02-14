@@ -13,26 +13,33 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
         var data = context.GetData();
         var simctl = new SimCtl();
         
-        var success = await simctl.CreateAsync(
+        var udid = await simctl.CreateAndGetUdidAsync(
             settings.Name, 
             settings.DeviceTypeId, 
             settings.RuntimeId,
             data.CancellationToken).ConfigureAwait(false);
         
-        if (success)
+        if (udid != null)
         {
-            AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
+            if (settings.Format == OutputFormat.Json)
+            {
+                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { udid, name = settings.Name }));
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}' ({udid})[/]");
+            }
         }
         else
         {
             AnsiConsole.MarkupLine($"[red]Failed to create simulator '{settings.Name}'[/]");
         }
         
-        return this.ExitCode(success);
+        return this.ExitCode(udid != null);
     }
 }
 
-public class CreateSimulatorCommandSettings : CommandSettings
+public class CreateSimulatorCommandSettings : FormattableOutputCommandSettings
 {
     [Description("Name for the new simulator")]
     [CommandArgument(0, "<name>")]
