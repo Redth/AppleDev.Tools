@@ -13,17 +13,31 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
         var data = context.GetData();
         var simctl = new SimCtl();
         
+        // Resolve runtime if provided as a friendly name (e.g., "latest", "26.2", "iOS 26.2")
+        var runtimeId = settings.RuntimeId;
+        if (!string.IsNullOrEmpty(runtimeId) && !runtimeId.StartsWith("com.apple.CoreSimulator"))
+        {
+            var resolved = await simctl.ResolveRuntimeAsync(runtimeId, cancellationToken: data.CancellationToken).ConfigureAwait(false);
+            if (resolved == null)
+            {
+                AnsiConsole.MarkupLine($"[red]Could not resolve runtime '{runtimeId}'[/]");
+                return this.ExitCode(false);
+            }
+            AnsiConsole.MarkupLine($"[dim]Resolved runtime '{runtimeId}' → {resolved.Name} ({resolved.Identifier})[/]");
+            runtimeId = resolved.Identifier;
+        }
+
         var udid = await simctl.CreateAndGetUdidAsync(
             settings.Name, 
             settings.DeviceTypeId, 
-            settings.RuntimeId,
+            runtimeId,
             data.CancellationToken).ConfigureAwait(false);
         
         if (udid != null)
         {
             if (settings.Format == OutputFormat.Json)
             {
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { udid, name = settings.Name }));
+                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { udid, name = settings.Name, runtime = runtimeId }));
             }
             else
             {

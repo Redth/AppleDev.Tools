@@ -158,6 +158,70 @@ public class SimCtl : XCRun
 	}
 
 	/// <summary>
+	/// Waits for the simulator to be fully ready, including SpringBoard and system services.
+	/// This goes beyond bootstatus by also checking that SpringBoard is running and settled.
+	/// </summary>
+	/// <param name="target">The target UDID or Simulator Name to wait for.</param>
+	/// <param name="timeout">Timeout to wait for ready state.</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if the simulator is fully ready.</returns>
+	public async Task<bool> WaitForReadyAsync(string target, TimeSpan timeout, CancellationToken cancellationToken = default)
+	{
+		base.ThrowIfNotMacOS();
+
+		using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+		cts.CancelAfter(timeout);
+
+		// Phase 1: Wait for bootstatus
+		var booted = await WaitForBootedAsync(target, timeout, cts.Token).ConfigureAwait(false);
+		if (!booted)
+			return false;
+
+		// Phase 2: Wait for SpringBoard to be running
+		var springBoardReady = false;
+		var attempts = 0;
+		while (attempts < 60 && !cts.Token.IsCancellationRequested)
+		{
+			try
+			{
+				var (success, output) = await RunSimCtlCmdWithOutputAsync(args =>
+				{
+					args.Add("spawn");
+					args.Add(target);
+					args.Add("launchctl");
+					args.Add("print");
+					args.Add("system");
+				}, cts.Token).ConfigureAwait(false);
+
+				if (success && output.Contains("SpringBoard"))
+				{
+					springBoardReady = true;
+					break;
+				}
+			}
+			catch (OperationCanceledException)
+			{
+				return false;
+			}
+			catch { }
+
+			attempts++;
+			await Task.Delay(2000, cts.Token).ConfigureAwait(false);
+		}
+
+		if (!springBoardReady)
+		{
+			Logger?.LogWarning("SpringBoard not ready after {Attempts} attempts for {Target}", attempts, target);
+			return false;
+		}
+
+		// Phase 3: Settling delay
+		await Task.Delay(10000, cts.Token).ConfigureAwait(false);
+
+		return true;
+	}
+
+	/// <summary>
 	/// Shuts down the target simulator(s).
 	/// </summary>
 	/// <param name="target">The target UDID, Simulator Name, Literal value 'all', or status (eg: 'available')</param>
@@ -565,6 +629,55 @@ public class SimCtl : XCRun
 	{
 		var runtimes = await WrapSimCtl<List<SimCtlRuntime>>("runtimes", cancellationToken).ConfigureAwait(false);
 		return runtimes ?? new List<SimCtlRuntime>();
+	}
+
+	/// <summary>
+	/// Resolves a runtime string to a full runtime identifier.
+	/// Accepts "latest", a version like "26.2", or a name like "iOS 26.2".
+	/// </summary>
+	/// <param name="runtime">The runtime to resolve. Use "latest" for the newest available iOS runtime.</param>
+	/// <param name="platform">The platform to filter by (e.g., "iOS", "tvOS", "watchOS"). Defaults to "iOS".</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>The full runtime identifier, or null if not found.</returns>
+	public async Task<SimCtlRuntime?> ResolveRuntimeAsync(string runtime, string platform = "iOS", CancellationToken cancellationToken = default)
+	{
+		var runtimes = await GetSimulatorRuntimes(cancellationToken).ConfigureAwait(false);
+		var available = runtimes.Where(r => r.IsAvailable).ToList();
+
+		// Filter by platform
+		var platformRuntimes = available
+			.Where(r => r.Name?.StartsWith(platform, StringComparison.OrdinalIgnoreCase) == true)
+			.ToList();
+
+		if (string.Equals(runtime, "latest", StringComparison.OrdinalIgnoreCase))
+		{
+			return platformRuntimes
+				.OrderByDescending(r => r.Version)
+				.FirstOrDefault();
+		}
+
+		// Try exact name match first (e.g., "iOS 26.2")
+		var match = platformRuntimes.FirstOrDefault(r =>
+			string.Equals(r.Name, runtime, StringComparison.OrdinalIgnoreCase));
+		if (match != null)
+			return match;
+
+		// Try version match (e.g., "26.2")
+		match = platformRuntimes.FirstOrDefault(r =>
+			string.Equals(r.Version, runtime, StringComparison.OrdinalIgnoreCase));
+		if (match != null)
+			return match;
+
+		// Try with platform prefix (e.g., "26.2" → "iOS 26.2")
+		match = platformRuntimes.FirstOrDefault(r =>
+			string.Equals(r.Name, $"{platform} {runtime}", StringComparison.OrdinalIgnoreCase));
+		if (match != null)
+			return match;
+
+		// Try identifier match
+		match = available.FirstOrDefault(r =>
+			string.Equals(r.Identifier, runtime, StringComparison.OrdinalIgnoreCase));
+		return match;
 	}
 
 

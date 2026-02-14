@@ -18,8 +18,8 @@ public class BootSimulatorCommand : AsyncCommand<BootSimulatorCommandSettings>
             
             if (settings.Wait)
             {
-                AnsiConsole.MarkupLine($"[dim]Waiting for simulator to be ready (timeout: {settings.Timeout}s)...[/]");
-                success = await simctl.WaitForBootedAsync(settings.Target, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
+                AnsiConsole.MarkupLine($"[dim]Waiting for simulator to be fully ready (timeout: {settings.Timeout}s)...[/]");
+                success = await simctl.WaitForReadyAsync(settings.Target, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
                 
                 if (success)
                     AnsiConsole.MarkupLine($"[green]Simulator '{settings.Target}' is ready[/]");

@@ -84,6 +84,13 @@ app.Configure(config =>
 				.WithExample(new[] { "simulator", "delete", "unavailable" })
 				.WithExample(new[] { "simulator", "delete", "all" });
 
+			sim.AddCommand<TeardownSimulatorCommand>("teardown")
+				.WithData(data)
+				.WithDescription("Collects logs and diagnostics, then shuts down and optionally deletes the simulator")
+				.WithExample(new[] { "simulator", "teardown", "ABCD1234-1234-1234-1234-123456789ABC" })
+				.WithExample(new[] { "simulator", "teardown", "ABCD1234-1234-1234-1234-123456789ABC", "--output-directory", "./logs" })
+				.WithExample(new[] { "simulator", "teardown", "ABCD1234-1234-1234-1234-123456789ABC", "--skip-logs" });
+
 			sim.AddCommand<ScreenshotSimulatorCommand>("screenshot")
 				.WithData(data)
 				.WithDescription("Captures a screenshot from a running simulator")
