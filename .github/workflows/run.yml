@@ -34,11 +34,14 @@ jobs:
 
     - name: 🆕 Create and boot simulator
       run: |
-        RESULT=$(dotnet $TOOL simulator create "E2ETestSim" --device-type "iPhone 16" --boot --wait --format json 2>/dev/null)
+        RESULT=$(dotnet $TOOL simulator create "E2ETestSim" --device-type "iPhone 16" --boot --wait --timeout 300 --format json 2>/dev/null)
         echo "Simulator create result: $RESULT"
-        UDID=$(echo "$RESULT" | jq -r '.udid')
+        UDID=$(echo "$RESULT" | jq -r '.udid' 2>/dev/null)
         if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
           echo "❌ Failed to parse UDID from simulator create output"
+          echo "Raw output: $RESULT"
+          echo "--- Attempting to list simulators for debugging ---"
+          dotnet $TOOL simulator list || true
           exit 1
         fi
         echo "✅ UDID: $UDID"
