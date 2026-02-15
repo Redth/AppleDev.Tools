@@ -95,6 +95,8 @@ jobs:
         echo "✅ App installed and verified via CLI"
 
     - name: 🚀 Launch and verify test app
+      env:
+        NO_COLOR: "1"
       run: |
         dotnet $TOOL simulator app launch "E2ETestSim" "com.companyname.TestApp"
         echo "Waiting for app to run..."
@@ -102,19 +104,11 @@ jobs:
         echo "--- Capturing logs ---"
         dotnet $TOOL simulator logs "E2ETestSim" --format json > simulator-logs.json
         if [ ! -s simulator-logs.json ]; then
-          echo "⚠️ No logs captured (json file empty), trying without format..."
-          dotnet $TOOL simulator logs "E2ETestSim" > simulator-logs.txt
-          if [ -s simulator-logs.txt ]; then
-            echo "--- Log output (last 30 lines) ---"
-            tail -30 simulator-logs.txt
-          else
-            echo "❌ No logs captured at all"
-            exit 1
-          fi
-        else
-          echo "--- Log entries ---"
-          cat simulator-logs.json | jq length
+          echo "❌ No logs captured"
+          exit 1
         fi
+        echo "--- Log entries ---"
+        cat simulator-logs.json | jq length
         echo "✅ App launched successfully"
 
     - name: 🧹 Cleanup simulator
