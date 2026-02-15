@@ -41,18 +41,8 @@ jobs:
     - name: 📱 Create test iOS app
       run: |
         dotnet new ios -n TestApp --output TestApp
-        # Add a log marker to prove the app runs real code
-        cat >> TestApp/AppDelegate.cs << 'EOF'
-
-        // E2E test marker
-        partial class AppDelegate
-        {
-            static AppDelegate()
-            {
-                Console.WriteLine("TestApp: E2E_APP_STARTED_SUCCESSFULLY");
-            }
-        }
-        EOF
+        # Add a log marker inside FinishedLaunching to prove the app runs real code
+        sed -i.bak 's/return true;/System.Console.WriteLine("TestApp: E2E_APP_STARTED_SUCCESSFULLY"); return true;/' TestApp/AppDelegate.cs
         dotnet build TestApp/TestApp.csproj -f net10.0-ios -c Release -r iossimulator-arm64
 
     - name: 📦 Publish and install app
