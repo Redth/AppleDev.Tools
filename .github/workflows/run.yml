@@ -56,17 +56,30 @@ jobs:
         dotnet new ios -n TestApp --output TestApp
         sed -i.bak 's/return true;/System.Console.WriteLine("TestApp: E2E_APP_STARTED_SUCCESSFULLY"); return true;/' TestApp/AppDelegate.cs
         dotnet build TestApp/TestApp.csproj -f net10.0-ios -c Debug -r iossimulator-arm64
-        APP_PATH=$(find TestApp -name "TestApp.app" -path "*/bin/*" -not -path "*/ref/*" | head -1)
+        echo "--- All .app bundles found ---"
+        find TestApp -name "TestApp.app" -type d | head -10
+        APP_PATH=$(find TestApp/bin -name "TestApp.app" -type d 2>/dev/null | head -1)
+        if [ -z "$APP_PATH" ]; then
+          APP_PATH=$(find TestApp -name "TestApp.app" -type d -not -path "*/obj/*" 2>/dev/null | head -1)
+        fi
+        if [ -z "$APP_PATH" ]; then
+          APP_PATH=$(find TestApp -name "TestApp.app" -type d | head -1)
+        fi
         if [ -z "$APP_PATH" ]; then
           echo "❌ Could not find TestApp.app after build"
-          find TestApp -name "*.app" | head -5
           exit 1
         fi
         echo "✅ App built: $APP_PATH"
 
     - name: 📦 Install and verify app on simulator
       run: |
-        APP_PATH=$(find TestApp -name "TestApp.app" -path "*/bin/*" -not -path "*/ref/*" | head -1)
+        APP_PATH=$(find TestApp/bin -name "TestApp.app" -type d 2>/dev/null | head -1)
+        if [ -z "$APP_PATH" ]; then
+          APP_PATH=$(find TestApp -name "TestApp.app" -type d -not -path "*/obj/*" 2>/dev/null | head -1)
+        fi
+        if [ -z "$APP_PATH" ]; then
+          APP_PATH=$(find TestApp -name "TestApp.app" -type d | head -1)
+        fi
         echo "Installing app: $APP_PATH"
         dotnet $TOOL simulator app install "E2ETestSim" "$APP_PATH"
         echo "--- Verifying app is installed via simulator app list ---"
