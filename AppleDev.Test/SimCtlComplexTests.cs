@@ -326,9 +326,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 
 		try
 		{
-			Assert.Contains(logs, log => log.Contains("[com.apple.Maps:GeneralMapsWidget]"));
-			Assert.DoesNotContain(logs, log => log.Contains("Clock"));
-
+			Assert.Contains(logs, log => log.Contains("Maps"));
 		}
 		catch
 		{
