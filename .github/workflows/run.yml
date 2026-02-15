@@ -40,11 +40,11 @@ jobs:
           exit 1
         fi
         echo "✅ UDID: $UDID"
-        echo "--- Verifying simulator exists and is booted ---"
-        STATE=$(xcrun simctl list devices -j | jq -r ".devices[][] | select(.udid == \"$UDID\") | .state")
-        if [ "$STATE" != "Booted" ]; then
-          echo "❌ Simulator state is '$STATE', expected 'Booted'"
-          xcrun simctl list devices | grep -A1 "E2ETestSim" || true
+        echo "--- Verifying simulator exists and is booted via tool ---"
+        SIMS=$(dotnet run --no-launch-profile --project AppleDev.Tool -- simulator list --format json)
+        if ! echo "$SIMS" | jq -e ".[] | select(.udid == \"$UDID\" and .state == \"Booted\")" > /dev/null 2>&1; then
+          echo "❌ Simulator $UDID not found as Booted in simulator list"
+          echo "$SIMS" | jq ".[] | select(.name == \"E2ETestSim\")" || true
           exit 1
         fi
         echo "✅ Simulator $UDID is Booted"
@@ -66,19 +66,19 @@ jobs:
         APP_PATH=$(find TestApp -name "TestApp.app" -path "*/bin/*" | head -1)
         echo "Installing app: $APP_PATH"
         dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app install "E2ETestSim" --path "$APP_PATH"
-        echo "--- Verifying app is installed ---"
-        if ! xcrun simctl listapps E2ETestSim 2>/dev/null | grep -q "com.companyname.testapp"; then
-          echo "⚠️ Could not verify via listapps, checking with get_app_container"
-          if ! xcrun simctl get_app_container E2ETestSim com.companyname.testapp 2>/dev/null; then
-            echo "❌ App not found on simulator after install"
-            exit 1
-          fi
+        echo "--- Verifying app is installed via simulator app list ---"
+        APPS=$(dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app list "E2ETestSim" --format json)
+        if ! echo "$APPS" | jq -e '.[] | select(.CFBundleIdentifier == "com.companyname.testapp")' > /dev/null 2>&1; then
+          echo "❌ com.companyname.testapp not found in simulator app list"
+          echo "$APPS" | jq '.[].CFBundleIdentifier' | head -10
+          exit 1
         fi
-        echo "✅ App installed on simulator"
+        echo "✅ App installed and verified via CLI"
 
     - name: 🚀 Launch test app
       run: |
         dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app launch "E2ETestSim" --bundle-id com.companyname.testapp
+        echo "Waiting for app to run..."
         sleep 10
 
     - name: 📋 Capture and verify logs
