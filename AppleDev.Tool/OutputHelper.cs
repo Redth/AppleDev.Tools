@@ -32,11 +32,11 @@ static class OutputHelper
 		else
 		{
 			if (format == OutputFormat.Json)
-				AnsiConsole.WriteLine(JsonSerialize(item));
+				Console.WriteLine(JsonSerialize(item));
 			else if (format == OutputFormat.JsonPretty)
-				AnsiConsole.WriteLine(JsonSerialize(item, indented: true));
+				Console.WriteLine(JsonSerialize(item, indented: true));
 			else if (format == OutputFormat.Xml)
-				AnsiConsole.WriteLine(XmlSerialize(item));
+				Console.WriteLine(XmlSerialize(item));
 		}
 	}
 
@@ -49,11 +49,11 @@ static class OutputHelper
 		else
 		{
 			if (format == OutputFormat.Json)
-				AnsiConsole.WriteLine(JsonSerialize(items));
+				Console.WriteLine(JsonSerialize(items));
 			else if (format == OutputFormat.JsonPretty)
-				AnsiConsole.WriteLine(JsonSerialize(items, indented: true));
+				Console.WriteLine(JsonSerialize(items, indented: true));
 			else if (format == OutputFormat.Xml)
-				AnsiConsole.WriteLine(XmlSerialize(items));
+				Console.WriteLine(XmlSerialize(items));
 		}
 	}
 	
@@ -66,11 +66,11 @@ static class OutputHelper
 		else
 		{
 			if (format == OutputFormat.Json)
-				AnsiConsole.WriteLine(JsonSerialize<T>(item));
+				Console.WriteLine(JsonSerialize<T>(item));
 			else if (format == OutputFormat.JsonPretty)
-				AnsiConsole.WriteLine(JsonSerialize<T>(item, indented: true));
+				Console.WriteLine(JsonSerialize<T>(item, indented: true));
 			else if (format == OutputFormat.Xml)
-				AnsiConsole.WriteLine(XmlSerialize<T>(item));
+				Console.WriteLine(XmlSerialize<T>(item));
 		}
 	}
 
