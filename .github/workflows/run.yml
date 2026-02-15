@@ -34,22 +34,22 @@ jobs:
 
     - name: 🆕 Create and boot simulator
       run: |
-        RESULT=$(dotnet $TOOL simulator create "E2ETestSim" --device-type "iPhone 16" --boot --wait --timeout 300 --format json 2>/dev/null)
+        RESULT=$(dotnet $TOOL simulator create "E2ETestSim" --device-type "iPhone 16" --boot --wait --timeout 300 --format json)
         echo "Simulator create result: $RESULT"
-        UDID=$(echo "$RESULT" | jq -r '.udid' 2>/dev/null)
+        UDID=$(echo "$RESULT" | jq -r '.udid')
         if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
           echo "❌ Failed to parse UDID from simulator create output"
           echo "Raw output: $RESULT"
           echo "--- Attempting to list simulators for debugging ---"
-          dotnet $TOOL simulator list || true
+          dotnet $TOOL simulator list
           exit 1
         fi
         echo "✅ UDID: $UDID"
         echo "--- Verifying simulator exists and is booted via tool ---"
-        SIMS=$(dotnet $TOOL simulator list --format json 2>/dev/null)
+        SIMS=$(dotnet $TOOL simulator list --format json)
         if ! echo "$SIMS" | jq -e ".[] | select(.udid == \"$UDID\" and .state == \"Booted\")" > /dev/null 2>&1; then
           echo "❌ Simulator $UDID not found as Booted in simulator list"
-          echo "$SIMS" | jq ".[] | select(.name == \"E2ETestSim\")" || true
+          echo "$SIMS" | jq ".[] | select(.name == \"E2ETestSim\")"
           exit 1
         fi
         echo "✅ Simulator $UDID is Booted"
@@ -61,9 +61,9 @@ jobs:
         dotnet build TestApp/TestApp.csproj -f net10.0-ios -c Debug -r iossimulator-arm64
         echo "--- All .app bundles found ---"
         find TestApp -name "TestApp.app" -type d | head -10
-        APP_PATH=$(find TestApp/bin -name "TestApp.app" -type d 2>/dev/null | head -1)
+        APP_PATH=$(find TestApp/bin -name "TestApp.app" -type d | head -1)
         if [ -z "$APP_PATH" ]; then
-          APP_PATH=$(find TestApp -name "TestApp.app" -type d -not -path "*/obj/*" 2>/dev/null | head -1)
+          APP_PATH=$(find TestApp -name "TestApp.app" -type d -not -path "*/obj/*" | head -1)
         fi
         if [ -z "$APP_PATH" ]; then
           APP_PATH=$(find TestApp -name "TestApp.app" -type d | head -1)
@@ -76,9 +76,9 @@ jobs:
 
     - name: 📦 Install and verify app on simulator
       run: |
-        APP_PATH=$(find TestApp/bin -name "TestApp.app" -type d 2>/dev/null | head -1)
+        APP_PATH=$(find TestApp/bin -name "TestApp.app" -type d | head -1)
         if [ -z "$APP_PATH" ]; then
-          APP_PATH=$(find TestApp -name "TestApp.app" -type d -not -path "*/obj/*" 2>/dev/null | head -1)
+          APP_PATH=$(find TestApp -name "TestApp.app" -type d -not -path "*/obj/*" | head -1)
         fi
         if [ -z "$APP_PATH" ]; then
           APP_PATH=$(find TestApp -name "TestApp.app" -type d | head -1)
@@ -86,7 +86,7 @@ jobs:
         echo "Installing app: $APP_PATH"
         dotnet $TOOL simulator app install "E2ETestSim" "$APP_PATH"
         echo "--- Verifying app is installed via simulator app list ---"
-        APPS=$(dotnet $TOOL simulator app list "E2ETestSim" --format json 2>/dev/null)
+        APPS=$(dotnet $TOOL simulator app list "E2ETestSim" --format json)
         if ! echo "$APPS" | jq -e '.[] | select(.CFBundleIdentifier == "com.companyname.TestApp")' > /dev/null 2>&1; then
           echo "❌ com.companyname.TestApp not found in simulator app list"
           echo "$APPS" | jq '.[].CFBundleIdentifier' | head -10
@@ -100,19 +100,20 @@ jobs:
         echo "Waiting for app to run..."
         sleep 10
         echo "--- Capturing logs ---"
-        dotnet $TOOL simulator logs "E2ETestSim" --format json > simulator-logs.json 2>/dev/null || true
+        dotnet $TOOL simulator logs "E2ETestSim" --format json > simulator-logs.json
         if [ ! -s simulator-logs.json ]; then
           echo "⚠️ No logs captured (json file empty), trying without format..."
-          dotnet $TOOL simulator logs "E2ETestSim" > simulator-logs.txt 2>/dev/null || true
+          dotnet $TOOL simulator logs "E2ETestSim" > simulator-logs.txt
           if [ -s simulator-logs.txt ]; then
             echo "--- Log output (last 30 lines) ---"
             tail -30 simulator-logs.txt
           else
-            echo "⚠️ No logs captured at all"
+            echo "❌ No logs captured at all"
+            exit 1
           fi
         else
           echo "--- Log entries ---"
-          cat simulator-logs.json | jq length 2>/dev/null || echo "Could not parse JSON"
+          cat simulator-logs.json | jq length
         fi
         echo "✅ App launched successfully"
 
