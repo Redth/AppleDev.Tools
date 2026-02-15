@@ -12,13 +12,37 @@ public class BootSimulatorCommand : AsyncCommand<BootSimulatorCommandSettings>
         var simctl = new SimCtl();
         var success = await simctl.BootAsync(settings.Target, data.CancellationToken).ConfigureAwait(false);
 
-        if (success && settings.Wait)
+        if (!success)
+        {
+            AnsiConsole.MarkupLine($"[red]Failed to boot simulator '{settings.Target}'[/]");
+            return this.ExitCode(false);
+        }
+
+        if (settings.Wait)
             success = await simctl.WaitForBootedAsync(settings.Target, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
+
+        if (success)
+        {
+            var format = settings.Format;
+            if (format == OutputFormat.None)
+            {
+                AnsiConsole.MarkupLine($"[green]Simulator '{settings.Target}' booted successfully[/]");
+            }
+            else if (format == OutputFormat.Json || format == OutputFormat.JsonPretty)
+            {
+                var result = new { target = settings.Target, state = "Booted" };
+                OutputHelper.Output(result, format);
+            }
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[red]Simulator '{settings.Target}' failed to become ready[/]");
+        }
         
         return this.ExitCode(success);
     }
 }
-public class BootSimulatorCommandSettings : CommandSettings
+public class BootSimulatorCommandSettings : FormattableOutputCommandSettings
 {
     [Description("Wait Until Ready")]
     [CommandOption("--wait")]
