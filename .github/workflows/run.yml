@@ -25,7 +25,7 @@ jobs:
     - name: 📦 Install iOS workload
       run: dotnet workload install ios --source https://api.nuget.org/v3/index.json
     - name: 🔨 Build the project
-      run: dotnet build AppleDev.Tool/AppleDev.Tool.csproj
+      run: GITHUB_ENV=/dev/null dotnet build AppleDev.Tool/AppleDev.Tool.csproj
 
     - name: 📋 List available simulators
       run: dotnet run --no-launch-profile --project AppleDev.Tool -- simulator list
