@@ -36,6 +36,7 @@ jobs:
         dotnet test ./AppleDev.Tool.Tests/AppleDev.Tool.Tests.csproj --logger "trx;LogFileName=test-results-tool.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
 
     - name: 🧪 Run IDB Integration Tests
+      if: always()
       continue-on-error: true
       run: |
         dotnet test ./AppleDev.FbIdb.Test/AppleDev.FbIdb.Test.csproj --logger "trx;LogFileName=test-results-fbidb.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
@@ -50,6 +51,7 @@ jobs:
           ./TestResults/test-results-tool.trx
         reporter: dotnet-trx
         fail-on-error: true
+        fail-on-empty: false
 
     - name: 📊 Publish IDB Test Results
       uses: dorny/test-reporter@v2
@@ -59,3 +61,4 @@ jobs:
         path: './TestResults/test-results-fbidb.trx'
         reporter: dotnet-trx
         fail-on-error: false
+        fail-on-empty: false

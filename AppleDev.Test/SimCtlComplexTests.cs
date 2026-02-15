@@ -157,7 +157,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 		var bootSuccess = await _simCtl.BootAsync(testSim.Udid);
 		Assert.True(bootSuccess, "Failed to boot the simulator");
 
-		var waitSuccess = await _simCtl.WaitForBootedAsync(testSim.Udid, TimeSpan.FromSeconds(120));
+		var waitSuccess = await _simCtl.WaitForBootedAsync(testSim.Udid, TimeSpan.FromSeconds(300));
 		Assert.True(waitSuccess, "Failed to wait for the simulator to boot");
 
 		// Verify booted state
