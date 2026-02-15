@@ -20,12 +20,12 @@ jobs:
       run: dotnet build AppleDev.Tool/AppleDev.Tool.csproj
 
     - name: 📋 List available simulators
-      run: dotnet run --project AppleDev.Tool -- simulator list
+      run: dotnet run --no-launch-profile --project AppleDev.Tool -- simulator list
 
     - name: 🆕 Create and boot simulator
       id: create-sim
       run: |
-        RESULT=$(dotnet run --project AppleDev.Tool -- simulator create "E2ETestSim" --device-type "iPhone 16" --boot --wait --format json)
+        RESULT=$(dotnet run --no-launch-profile --project AppleDev.Tool -- simulator create "E2ETestSim" --device-type "iPhone 16" --boot --wait --format json)
         echo "Simulator create result: $RESULT"
         UDID=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['udid'])" 2>/dev/null || echo "")
         echo "UDID: $UDID"
@@ -33,7 +33,7 @@ jobs:
 
     - name: ✅ Verify simulator is booted
       run: |
-        dotnet run --project AppleDev.Tool -- simulator list --format json | python3 -c "
+        dotnet run --no-launch-profile --project AppleDev.Tool -- simulator list --format json | python3 -c "
         import sys, json
         sims = json.load(sys.stdin)
         booted = [s for s in sims if s.get('name') == 'E2ETestSim' and s.get('state') == 'Booted']
@@ -66,21 +66,21 @@ jobs:
         dotnet publish TestApp/TestApp.csproj -f net9.0-ios -c Release -r iossimulator-arm64 -p:_BundlerVerbosity=1
         APP_PATH=$(find TestApp -name "TestApp.app" -path "*/publish/*" | head -1)
         echo "Installing app: $APP_PATH"
-        dotnet run --project AppleDev.Tool -- simulator app install "E2ETestSim" --path "$APP_PATH"
+        dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app install "E2ETestSim" --path "$APP_PATH"
 
     - name: 🚀 Launch test app
-      run: dotnet run --project AppleDev.Tool -- simulator app launch "E2ETestSim" --bundle-id com.companyname.testapp
+      run: dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app launch "E2ETestSim" --bundle-id com.companyname.testapp
 
     - name: 📋 Capture and verify logs
       run: |
         sleep 5
-        dotnet run --project AppleDev.Tool -- simulator logs "E2ETestSim" --format text > simulator-logs.txt 2>&1 || true
+        dotnet run --no-launch-profile --project AppleDev.Tool -- simulator logs "E2ETestSim" --format text > simulator-logs.txt 2>&1 || true
         echo "--- Checking for app log marker ---"
         grep "E2E_APP_STARTED_SUCCESSFULLY" simulator-logs.txt && echo "✅ App ran successfully" || echo "⚠️ App log marker not found (may need predicate filter)"
 
     - name: 🧹 Cleanup simulator
       if: always()
-      run: dotnet run --project AppleDev.Tool -- simulator delete --force "E2ETestSim"
+      run: dotnet run --no-launch-profile --project AppleDev.Tool -- simulator delete --force "E2ETestSim"
 
     - name: 📤 Upload logs
       if: always()
