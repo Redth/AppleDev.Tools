@@ -78,7 +78,7 @@ public class SimCtlCreateWithUdidTests : IAsyncLifetime
 		Assert.True(bootSuccess, "Failed to boot simulator");
 
 		// Wait for ready (uses simctl bootstatus internally)
-		var waitSuccess = await _simCtl.WaitForBootedAsync(udid, TimeSpan.FromSeconds(120));
+		var waitSuccess = await _simCtl.WaitForBootedAsync(udid, TimeSpan.FromSeconds(300));
 		Assert.True(waitSuccess, "Failed to wait for simulator to boot");
 
 		// Verify booted

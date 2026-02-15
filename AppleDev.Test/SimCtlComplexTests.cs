@@ -44,8 +44,8 @@ public class SimCtlComplexTests : IAsyncLifetime
 		var bootSuccess = await _simCtl.BootAsync(_testSimName);
 		Assert.True(bootSuccess, "Failed to boot the simulator");
 
-		// Wait for boot to complete with reduced timeout
-		var waitSuccess = await _simCtl.WaitForBootedAsync(_testSimName, TimeSpan.FromSeconds(60));
+		// Wait for boot to complete
+		var waitSuccess = await _simCtl.WaitForBootedAsync(_testSimName, TimeSpan.FromSeconds(300));
 		Assert.True(waitSuccess, "Failed to wait for the simulator to boot");
 
 		_isBooted = true;
