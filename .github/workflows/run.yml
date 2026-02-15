@@ -28,11 +28,11 @@ jobs:
       run: GITHUB_ENV=/dev/null dotnet build AppleDev.Tool/AppleDev.Tool.csproj
 
     - name: 📋 List available simulators
-      run: dotnet run --no-launch-profile --project AppleDev.Tool -- simulator list
+      run: dotnet run --no-launch-profile --no-build --project AppleDev.Tool -- simulator list
 
     - name: 🆕 Create and boot simulator
       run: |
-        RESULT=$(dotnet run --no-launch-profile --project AppleDev.Tool -- simulator create "E2ETestSim" --device-type "iPhone 16" --boot --wait --format json 2>/dev/null)
+        RESULT=$(dotnet run --no-launch-profile --no-build --project AppleDev.Tool -- simulator create "E2ETestSim" --device-type "iPhone 16" --boot --wait --format json 2>/dev/null)
         echo "Simulator create result: $RESULT"
         UDID=$(echo "$RESULT" | jq -r '.udid')
         if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
@@ -41,7 +41,7 @@ jobs:
         fi
         echo "✅ UDID: $UDID"
         echo "--- Verifying simulator exists and is booted via tool ---"
-        SIMS=$(dotnet run --no-launch-profile --project AppleDev.Tool -- simulator list --format json 2>/dev/null)
+        SIMS=$(dotnet run --no-launch-profile --no-build --project AppleDev.Tool -- simulator list --format json 2>/dev/null)
         if ! echo "$SIMS" | jq -e ".[] | select(.udid == \"$UDID\" and .state == \"Booted\")" > /dev/null 2>&1; then
           echo "❌ Simulator $UDID not found as Booted in simulator list"
           echo "$SIMS" | jq ".[] | select(.name == \"E2ETestSim\")" || true
@@ -65,9 +65,9 @@ jobs:
       run: |
         APP_PATH=$(find TestApp -name "TestApp.app" -path "*/bin/*" | head -1)
         echo "Installing app: $APP_PATH"
-        dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app install "E2ETestSim" "$APP_PATH"
+        dotnet run --no-launch-profile --no-build --project AppleDev.Tool -- simulator app install "E2ETestSim" "$APP_PATH"
         echo "--- Verifying app is installed via simulator app list ---"
-        APPS=$(dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app list "E2ETestSim" --format json 2>/dev/null)
+        APPS=$(dotnet run --no-launch-profile --no-build --project AppleDev.Tool -- simulator app list "E2ETestSim" --format json 2>/dev/null)
         if ! echo "$APPS" | jq -e '.[] | select(.CFBundleIdentifier == "com.companyname.TestApp")' > /dev/null 2>&1; then
           echo "❌ com.companyname.TestApp not found in simulator app list"
           echo "$APPS" | jq '.[].CFBundleIdentifier' | head -10
@@ -77,14 +77,14 @@ jobs:
 
     - name: 🚀 Launch test app
       run: |
-        dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app launch "E2ETestSim" "com.companyname.TestApp"
+        dotnet run --no-launch-profile --no-build --project AppleDev.Tool -- simulator app launch "E2ETestSim" "com.companyname.TestApp"
         echo "Waiting for app to run..."
         sleep 10
 
     - name: 📋 Capture and verify logs
       timeout-minutes: 2
       run: |
-        timeout 30 dotnet run --no-launch-profile --project AppleDev.Tool -- simulator logs "E2ETestSim" --format text > simulator-logs.txt 2>&1 || true
+        timeout 30 dotnet run --no-launch-profile --no-build --project AppleDev.Tool -- simulator logs "E2ETestSim" --format text > simulator-logs.txt 2>&1 || true
         if [ ! -f simulator-logs.txt ] || [ ! -s simulator-logs.txt ]; then
           echo "❌ simulator-logs.txt was not created or is empty"
           exit 1
@@ -100,7 +100,7 @@ jobs:
 
     - name: 🧹 Cleanup simulator
       if: always()
-      run: dotnet run --no-launch-profile --project AppleDev.Tool -- simulator delete --force "E2ETestSim"
+      run: dotnet run --no-launch-profile --no-build --project AppleDev.Tool -- simulator delete --force "E2ETestSim"
 
     - name: 📤 Upload logs
       if: always()
