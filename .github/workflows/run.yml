@@ -55,17 +55,18 @@ jobs:
       run: |
         dotnet new ios -n TestApp --output TestApp
         sed -i.bak 's/return true;/System.Console.WriteLine("TestApp: E2E_APP_STARTED_SUCCESSFULLY"); return true;/' TestApp/AppDelegate.cs
-        dotnet build TestApp/TestApp.csproj -f net10.0-ios -c Release -r iossimulator-arm64
-        APP_PATH=$(find TestApp -name "TestApp.app" -path "*/bin/*" | head -1)
+        dotnet publish TestApp/TestApp.csproj -f net10.0-ios -c Release -r iossimulator-arm64
+        APP_PATH=$(find TestApp/bin -name "TestApp.app" | head -1)
         if [ -z "$APP_PATH" ]; then
-          echo "❌ Could not find TestApp.app after build"
+          echo "❌ Could not find TestApp.app after publish"
+          find TestApp -name "*.app" | head -5
           exit 1
         fi
         echo "✅ App built: $APP_PATH"
 
     - name: 📦 Install and verify app on simulator
       run: |
-        APP_PATH=$(find TestApp -name "TestApp.app" -path "*/bin/*" | head -1)
+        APP_PATH=$(find TestApp/bin -name "TestApp.app" | head -1)
         echo "Installing app: $APP_PATH"
         dotnet $TOOL simulator app install "E2ETestSim" "$APP_PATH"
         echo "--- Verifying app is installed via simulator app list ---"
