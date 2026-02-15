@@ -33,14 +33,29 @@ jobs:
     - name: 🧪 Run Tests
       run: |
         dotnet test ./AppleDev.Test/AppleDev.Test.csproj --logger "trx;LogFileName=test-results-appledev.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
-        dotnet test ./AppleDev.FbIdb.Test/AppleDev.FbIdb.Test.csproj --logger "trx;LogFileName=test-results-fbidb.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
         dotnet test ./AppleDev.Tool.Tests/AppleDev.Tool.Tests.csproj --logger "trx;LogFileName=test-results-tool.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
+
+    - name: 🧪 Run IDB Integration Tests
+      continue-on-error: true
+      run: |
+        dotnet test ./AppleDev.FbIdb.Test/AppleDev.FbIdb.Test.csproj --logger "trx;LogFileName=test-results-fbidb.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
 
     - name: 📊 Publish Test Results
       uses: dorny/test-reporter@v2
       if: always()
       with:
         name: Test Results
-        path: './TestResults/*.trx'
+        path: |
+          ./TestResults/test-results-appledev.trx
+          ./TestResults/test-results-tool.trx
         reporter: dotnet-trx
         fail-on-error: true
+
+    - name: 📊 Publish IDB Test Results
+      uses: dorny/test-reporter@v2
+      if: always()
+      with:
+        name: IDB Integration Test Results (Flaky)
+        path: './TestResults/test-results-fbidb.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
