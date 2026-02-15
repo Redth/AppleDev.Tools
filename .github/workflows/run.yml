@@ -16,6 +16,10 @@ jobs:
         fetch-depth: 0
     - name: ⚙️ Setup .NET
       uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+    - name: 📦 Install iOS workload
+      run: dotnet workload install ios --source https://api.nuget.org/v3/index.json
     - name: 🔨 Build the project
       run: dotnet build AppleDev.Tool/AppleDev.Tool.csproj
 
@@ -49,11 +53,11 @@ jobs:
             }
         }
         EOF
-        dotnet build TestApp/TestApp.csproj -f net9.0-ios -c Release -r iossimulator-arm64
+        dotnet build TestApp/TestApp.csproj -f net10.0-ios -c Release -r iossimulator-arm64
 
     - name: 📦 Publish and install app
       run: |
-        dotnet publish TestApp/TestApp.csproj -f net9.0-ios -c Release -r iossimulator-arm64 -p:_BundlerVerbosity=1
+        dotnet publish TestApp/TestApp.csproj -f net10.0-ios -c Release -r iossimulator-arm64 -p:_BundlerVerbosity=1
         APP_PATH=$(find TestApp -name "TestApp.app" -path "*/publish/*" | head -1)
         echo "Installing app: $APP_PATH"
         dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app install "E2ETestSim" --path "$APP_PATH"
