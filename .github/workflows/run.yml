@@ -31,39 +31,72 @@ jobs:
       run: dotnet run --no-launch-profile --project AppleDev.Tool -- simulator list
 
     - name: 🆕 Create and boot simulator
-      id: create-sim
       run: |
         RESULT=$(dotnet run --no-launch-profile --project AppleDev.Tool -- simulator create "E2ETestSim" --device-type "iPhone 16" --boot --wait --format json)
         echo "Simulator create result: $RESULT"
-        UDID=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['udid'])" 2>/dev/null || echo "")
-        echo "UDID: $UDID"
-        echo "sim_udid=$UDID" >> $GITHUB_OUTPUT
-
-    - name: ✅ Verify simulator is booted
-      run: xcrun simctl list devices | grep "E2ETestSim" | grep "Booted" && echo "✅ Simulator is booted" || echo "⚠️ Simulator may not be booted"
+        UDID=$(echo "$RESULT" | jq -r '.udid')
+        if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
+          echo "❌ Failed to parse UDID from simulator create output"
+          exit 1
+        fi
+        echo "✅ UDID: $UDID"
+        echo "--- Verifying simulator exists and is booted ---"
+        STATE=$(xcrun simctl list devices -j | jq -r ".devices[][] | select(.udid == \"$UDID\") | .state")
+        if [ "$STATE" != "Booted" ]; then
+          echo "❌ Simulator state is '$STATE', expected 'Booted'"
+          xcrun simctl list devices | grep -A1 "E2ETestSim" || true
+          exit 1
+        fi
+        echo "✅ Simulator $UDID is Booted"
 
     - name: 📱 Create test iOS app
       run: |
         dotnet new ios -n TestApp --output TestApp
-        # Add a log marker inside FinishedLaunching to prove the app runs real code
         sed -i.bak 's/return true;/System.Console.WriteLine("TestApp: E2E_APP_STARTED_SUCCESSFULLY"); return true;/' TestApp/AppDelegate.cs
         dotnet build TestApp/TestApp.csproj -f net10.0-ios -c Release -r iossimulator-arm64
+        APP_PATH=$(find TestApp -name "TestApp.app" -path "*/bin/*" | head -1)
+        if [ -z "$APP_PATH" ]; then
+          echo "❌ Could not find TestApp.app after build"
+          exit 1
+        fi
+        echo "✅ App built: $APP_PATH"
 
-    - name: 📦 Install app on simulator
+    - name: 📦 Install and verify app on simulator
       run: |
         APP_PATH=$(find TestApp -name "TestApp.app" -path "*/bin/*" | head -1)
         echo "Installing app: $APP_PATH"
         dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app install "E2ETestSim" --path "$APP_PATH"
+        echo "--- Verifying app is installed ---"
+        if ! xcrun simctl listapps E2ETestSim 2>/dev/null | grep -q "com.companyname.testapp"; then
+          echo "⚠️ Could not verify via listapps, checking with get_app_container"
+          if ! xcrun simctl get_app_container E2ETestSim com.companyname.testapp 2>/dev/null; then
+            echo "❌ App not found on simulator after install"
+            exit 1
+          fi
+        fi
+        echo "✅ App installed on simulator"
 
     - name: 🚀 Launch test app
-      run: dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app launch "E2ETestSim" --bundle-id com.companyname.testapp
+      run: |
+        dotnet run --no-launch-profile --project AppleDev.Tool -- simulator app launch "E2ETestSim" --bundle-id com.companyname.testapp
+        sleep 10
 
     - name: 📋 Capture and verify logs
+      timeout-minutes: 2
       run: |
-        sleep 5
-        dotnet run --no-launch-profile --project AppleDev.Tool -- simulator logs "E2ETestSim" --format text > simulator-logs.txt 2>&1 || true
+        timeout 30 dotnet run --no-launch-profile --project AppleDev.Tool -- simulator logs "E2ETestSim" --format text > simulator-logs.txt 2>&1 || true
+        if [ ! -f simulator-logs.txt ] || [ ! -s simulator-logs.txt ]; then
+          echo "❌ simulator-logs.txt was not created or is empty"
+          exit 1
+        fi
+        echo "--- Log output (last 30 lines) ---"
+        tail -30 simulator-logs.txt
         echo "--- Checking for app log marker ---"
-        grep "E2E_APP_STARTED_SUCCESSFULLY" simulator-logs.txt && echo "✅ App ran successfully" || echo "⚠️ App log marker not found (may need predicate filter)"
+        if ! grep -q "E2E_APP_STARTED_SUCCESSFULLY" simulator-logs.txt; then
+          echo "❌ App log marker 'E2E_APP_STARTED_SUCCESSFULLY' not found in logs"
+          exit 1
+        fi
+        echo "✅ App ran real code successfully"
 
     - name: 🧹 Cleanup simulator
       if: always()
