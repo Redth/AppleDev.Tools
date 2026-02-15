@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AppleDev;
 using Xunit.Abstractions;
 
@@ -27,6 +28,15 @@ public class SimulatorFixture : IAsyncLifetime
 		if (!locator.CanLocate())
 		{
 			SkipReason = "idb_companion not installed";
+			return;
+		}
+
+		// idb_companion 1.1.8 (latest from Homebrew, built Aug 2022) is incompatible
+		// with Xcode 26+ simulators — causes HTTP/2 PROTOCOL_ERROR on gRPC calls
+		var xcodeVersion = GetXcodeMajorVersion();
+		if (xcodeVersion >= 26)
+		{
+			SkipReason = $"idb_companion is incompatible with Xcode {xcodeVersion} (requires updated idb_companion)";
 			return;
 		}
 
@@ -64,7 +74,7 @@ public class SimulatorFixture : IAsyncLifetime
 			await _simCtl.BootAsync(SimulatorUdid!);
 			
 			// Wait for it to be fully booted
-			var booted = await _simCtl.WaitForBootedAsync(SimulatorUdid!, TimeSpan.FromSeconds(120));
+			var booted = await _simCtl.WaitForBootedAsync(SimulatorUdid!, TimeSpan.FromSeconds(300));
 			if (!booted)
 			{
 				SkipReason = "Simulator failed to boot within timeout";
@@ -94,6 +104,28 @@ public class SimulatorFixture : IAsyncLifetime
 				// Ignore shutdown errors
 			}
 		}
+	}
+
+	private static int GetXcodeMajorVersion()
+	{
+		try
+		{
+			var psi = new ProcessStartInfo("xcodebuild", "-version")
+			{
+				RedirectStandardOutput = true,
+				UseShellExecute = false,
+			};
+			using var proc = Process.Start(psi);
+			var output = proc?.StandardOutput.ReadToEnd() ?? string.Empty;
+			proc?.WaitForExit();
+			// Output is like "Xcode 26.2\nBuild version..."
+			var firstLine = output.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
+			var parts = firstLine.Split(' ');
+			if (parts.Length >= 2 && Version.TryParse(parts[1], out var version))
+				return version.Major;
+		}
+		catch { }
+		return 0;
 	}
 }
 
