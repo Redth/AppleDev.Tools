@@ -18,13 +18,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 		_testSimName = $"Test-iPhone-{DateTime.Now:yyyyMMdd-HHmmss}";
 	}
 
-	private static bool IsRunningInCI()
-	{
-		// Check for common CI environment variables
-		return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")) ||
-		       !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS")) ||
-		       !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("TF_BUILD"));
-	}
 
 	public async Task InitializeAsync()
 	{
@@ -70,10 +63,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		}
 	}
 
-	[SkippableFact]
+	[Fact]
 	public async Task CreateSimulator_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
 		
 		// Verify the simulator was created
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
@@ -82,10 +74,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Equal(_testSimName, createdSim.Name);
 	}
 
-	[SkippableFact]
+	[Fact]
 	public async Task BootAndShutdownSimulator_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
 		
 		await BootAndWaitAsync();
 
@@ -112,10 +103,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		}
 	}
 
-	[SkippableFact]
+	[Fact]
 	public async Task DeleteSimulator_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
 		
 		// Get the created simulator
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
@@ -133,10 +123,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Null(deletedSim);
 	}
 
-	[SkippableFact]
+	[Fact]
 	public async Task EraseSimulator_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
 		
 		// Get the created simulator
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
@@ -154,10 +143,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotNull(erasedSim);
 	}
 
-	[SkippableFact]
+	[Fact]
 	public async Task SimulatorLifecycle_CreateBootShutdownDelete_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
 		
 		// Get the created simulator
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
@@ -201,10 +189,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Null(deletedSim);
 	}
 
-	[SkippableFact]
+	[Fact]
 	public async Task GetAppsAsync_ShouldReturnAppsWithCorrectProperties()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
 		
 		await BootAndWaitAsync();
 
@@ -269,10 +256,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Contains("watch-companion", bridgeApp.SBAppTags);
 	}
 
-	[SkippableFact]
+	[Fact]
 	public async Task GetLogsAsync_ShouldReturnLogOutput()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
 		
 		await BootAndWaitAsync();
 
@@ -282,10 +268,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotEmpty(logs);
 	}
 
-	[SkippableFact]
+	[Fact]
 	public async Task GetLogsAsync_WithStart_ShouldReturnLogOutput()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
 		
 		await BootAndWaitAsync();
 
@@ -295,10 +280,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotEmpty(logs);
 	}
 
-	[SkippableFact]
+	[Fact]
 	public async Task GetLogsAsync_WithPredicate_ShouldFilterLogs()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
 		
 		await BootAndWaitAsync();
 
@@ -326,10 +310,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		}
 	}
 
-	[SkippableFact]
+	[Fact]
 	public async Task GetLogsPlainAsync_WithPredicate_ShouldFilterLogs()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
 		
 		await BootAndWaitAsync();
 
@@ -358,10 +341,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		}
 	}
 
-	[SkippableFact]
+	[Fact]
 	public async Task CollectLogsAsync_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
 		
 		await BootAndWaitAsync();
 
