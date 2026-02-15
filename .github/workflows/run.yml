@@ -100,7 +100,11 @@ jobs:
     - name: 📋 Capture and verify logs
       timeout-minutes: 2
       run: |
-        timeout 30 dotnet $TOOL simulator logs "E2ETestSim" --format text > simulator-logs.txt 2>&1 || true
+        dotnet $TOOL simulator logs "E2ETestSim" --format text > simulator-logs.txt 2>&1 &
+        LOG_PID=$!
+        sleep 30
+        kill $LOG_PID 2>/dev/null || true
+        wait $LOG_PID 2>/dev/null || true
         if [ ! -f simulator-logs.txt ] || [ ! -s simulator-logs.txt ]; then
           echo "❌ simulator-logs.txt was not created or is empty"
           exit 1
