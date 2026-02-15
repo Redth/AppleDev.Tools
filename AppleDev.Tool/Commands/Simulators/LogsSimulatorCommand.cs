@@ -21,8 +21,8 @@ public class LogsSimulatorCommand : AsyncCommand<LogsSimulatorCommandSettings>
 			{
 				if (!DateTimeOffset.TryParse(settings.Start, out var parsedStart))
 				{
-					AnsiConsole.MarkupLine($"[red]Error:[/] Invalid timestamp format: {settings.Start}");
-					AnsiConsole.MarkupLine("[yellow]Expected format:[/] yyyy-MM-dd HH:mm:ss");
+					Console.Error.WriteLine($"Error: Invalid timestamp format: {settings.Start}");
+					Console.Error.WriteLine("Expected format: yyyy-MM-dd HH:mm:ss");
 					return this.ExitCode(false);
 				}
 				startTime = parsedStart;
@@ -35,10 +35,7 @@ public class LogsSimulatorCommand : AsyncCommand<LogsSimulatorCommandSettings>
 				data.CancellationToken);
 
 			if (logs == null || !logs.Any())
-			{
-				AnsiConsole.MarkupLine($"[yellow]No logs found for simulator {settings.Target}[/]");
-				return this.ExitCode();
-			}
+				logs = new List<SimCtlLogEntry>();
 
 			OutputHelper.Output(logs, settings.Format, settings.Verbose,
 				new Col("Timestamp", d => d.Timestamp),
@@ -54,7 +51,7 @@ public class LogsSimulatorCommand : AsyncCommand<LogsSimulatorCommandSettings>
 		}
 		catch (Exception ex)
 		{
-			AnsiConsole.MarkupLine($"[red]Error:[/] {ex.Message}");
+			Console.Error.WriteLine($"Error: {ex.Message}");
 			return this.ExitCode(false);
 		}
 	}

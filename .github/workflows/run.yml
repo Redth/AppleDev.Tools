@@ -95,8 +95,6 @@ jobs:
         echo "✅ App installed and verified via CLI"
 
     - name: 🚀 Launch and verify test app
-      env:
-        NO_COLOR: "1"
       run: |
         dotnet $TOOL simulator app launch "E2ETestSim" "com.companyname.TestApp"
         echo "Waiting for app to run..."
