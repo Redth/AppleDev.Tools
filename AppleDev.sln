@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppleDev.FbIdb", "AppleDev.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppleDev.FbIdb.Test", "AppleDev.FbIdb.Test\AppleDev.FbIdb.Test.csproj", "{191CAE26-FBF9-40E1-9656-2D1774DFDC00}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppleDev.Tool.Tests", "AppleDev.Tool.Tests\AppleDev.Tool.Tests.csproj", "{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,6 +99,18 @@ Global
 		{191CAE26-FBF9-40E1-9656-2D1774DFDC00}.Release|x64.Build.0 = Release|Any CPU
 		{191CAE26-FBF9-40E1-9656-2D1774DFDC00}.Release|x86.ActiveCfg = Release|Any CPU
 		{191CAE26-FBF9-40E1-9656-2D1774DFDC00}.Release|x86.Build.0 = Release|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Debug|x64.Build.0 = Debug|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Debug|x86.Build.0 = Debug|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Release|x64.ActiveCfg = Release|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Release|x64.Build.0 = Release|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Release|x86.ActiveCfg = Release|Any CPU
+		{C788B08F-4ACF-44D7-8FDC-E24F00DA3C5F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

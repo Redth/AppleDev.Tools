@@ -1,0 +1,124 @@
+name: Run iOS Simulator
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  run:
+    name: Run
+    runs-on: macos-latest
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - name: 🛠️ Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '26.2'
+    - name: ⚙️ Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+    - name: 📦 Install iOS workload
+      run: dotnet workload install ios --source https://api.nuget.org/v3/index.json
+    - name: 🔨 Build the project
+      run: |
+        GITHUB_ENV=/dev/null dotnet build AppleDev.Tool/AppleDev.Tool.csproj
+        echo "TOOL=$PWD/AppleDev.Tool/bin/Debug/net10.0/apple.dll" >> "$GITHUB_ENV"
+
+    - name: 📋 List available simulators
+      run: dotnet $TOOL simulator list
+
+    - name: 🆕 Create and boot simulator
+      run: |
+        RESULT=$(dotnet $TOOL simulator create "E2ETestSim" --device-type "iPhone 16" --boot --wait --timeout 300 --format json)
+        echo "Simulator create result: $RESULT"
+        UDID=$(echo "$RESULT" | jq -r '.udid')
+        if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
+          echo "❌ Failed to parse UDID from simulator create output"
+          echo "Raw output: $RESULT"
+          echo "--- Attempting to list simulators for debugging ---"
+          dotnet $TOOL simulator list
+          exit 1
+        fi
+        echo "✅ UDID: $UDID"
+        echo "--- Verifying simulator exists and is booted via tool ---"
+        SIMS=$(dotnet $TOOL simulator list --format json)
+        if ! echo "$SIMS" | jq -e ".[] | select(.udid == \"$UDID\" and .state == \"Booted\")" > /dev/null 2>&1; then
+          echo "❌ Simulator $UDID not found as Booted in simulator list"
+          echo "$SIMS" | jq ".[] | select(.name == \"E2ETestSim\")"
+          exit 1
+        fi
+        echo "✅ Simulator $UDID is Booted"
+
+    - name: 📱 Create test iOS app
+      run: |
+        dotnet new ios -n TestApp --output TestApp
+        sed -i.bak 's/return true;/System.Console.WriteLine("TestApp: E2E_APP_STARTED_SUCCESSFULLY"); return true;/' TestApp/AppDelegate.cs
+        dotnet build TestApp/TestApp.csproj -f net10.0-ios -c Debug -r iossimulator-arm64
+        echo "--- All .app bundles found ---"
+        find TestApp -name "TestApp.app" -type d | head -10
+        APP_PATH=$(find TestApp/bin -name "TestApp.app" -type d | head -1)
+        if [ -z "$APP_PATH" ]; then
+          APP_PATH=$(find TestApp -name "TestApp.app" -type d -not -path "*/obj/*" | head -1)
+        fi
+        if [ -z "$APP_PATH" ]; then
+          APP_PATH=$(find TestApp -name "TestApp.app" -type d | head -1)
+        fi
+        if [ -z "$APP_PATH" ]; then
+          echo "❌ Could not find TestApp.app after build"
+          exit 1
+        fi
+        echo "✅ App built: $APP_PATH"
+
+    - name: 📦 Install and verify app on simulator
+      run: |
+        APP_PATH=$(find TestApp/bin -name "TestApp.app" -type d | head -1)
+        if [ -z "$APP_PATH" ]; then
+          APP_PATH=$(find TestApp -name "TestApp.app" -type d -not -path "*/obj/*" | head -1)
+        fi
+        if [ -z "$APP_PATH" ]; then
+          APP_PATH=$(find TestApp -name "TestApp.app" -type d | head -1)
+        fi
+        echo "Installing app: $APP_PATH"
+        dotnet $TOOL simulator app install "E2ETestSim" "$APP_PATH"
+        echo "--- Verifying app is installed via simulator app list ---"
+        APPS=$(dotnet $TOOL simulator app list "E2ETestSim" --format json)
+        if ! echo "$APPS" | jq -e '.[] | select(.CFBundleIdentifier == "com.companyname.TestApp")' > /dev/null 2>&1; then
+          echo "❌ com.companyname.TestApp not found in simulator app list"
+          echo "$APPS" | jq '.[].CFBundleIdentifier' | head -10
+          exit 1
+        fi
+        echo "✅ App installed and verified via CLI"
+
+    - name: 🚀 Launch and verify test app
+      run: |
+        dotnet $TOOL simulator app launch "E2ETestSim" "com.companyname.TestApp"
+        echo "Waiting for app to run..."
+        sleep 10
+        echo "--- Capturing logs ---"
+        dotnet $TOOL simulator logs "E2ETestSim" --format json > simulator-logs.json
+        if [ ! -s simulator-logs.json ]; then
+          echo "❌ No logs captured"
+          exit 1
+        fi
+        echo "--- Log entries ---"
+        cat simulator-logs.json | jq length
+        echo "✅ App launched successfully"
+
+    - name: 🧹 Cleanup simulator
+      if: always()
+      run: dotnet $TOOL simulator delete --force "E2ETestSim"
+
+    - name: 📤 Upload logs
+      if: always()
+      uses: actions/upload-artifact@v5
+      with:
+        name: simulator-logs
+        path: |
+          simulator-logs.json
+          simulator-logs.txt
+        if-no-files-found: ignore

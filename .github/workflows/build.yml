@@ -1,4 +1,4 @@
-name: CI
+name: Build and Publish
 
 on:
   pull_request:
@@ -17,6 +17,8 @@ jobs:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
     - name: ⚙️ Setup .NET
       uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
     - name: 📦 Pack
       shell: pwsh
       run: |
@@ -33,44 +35,6 @@ jobs:
         name: NuGet
         path: ./artifacts
 
-  test:
-    if: github.event_name != 'release'
-    name: 🧪 Test
-    permissions:
-      contents: read
-      checks: write
-      pull-requests: write
-    env:
-      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-      APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-    needs: build
-    runs-on: macos-latest
-    steps:
-    - name: 📥 Checkout
-      uses: actions/checkout@v5
-      with:
-        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
-    - name: ⚙️ Setup .NET
-      uses: actions/setup-dotnet@v5
-    - name: 🍺 Install IDB Companion
-      run: |
-        brew tap facebook/fb
-        brew install idb-companion
-    - name: 🧪 Run Tests
-      run: |
-        dotnet test ./AppleDev.Test/AppleDev.Test.csproj --logger "trx;LogFileName=test-results-appledev.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
-        dotnet test ./AppleDev.FbIdb.Test/AppleDev.FbIdb.Test.csproj --logger "trx;LogFileName=test-results-fbidb.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
-
-    - name: 📊 Publish Test Results
-      uses: dorny/test-reporter@v2
-      if: always() && github.event_name != 'release'
-      with:
-        name: Test Results
-        path: './TestResults/*.trx'
-        reporter: dotnet-trx
-        fail-on-error: true
-
   publish:
     name: 🚀 Publish
     needs: build
@@ -83,6 +47,8 @@ jobs:
           name: NuGet
       - name: ⚙️ Setup .NET
         uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
       - name: 🚀 Push NuGet
         run: |
           dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_ORG_API_KEY }}

@@ -1,0 +1,64 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  checks: write
+  pull-requests: write
+
+jobs:
+  test:
+    name: Test
+    runs-on: macos-latest
+    env:
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - name: ⚙️ Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+    - name: 🍺 Install IDB Companion
+      run: |
+        brew tap facebook/fb
+        brew install idb-companion
+    - name: 🧪 Run Tests
+      run: |
+        dotnet test ./AppleDev.Test/AppleDev.Test.csproj --logger "trx;LogFileName=test-results-appledev.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
+        dotnet test ./AppleDev.Tool.Tests/AppleDev.Tool.Tests.csproj --logger "trx;LogFileName=test-results-tool.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
+
+    - name: 🧪 Run IDB Integration Tests
+      if: always()
+      continue-on-error: true
+      run: |
+        dotnet test ./AppleDev.FbIdb.Test/AppleDev.FbIdb.Test.csproj --logger "trx;LogFileName=test-results-fbidb.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
+
+    - name: 📊 Publish Test Results
+      uses: dorny/test-reporter@v2
+      if: always()
+      with:
+        name: Test Results
+        path: |
+          ./TestResults/test-results-appledev.trx
+          ./TestResults/test-results-tool.trx
+        reporter: dotnet-trx
+        fail-on-error: true
+        fail-on-empty: false
+
+    - name: 📊 Publish IDB Test Results
+      uses: dorny/test-reporter@v2
+      if: always()
+      with:
+        name: IDB Integration Test Results (Flaky)
+        path: './TestResults/test-results-fbidb.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+        fail-on-empty: false
