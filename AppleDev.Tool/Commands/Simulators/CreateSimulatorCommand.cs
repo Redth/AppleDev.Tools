@@ -31,6 +31,13 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
             if (!bootSuccess)
             {
                 AnsiConsole.MarkupLine($"[red]Simulator created but failed to boot '{settings.Name}'[/]");
+                
+                if (settings.Format == OutputFormat.Json || settings.Format == OutputFormat.JsonPretty)
+                {
+                    var errorResult = new { udid = udid, name = settings.Name, error = $"Simulator created but failed to boot '{settings.Name}'" };
+                    OutputHelper.Output(errorResult, settings.Format);
+                }
+                
                 return this.ExitCode(false);
             }
         }
