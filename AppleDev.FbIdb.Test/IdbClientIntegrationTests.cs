@@ -117,8 +117,7 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 	{
 		Skip.If(!OperatingSystem.IsMacOS(), "IDB only works on macOS");
 		Skip.If(!new IdbCompanionLocator().CanLocate(), "idb_companion not installed");
-		if (!_fixture.IsReady)
-			throw new InvalidOperationException(_fixture.SkipReason ?? "Simulator not ready");
+		Skip.If(!_fixture.IsReady, _fixture.SkipReason ?? "Simulator not ready");
 	}
 
 	private async Task<IdbClient> CreateConnectedClientAsync()
