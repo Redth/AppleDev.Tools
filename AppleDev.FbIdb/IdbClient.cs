@@ -476,12 +476,12 @@ public sealed class IdbClient : IIdbClient
 	/// </remarks>
 	public async Task<Screenshot> ScreenshotAsync(CancellationToken cancellationToken = default)
 	{
-		await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
-
 		try
 		{
 			var request = new ScreenshotRequest();
-			var response = await GetClient().screenshotAsync(request, GetCallOptions(cancellationToken)).ConfigureAwait(false);
+			var response = await WithRetryOnProtocolErrorAsync(
+				(client, opts) => client.screenshotAsync(request, opts).ResponseAsync,
+				cancellationToken).ConfigureAwait(false);
 
 			return new Screenshot
 			{
@@ -492,8 +492,8 @@ public sealed class IdbClient : IIdbClient
 		catch (Grpc.Core.RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.Internal && 
 			ex.Message.Contains("PROTOCOL_ERROR"))
 		{
-			// Fallback to simctl for simulators due to .NET/Swift gRPC HTTP/2 incompatibility
-			_logger.LogDebug("gRPC screenshot failed with PROTOCOL_ERROR, falling back to simctl");
+			// Fallback to simctl for simulators if all gRPC retries exhausted
+			_logger.LogDebug("gRPC screenshot failed with PROTOCOL_ERROR after retries, falling back to simctl");
 			return await ScreenshotViaSimctlAsync(cancellationToken).ConfigureAwait(false);
 		}
 	}
