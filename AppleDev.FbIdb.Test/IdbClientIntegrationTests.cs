@@ -251,6 +251,9 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 	public async Task ListCrashLogsAsync_ReturnsCrashLogs()
 	{
 		SkipIfNotReady();
+		// idb_companion v1.1.8 crashes with an uncaught NSException in crash_list.
+		// See: https://github.com/facebook/idb/issues/868
+		Skip.If(true, "idb_companion v1.1.8 crash_list is broken (facebook/idb#868)");
 
 		await using var client = await CreateConnectedClientAsync();
 
