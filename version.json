@@ -3,8 +3,8 @@
   "version": "0.8",
   "pathFilters": [":/AppleDev/", ":/AppleDev.Tool/", ":/AppleDev.Mcp.Server/", ":/AppStoreConnectClient/", ":/version.json"],
   "cloudBuild": {
-    "setVersionVariables": true,
-    "setAllVariables": true
+    "setVersionVariables": false,
+    "setAllVariables": false
   },
   "publicReleaseRefSpec": [
     "^refs/tags/*"
