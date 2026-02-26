@@ -113,9 +113,12 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 		_fixture = fixture;
 	}
 
-	private void SkipIfNotReady()
+	private void SkipIfNotSupported()
 	{
-		Skip.If(!_fixture.IsReady, _fixture.SkipReason ?? "Simulator not ready");
+		Skip.If(!OperatingSystem.IsMacOS(), "IDB only works on macOS");
+		Skip.If(!new IdbCompanionLocator().CanLocate(), "idb_companion not installed");
+		if (!_fixture.IsReady)
+			throw new InvalidOperationException(_fixture.SkipReason ?? "Simulator not ready");
 	}
 
 	private async Task<IdbClient> CreateConnectedClientAsync()
@@ -139,7 +142,7 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 	[SkippableFact]
 	public async Task IdbClient_CanBeCreated()
 	{
-		SkipIfNotReady();
+		SkipIfNotSupported();
 
 		_testOutputHelper.WriteLine($"Using simulator UDID: {_fixture.SimulatorUdid}");
 
@@ -151,7 +154,7 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 	[SkippableFact]
 	public async Task ConnectAsync_ConnectsToSimulator()
 	{
-		SkipIfNotReady();
+		SkipIfNotSupported();
 
 		_testOutputHelper.WriteLine($"Using booted simulator: {_fixture.SimulatorUdid}");
 
@@ -165,7 +168,7 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 	[SkippableFact]
 	public async Task DescribeAsync_ReturnsTargetInfo()
 	{
-		SkipIfNotReady();
+		SkipIfNotSupported();
 
 		await using var client = await CreateConnectedClientAsync();
 
@@ -190,7 +193,7 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 	[SkippableFact]
 	public async Task ListAppsAsync_ReturnsApps()
 	{
-		SkipIfNotReady();
+		SkipIfNotSupported();
 
 		await using var client = await CreateConnectedClientAsync();
 
@@ -208,7 +211,7 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 	[SkippableFact]
 	public async Task ScreenshotAsync_TakesScreenshot()
 	{
-		SkipIfNotReady();
+		SkipIfNotSupported();
 
 		await using var client = await CreateConnectedClientAsync();
 
@@ -223,7 +226,7 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 	[SkippableFact]
 	public async Task SetLocationAsync_SetsLocation()
 	{
-		SkipIfNotReady();
+		SkipIfNotSupported();
 
 		await using var client = await CreateConnectedClientAsync();
 
@@ -238,7 +241,7 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 	[SkippableFact]
 	public async Task FocusAsync_FocusesSimulator()
 	{
-		SkipIfNotReady();
+		SkipIfNotSupported();
 
 		await using var client = await CreateConnectedClientAsync();
 
@@ -250,9 +253,10 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 	[SkippableFact]
 	public async Task ListCrashLogsAsync_ReturnsCrashLogs()
 	{
-		SkipIfNotReady();
-		// idb_companion v1.1.8 crashes with an uncaught NSException in crash_list.
+		SkipIfNotSupported();
+		// idb_companion v1.1.8 crashes server-side with uncaught NSException in crash_list.
 		// See: https://github.com/facebook/idb/issues/868
+		// Unlike PROTOCOL_ERROR, this is a server crash that retries cannot fix.
 		Skip.If(true, "idb_companion v1.1.8 crash_list is broken (facebook/idb#868)");
 
 		await using var client = await CreateConnectedClientAsync();
@@ -271,7 +275,7 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 	[SkippableFact]
 	public async Task ListTestBundlesAsync_ReturnsTestBundles()
 	{
-		SkipIfNotReady();
+		SkipIfNotSupported();
 
 		await using var client = await CreateConnectedClientAsync();
 
