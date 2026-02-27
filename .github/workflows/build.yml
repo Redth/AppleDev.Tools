@@ -71,13 +71,12 @@ jobs:
         dotnet test ./AppleDev.FbIdb.Test/AppleDev.FbIdb.Test.csproj --logger "trx;LogFileName=test-results-fbidb.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
 
     - name: 📊 Publish Test Results
-      uses: dorny/test-reporter@v2
+      uses: EnricoMi/publish-unit-test-result-action/macos@v2
       if: always() && github.event_name != 'release'
       with:
-        name: Test Results
-        path: './TestResults/*.trx'
-        reporter: dotnet-trx
-        fail-on-error: true
+        files: './TestResults/*.trx'
+        comment_mode: always
+        check_name: Test Results
 
   publish:
     name: 🚀 Publish
