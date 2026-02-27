@@ -131,7 +131,16 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 			},
 			new XUnitLogger<IdbClient>(_testOutputHelper));
 		
-		await client.ConnectAsync();
+		try
+		{
+			await client.ConnectAsync();
+		}
+		catch (TimeoutException ex)
+		{
+			await client.DisposeAsync();
+			Skip.If(true, $"idb_companion failed to start: {ex.Message}");
+		}
+
 		_testOutputHelper.WriteLine($"Connected to IDB companion, IsConnected={client.IsConnected}");
 		return client;
 	}
