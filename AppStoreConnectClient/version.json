@@ -4,8 +4,8 @@
   "version": "0.2",
   "pathFilters": [":/AppStoreConnectClient/"],
   "cloudBuild": {
-    "setVersionVariables": true,
-    "setAllVariables": true
+    "setVersionVariables": false,
+    "setAllVariables": false
   },
   "publicReleaseRefSpec": [
     "^refs/tags/*"
