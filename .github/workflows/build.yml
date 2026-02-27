@@ -23,6 +23,8 @@ jobs:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
     - name: ⚙️ Setup .NET
       uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
     - name: 🔢 Set version variables
       run: dnx -y nbgv cloud
     - name: 📦 Pack
@@ -61,6 +63,8 @@ jobs:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
     - name: ⚙️ Setup .NET
       uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
     - name: 🍺 Install IDB Companion
       run: |
         brew tap facebook/fb
@@ -91,6 +95,8 @@ jobs:
           name: NuGet
       - name: ⚙️ Setup .NET
         uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
       - name: 🚀 Push NuGet
         run: |
           dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_ORG_API_KEY }}
