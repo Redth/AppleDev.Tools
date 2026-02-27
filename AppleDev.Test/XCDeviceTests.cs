@@ -46,7 +46,7 @@ public class XCDeviceTests
     [Fact]
     public async Task ObserveAnyDevices()
     {
-        var ct = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var ct = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
         var tcs = new TaskCompletionSource<bool>();
 

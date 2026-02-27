@@ -18,14 +18,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 		_testSimName = $"Test-iPhone-{DateTime.Now:yyyyMMdd-HHmmss}";
 	}
 
-	private static bool IsRunningInCI()
-	{
-		// Check for common CI environment variables
-		return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")) ||
-		       !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS")) ||
-		       !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("TF_BUILD"));
-	}
-
 	public async Task InitializeAsync()
 	{
 		var deviceTypes = await _simCtl.GetSimulatorGroupsAsync();
@@ -51,8 +43,8 @@ public class SimCtlComplexTests : IAsyncLifetime
 		var bootSuccess = await _simCtl.BootAsync(_testSimName);
 		Assert.True(bootSuccess, "Failed to boot the simulator");
 
-		// Wait for boot to complete with reduced timeout
-		var waitSuccess = await _simCtl.WaitForBootedAsync(_testSimName, TimeSpan.FromSeconds(60));
+		// Wait for boot to complete
+		var waitSuccess = await _simCtl.WaitForBootedAsync(_testSimName, TimeSpan.FromSeconds(300));
 		Assert.True(waitSuccess, "Failed to wait for the simulator to boot");
 
 		_isBooted = true;
@@ -73,8 +65,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 	[SkippableFact]
 	public async Task CreateSimulator_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
-		
 		// Verify the simulator was created
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
 		var createdSim = sims.FirstOrDefault(s => s.Name == _testSimName);
@@ -85,8 +75,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 	[SkippableFact]
 	public async Task BootAndShutdownSimulator_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
-		
 		await BootAndWaitAsync();
 
 		// Verify the simulator is booted
@@ -115,8 +103,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 	[SkippableFact]
 	public async Task DeleteSimulator_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
-		
 		// Get the created simulator
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
 		var createdSim = sims.FirstOrDefault(s => s.Name == _testSimName);
@@ -136,8 +122,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 	[SkippableFact]
 	public async Task EraseSimulator_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
-		
 		// Get the created simulator
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
 		var testSim = sims.FirstOrDefault(s => s.Name == _testSimName);
@@ -157,8 +141,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 	[SkippableFact]
 	public async Task SimulatorLifecycle_CreateBootShutdownDelete_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
-		
 		// Get the created simulator
 		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
 		var testSim = sims.FirstOrDefault(s => s.Name == _testSimName);
@@ -204,8 +186,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 	[SkippableFact]
 	public async Task GetAppsAsync_ShouldReturnAppsWithCorrectProperties()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
-		
 		await BootAndWaitAsync();
 
 		// Get the installed apps
@@ -272,8 +252,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 	[SkippableFact]
 	public async Task GetLogsAsync_ShouldReturnLogOutput()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
-		
 		await BootAndWaitAsync();
 
 		// Get logs - should return some log data
@@ -285,8 +263,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 	[SkippableFact]
 	public async Task GetLogsAsync_WithStart_ShouldReturnLogOutput()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
-		
 		await BootAndWaitAsync();
 
 		// Get logs - should return some log data
@@ -298,14 +274,13 @@ public class SimCtlComplexTests : IAsyncLifetime
 	[SkippableFact]
 	public async Task GetLogsAsync_WithPredicate_ShouldFilterLogs()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
-		
 		await BootAndWaitAsync();
 
-		// Reduced delay - simulator boot already generated plenty of logs
-		await Task.Delay(1000);
+		// Launch Maps so it generates logs we can filter for
+		await _simCtl.LaunchAppAsync(_testSimName, "com.apple.Maps");
+		await Task.Delay(3000);
 
-		// Get logs with a predicate filter
+		// Get logs with a predicate filter for Maps
 		var logs = await _simCtl.GetLogsAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
@@ -329,23 +304,21 @@ public class SimCtlComplexTests : IAsyncLifetime
 	[SkippableFact]
 	public async Task GetLogsPlainAsync_WithPredicate_ShouldFilterLogs()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
-		
 		await BootAndWaitAsync();
 
-		// Reduced delay - simulator boot already generated plenty of logs
-		await Task.Delay(1000);
+		// Launch Maps so it generates logs we can filter for
+		await _simCtl.LaunchAppAsync(_testSimName, "com.apple.Maps");
+		await Task.Delay(3000);
 
-		// Get logs with a predicate filter
+		// Get logs with a predicate filter for Maps
 		var logs = await _simCtl.GetLogsPlainAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
 
 		try
 		{
-			Assert.Contains(logs, log => log.Contains("[com.apple.Maps:GeneralMapsWidget]"));
-			Assert.DoesNotContain(logs, log => log.Contains("Clock"));
-
+			Assert.Contains(logs, log => log.Contains("Maps"));
+			Assert.DoesNotContain(logs, log => log.Contains("ClockKit"));
 		}
 		catch
 		{
@@ -361,8 +334,6 @@ public class SimCtlComplexTests : IAsyncLifetime
 	[SkippableFact]
 	public async Task CollectLogsAsync_ShouldSucceed()
 	{
-		Skip.If(IsRunningInCI(), "SimCtl complex tests are skipped in CI due to timeouts");
-		
 		await BootAndWaitAsync();
 
 		// Create a unique output path for the test

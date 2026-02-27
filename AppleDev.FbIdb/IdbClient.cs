@@ -173,6 +173,52 @@ public sealed class IdbClient : IIdbClient
 
 	private Metadata GetMetadata() => new();
 
+	private const int MaxRetries = 3;
+
+	/// <summary>
+	/// Executes a gRPC call with retry on PROTOCOL_ERROR.
+	/// When idb_companion sends invalid HTTP/2 data, the connection is
+	/// poisoned. This helper reconnects and retries the call.
+	/// </summary>
+	private async Task<T> WithRetryOnProtocolErrorAsync<T>(
+		Func<CompanionService.CompanionServiceClient, CallOptions, Task<T>> call,
+		CancellationToken cancellationToken)
+	{
+		await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+
+		for (int attempt = 0; ; attempt++)
+		{
+			try
+			{
+				return await call(GetClient(), GetCallOptions(cancellationToken)).ConfigureAwait(false);
+			}
+			catch (RpcException ex) when (
+				attempt < MaxRetries &&
+				ex.StatusCode == StatusCode.Internal &&
+				ex.Message.Contains("PROTOCOL_ERROR"))
+			{
+				_logger.LogDebug(
+					"gRPC call failed with PROTOCOL_ERROR (attempt {Attempt}/{Max}), reconnecting",
+					attempt + 1, MaxRetries);
+
+				// Tear down the poisoned connection and create a fresh one
+				await ReconnectAsync(cancellationToken).ConfigureAwait(false);
+			}
+		}
+	}
+
+	private async Task ReconnectAsync(CancellationToken cancellationToken)
+	{
+		if (_channel is not null)
+		{
+			try { _channel.Dispose(); } catch { /* best effort */ }
+			_channel = null;
+			_client = null;
+		}
+
+		await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+	}
+
 	#region Connection & Management
 
 	/// <inheritdoc />
@@ -193,10 +239,8 @@ public sealed class IdbClient : IIdbClient
 	/// <inheritdoc />
 	public async Task<TargetDescription> DescribeAsync(bool fetchDiagnostics = false, CancellationToken cancellationToken = default)
 	{
-		await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
-
 		var request = new TargetDescriptionRequest { FetchDiagnostics = fetchDiagnostics };
-		var response = await GetClient().describeAsync(request, GetCallOptions(cancellationToken)).ConfigureAwait(false);
+		var response = await WithRetryOnProtocolErrorAsync((client, opts) => client.describeAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 
 		var desc = response.TargetDescription;
 		return new TargetDescription
@@ -402,10 +446,8 @@ public sealed class IdbClient : IIdbClient
 	/// <inheritdoc />
 	public async Task<IReadOnlyList<InstalledApp>> ListAppsAsync(bool suppressProcessState = false, CancellationToken cancellationToken = default)
 	{
-		await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
-
 		var request = new ListAppsRequest { SuppressProcessState = suppressProcessState };
-		var response = await GetClient().list_appsAsync(request, GetCallOptions(cancellationToken)).ConfigureAwait(false);
+		var response = await WithRetryOnProtocolErrorAsync((client, opts) => client.list_appsAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 
 		return response.Apps.Select(app => new InstalledApp
 		{
@@ -430,12 +472,10 @@ public sealed class IdbClient : IIdbClient
 	/// </remarks>
 	public async Task<Screenshot> ScreenshotAsync(CancellationToken cancellationToken = default)
 	{
-		await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
-
 		try
 		{
 			var request = new ScreenshotRequest();
-			var response = await GetClient().screenshotAsync(request, GetCallOptions(cancellationToken)).ConfigureAwait(false);
+			var response = await WithRetryOnProtocolErrorAsync((client, opts) => client.screenshotAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 
 			return new Screenshot
 			{
@@ -446,8 +486,8 @@ public sealed class IdbClient : IIdbClient
 		catch (Grpc.Core.RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.Internal && 
 			ex.Message.Contains("PROTOCOL_ERROR"))
 		{
-			// Fallback to simctl for simulators due to .NET/Swift gRPC HTTP/2 incompatibility
-			_logger.LogDebug("gRPC screenshot failed with PROTOCOL_ERROR, falling back to simctl");
+			// Fallback to simctl for simulators if all gRPC retries exhausted
+			_logger.LogDebug("gRPC screenshot failed with PROTOCOL_ERROR after retries, falling back to simctl");
 			return await ScreenshotViaSimctlAsync(cancellationToken).ConfigureAwait(false);
 		}
 	}
@@ -675,10 +715,8 @@ public sealed class IdbClient : IIdbClient
 	/// <inheritdoc />
 	public async Task FocusAsync(CancellationToken cancellationToken = default)
 	{
-		await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
-
 		var request = new FocusRequest();
-		await GetClient().focusAsync(request, GetCallOptions(cancellationToken)).ConfigureAwait(false);
+		await WithRetryOnProtocolErrorAsync((client, opts) => client.focusAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 	}
 
 	#endregion
@@ -782,8 +820,6 @@ public sealed class IdbClient : IIdbClient
 	/// <inheritdoc />
 	public async Task SetLocationAsync(GeoLocation location, CancellationToken cancellationToken = default)
 	{
-		await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
-
 		var request = new SetLocationRequest
 		{
 			Location = new Location
@@ -793,7 +829,7 @@ public sealed class IdbClient : IIdbClient
 			}
 		};
 
-		await GetClient().set_locationAsync(request, GetCallOptions(cancellationToken)).ConfigureAwait(false);
+		await WithRetryOnProtocolErrorAsync((client, opts) => client.set_locationAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 	}
 
 	#endregion
@@ -1112,10 +1148,8 @@ public sealed class IdbClient : IIdbClient
 	/// <inheritdoc />
 	public async Task<IReadOnlyList<TestBundle>> ListTestBundlesAsync(CancellationToken cancellationToken = default)
 	{
-		await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
-
 		var request = new XctestListBundlesRequest();
-		var response = await GetClient().xctest_list_bundlesAsync(request, GetCallOptions(cancellationToken)).ConfigureAwait(false);
+		var response = await WithRetryOnProtocolErrorAsync((client, opts) => client.xctest_list_bundlesAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 
 		return response.Bundles.Select(b => new TestBundle
 		{
