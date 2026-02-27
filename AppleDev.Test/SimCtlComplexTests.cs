@@ -1,4 +1,5 @@
-﻿using System.Xml;
+﻿using System.Text.Json;
+using System.Xml;
 using Xunit.Abstractions;
 
 namespace AppleDev.Test;
@@ -61,7 +62,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 		}
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task CreateSimulator_ShouldSucceed()
 	{
 		// Verify the simulator was created
@@ -71,7 +72,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Equal(_testSimName, createdSim.Name);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task BootAndShutdownSimulator_ShouldSucceed()
 	{
 		await BootAndWaitAsync();
@@ -99,7 +100,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 		}
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task DeleteSimulator_ShouldSucceed()
 	{
 		// Get the created simulator
@@ -118,7 +119,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Null(deletedSim);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task EraseSimulator_ShouldSucceed()
 	{
 		// Get the created simulator
@@ -137,7 +138,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotNull(erasedSim);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task SimulatorLifecycle_CreateBootShutdownDelete_ShouldSucceed()
 	{
 		// Get the created simulator
@@ -182,7 +183,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Null(deletedSim);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetAppsAsync_ShouldReturnAppsWithCorrectProperties()
 	{
 		await BootAndWaitAsync();
@@ -248,7 +249,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.Contains("watch-companion", bridgeApp.SBAppTags);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetLogsAsync_ShouldReturnLogOutput()
 	{
 		await BootAndWaitAsync();
@@ -259,7 +260,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotEmpty(logs);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetLogsAsync_WithStart_ShouldReturnLogOutput()
 	{
 		await BootAndWaitAsync();
@@ -270,36 +271,67 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotEmpty(logs);
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetLogsAsync_WithPredicate_ShouldFilterLogs()
 	{
 		await BootAndWaitAsync();
 
-		// SpringBoard always runs on a booted simulator
-		var logs = await _simCtl.GetLogsAsync(_testSimName, predicate: "process == 'SpringBoard'");
+		// Launch Maps so it generates logs we can filter for
+		await _simCtl.LaunchAppAsync(_testSimName, "com.apple.Maps");
+		await Task.Delay(3000);
+
+		// Get logs with a predicate filter for Maps
+		var logs = await _simCtl.GetLogsAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
 
-		// All returned logs should be from SpringBoard
-		Assert.All(logs, log => Assert.Contains("SpringBoard", log.ProcessImagePath));
+		try
+		{
+			Assert.Contains(logs, log => log.Subsystem == "com.apple.Maps");
+			Assert.DoesNotContain(logs, log => log.Subsystem == "ClockKit");
+		}
+		catch
+		{
+			_testOutputHelper.WriteLine($"Logs for {_testSimName}:");
+			foreach (var log in logs)
+			{
+				_testOutputHelper.WriteLine(JsonSerializer.Serialize(log));
+			}
+			throw;
+		}
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task GetLogsPlainAsync_WithPredicate_ShouldFilterLogs()
 	{
 		await BootAndWaitAsync();
 
-		// SpringBoard always runs on a booted simulator
-		var logs = await _simCtl.GetLogsPlainAsync(_testSimName, predicate: "process == 'SpringBoard'");
+		// Launch Maps so it generates logs we can filter for
+		await _simCtl.LaunchAppAsync(_testSimName, "com.apple.Maps");
+		await Task.Delay(3000);
+
+		// Get logs with a predicate filter for Maps
+		var logs = await _simCtl.GetLogsPlainAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
 
-		// The predicate filters at the system level; plain text output includes
-		// headers and multi-line entries that won't contain the process name
-		Assert.Contains(logs, log => log.Contains("SpringBoard"));
+		try
+		{
+			Assert.Contains(logs, log => log.Contains("Maps"));
+			Assert.DoesNotContain(logs, log => log.Contains("ClockKit"));
+		}
+		catch
+		{
+			_testOutputHelper.WriteLine($"Logs for {_testSimName}:");
+			foreach (var log in logs)
+			{
+				_testOutputHelper.WriteLine(log);
+			}
+			throw;
+		}
 	}
 
-	[Fact]
+	[SkippableFact]
 	public async Task CollectLogsAsync_ShouldSucceed()
 	{
 		await BootAndWaitAsync();

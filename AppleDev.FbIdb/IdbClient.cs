@@ -240,9 +240,7 @@ public sealed class IdbClient : IIdbClient
 	public async Task<TargetDescription> DescribeAsync(bool fetchDiagnostics = false, CancellationToken cancellationToken = default)
 	{
 		var request = new TargetDescriptionRequest { FetchDiagnostics = fetchDiagnostics };
-		var response = await WithRetryOnProtocolErrorAsync(
-			(client, opts) => client.describeAsync(request, opts).ResponseAsync,
-			cancellationToken).ConfigureAwait(false);
+		var response = await WithRetryOnProtocolErrorAsync((client, opts) => client.describeAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 
 		var desc = response.TargetDescription;
 		return new TargetDescription
@@ -449,9 +447,7 @@ public sealed class IdbClient : IIdbClient
 	public async Task<IReadOnlyList<InstalledApp>> ListAppsAsync(bool suppressProcessState = false, CancellationToken cancellationToken = default)
 	{
 		var request = new ListAppsRequest { SuppressProcessState = suppressProcessState };
-		var response = await WithRetryOnProtocolErrorAsync(
-			(client, opts) => client.list_appsAsync(request, opts).ResponseAsync,
-			cancellationToken).ConfigureAwait(false);
+		var response = await WithRetryOnProtocolErrorAsync((client, opts) => client.list_appsAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 
 		return response.Apps.Select(app => new InstalledApp
 		{
@@ -479,9 +475,7 @@ public sealed class IdbClient : IIdbClient
 		try
 		{
 			var request = new ScreenshotRequest();
-			var response = await WithRetryOnProtocolErrorAsync(
-				(client, opts) => client.screenshotAsync(request, opts).ResponseAsync,
-				cancellationToken).ConfigureAwait(false);
+			var response = await WithRetryOnProtocolErrorAsync((client, opts) => client.screenshotAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 
 			return new Screenshot
 			{
@@ -722,9 +716,7 @@ public sealed class IdbClient : IIdbClient
 	public async Task FocusAsync(CancellationToken cancellationToken = default)
 	{
 		var request = new FocusRequest();
-		await WithRetryOnProtocolErrorAsync(
-			(client, opts) => client.focusAsync(request, opts).ResponseAsync,
-			cancellationToken).ConfigureAwait(false);
+		await WithRetryOnProtocolErrorAsync((client, opts) => client.focusAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 	}
 
 	#endregion
@@ -837,9 +829,7 @@ public sealed class IdbClient : IIdbClient
 			}
 		};
 
-		await WithRetryOnProtocolErrorAsync(
-			(client, opts) => client.set_locationAsync(request, opts).ResponseAsync,
-			cancellationToken).ConfigureAwait(false);
+		await WithRetryOnProtocolErrorAsync((client, opts) => client.set_locationAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 	}
 
 	#endregion
@@ -1159,9 +1149,7 @@ public sealed class IdbClient : IIdbClient
 	public async Task<IReadOnlyList<TestBundle>> ListTestBundlesAsync(CancellationToken cancellationToken = default)
 	{
 		var request = new XctestListBundlesRequest();
-		var response = await WithRetryOnProtocolErrorAsync(
-			(client, opts) => client.xctest_list_bundlesAsync(request, opts).ResponseAsync,
-			cancellationToken).ConfigureAwait(false);
+		var response = await WithRetryOnProtocolErrorAsync((client, opts) => client.xctest_list_bundlesAsync(request, opts).ResponseAsync, cancellationToken).ConfigureAwait(false);
 
 		return response.Bundles.Select(b => new TestBundle
 		{
