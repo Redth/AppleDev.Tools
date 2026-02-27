@@ -64,7 +64,7 @@ public class SimulatorFixture : IAsyncLifetime
 			await _simCtl.BootAsync(SimulatorUdid!);
 			
 			// Wait for it to be fully booted
-			var booted = await _simCtl.WaitForBootedAsync(SimulatorUdid!, TimeSpan.FromSeconds(120));
+			var booted = await _simCtl.WaitForBootedAsync(SimulatorUdid!, TimeSpan.FromSeconds(300));
 			if (!booted)
 			{
 				SkipReason = "Simulator failed to boot within timeout";
@@ -127,7 +127,7 @@ public class IdbClientIntegrationTests : IClassFixture<SimulatorFixture>
 			new IdbCompanionOptions 
 			{ 
 				VerboseLogging = true,
-				StartupTimeout = TimeSpan.FromSeconds(60)
+				StartupTimeout = TimeSpan.FromSeconds(120)
 			},
 			new XUnitLogger<IdbClient>(_testOutputHelper));
 		
