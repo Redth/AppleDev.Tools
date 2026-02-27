@@ -7,5 +7,6 @@ public enum OutputFormat
 {
 	None,
 	Json,
+	JsonPretty,
 	Xml
 }
