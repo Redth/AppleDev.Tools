@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Xml;
+﻿using System.Xml;
 using Xunit.Abstractions;
 
 namespace AppleDev.Test;
@@ -276,28 +275,13 @@ public class SimCtlComplexTests : IAsyncLifetime
 	{
 		await BootAndWaitAsync();
 
-		// Reduced delay - simulator boot already generated plenty of logs
-		await Task.Delay(1000);
-
-		// Get logs with a predicate filter
-		var logs = await _simCtl.GetLogsAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
+		// SpringBoard always runs on a booted simulator
+		var logs = await _simCtl.GetLogsAsync(_testSimName, predicate: "process == 'SpringBoard'");
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
 
-		try
-		{
-			Assert.Contains(logs, log => log.Subsystem == "com.apple.Maps");
-			Assert.DoesNotContain(logs, log => log.Subsystem == "ClockKit");
-		}
-		catch
-		{
-			_testOutputHelper.WriteLine($"Logs for {_testSimName}:");
-			foreach (var log in logs)
-			{
-				_testOutputHelper.WriteLine(JsonSerializer.Serialize(log));
-			}
-			throw;
-		}
+		// All returned logs should be from SpringBoard
+		Assert.All(logs, log => Assert.Contains("SpringBoard", log.ProcessImagePath));
 	}
 
 	[Fact]
@@ -305,29 +289,13 @@ public class SimCtlComplexTests : IAsyncLifetime
 	{
 		await BootAndWaitAsync();
 
-		// Reduced delay - simulator boot already generated plenty of logs
-		await Task.Delay(1000);
-
-		// Get logs with a predicate filter
-		var logs = await _simCtl.GetLogsPlainAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
+		// SpringBoard always runs on a booted simulator
+		var logs = await _simCtl.GetLogsPlainAsync(_testSimName, predicate: "process == 'SpringBoard'");
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
 
-		try
-		{
-			Assert.Contains(logs, log => log.Contains("[com.apple.Maps:GeneralMapsWidget]"));
-			Assert.DoesNotContain(logs, log => log.Contains("Clock"));
-
-		}
-		catch
-		{
-			_testOutputHelper.WriteLine($"Logs for {_testSimName}:");
-			foreach (var log in logs)
-			{
-				_testOutputHelper.WriteLine(log);
-			}
-			throw;
-		}
+		// All returned logs should mention SpringBoard
+		Assert.All(logs, log => Assert.Contains("SpringBoard", log));
 	}
 
 	[Fact]
