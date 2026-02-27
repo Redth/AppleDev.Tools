@@ -294,8 +294,9 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
 
-		// All returned logs should mention SpringBoard
-		Assert.All(logs, log => Assert.Contains("SpringBoard", log));
+		// The predicate filters at the system level; plain text output includes
+		// headers and multi-line entries that won't contain the process name
+		Assert.Contains(logs, log => log.Contains("SpringBoard"));
 	}
 
 	[Fact]
