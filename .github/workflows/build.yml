@@ -23,8 +23,6 @@ jobs:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
     - name: ⚙️ Setup .NET
       uses: actions/setup-dotnet@v5
-      with:
-        global-json-file: global.json
     - name: 🔢 Set version variables
       run: dnx -y nbgv cloud
     - name: 📦 Pack
@@ -63,8 +61,6 @@ jobs:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
     - name: ⚙️ Setup .NET
       uses: actions/setup-dotnet@v5
-      with:
-        global-json-file: global.json
     - name: 🍺 Install IDB Companion
       run: |
         brew tap facebook/fb
