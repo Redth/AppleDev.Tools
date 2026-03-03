@@ -7,7 +7,7 @@ namespace AppleDev.Tool.Tests;
 
 public class OutputHelperTests
 {
-	record TestItem(string Name, int Value);
+	public record TestItem(string Name, int Value);
 
 	static ColumnInfo<TestItem>[] TestColumns => new[]
 	{
@@ -134,5 +134,55 @@ public class OutputHelperTests
 
 		Assert.False(ContainsAnsiEscapes(output),
 			$"JSON output contains ANSI escape codes: {output}");
+	}
+
+	[Theory]
+	[InlineData("json", OutputFormat.Json)]
+	[InlineData("JSON", OutputFormat.Json)]
+	[InlineData("jsonpretty", OutputFormat.JsonPretty)]
+	[InlineData("JsonPretty", OutputFormat.JsonPretty)]
+	[InlineData("json-pretty", OutputFormat.JsonPretty)]
+	[InlineData("xml", OutputFormat.Xml)]
+	[InlineData("XML", OutputFormat.Xml)]
+	[InlineData("", OutputFormat.None)]
+	[InlineData("unknown", OutputFormat.None)]
+	public void OutputFormatTypeConverter_ParsesAllFormats(string input, OutputFormat expected)
+	{
+		var converter = new OutputFormatTypeConverter();
+		var result = converter.ConvertFrom(null, null, input);
+		Assert.Equal(expected, result);
+	}
+
+	[Fact]
+	public void Output_JsonPrettyFormat_WithItems_IsIndented()
+	{
+		var items = new[] { new TestItem("foo", 1) };
+
+		var output = CaptureStdout(() =>
+			OutputHelper.Output(items, OutputFormat.JsonPretty, false, TestColumns));
+
+		var trimmed = output.Trim();
+		Assert.Contains("\n", trimmed);
+		Assert.Contains("  ", trimmed);
+
+		var parsed = JsonSerializer.Deserialize<TestItem[]>(trimmed);
+		Assert.NotNull(parsed);
+		Assert.Single(parsed!);
+	}
+
+	[Fact]
+	public void Output_JsonFormat_IsCompact()
+	{
+		var items = new[] { new TestItem("foo", 1) };
+
+		var output = CaptureStdout(() =>
+			OutputHelper.Output(items, OutputFormat.Json, false, TestColumns));
+
+		var trimmed = output.Trim();
+		Assert.DoesNotContain("\n", trimmed);
+
+		var parsed = JsonSerializer.Deserialize<TestItem[]>(trimmed);
+		Assert.NotNull(parsed);
+		Assert.Single(parsed!);
 	}
 }

@@ -35,7 +35,14 @@ public class LogsSimulatorCommand : AsyncCommand<LogsSimulatorCommandSettings>
 				data.CancellationToken);
 
 			if (logs == null || !logs.Any())
+			{
+				if (settings.Format == OutputFormat.None)
+				{
+					Console.WriteLine("No logs found.");
+					return this.ExitCode();
+				}
 				logs = new List<SimCtlLogEntry>();
+			}
 
 			OutputHelper.Output(logs, settings.Format, settings.Verbose,
 				new Col("Timestamp", d => d.Timestamp),
