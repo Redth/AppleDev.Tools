@@ -638,10 +638,9 @@ app.Configure(config =>
 
 try
 {
-	return app.Run(args);
+	app.Run(args);
 }
 catch (Exception ex)
 {
 	AnsiConsole.WriteException(ex);
-	return 1;
 }

@@ -17,6 +17,9 @@ public class OutputFormatTypeConverter : System.ComponentModel.TypeConverter
 		if (str?.Equals("jsonpretty", StringComparison.OrdinalIgnoreCase) ?? false)
 			return OutputFormat.JsonPretty;
 
+		if (str?.Equals("json-pretty", StringComparison.OrdinalIgnoreCase) ?? false)
+			return OutputFormat.JsonPretty;
+
 		if (str?.Equals("xml", StringComparison.OrdinalIgnoreCase) ?? false)
 			return OutputFormat.Xml;
 
