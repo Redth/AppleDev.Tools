@@ -13,22 +13,17 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
         var data = context.GetData();
         var simctl = new SimCtl();
         
-        var success = await simctl.CreateAsync(
+        var device = await simctl.CreateAsync(
             settings.Name, 
             settings.DeviceTypeId, 
             settings.RuntimeId,
             data.CancellationToken).ConfigureAwait(false);
         
-        SimCtlDevice? device = null;
-        if (success)
-        {
-            var sims = await simctl.GetSimulatorsAsync(availableOnly: false, cancellationToken: data.CancellationToken).ConfigureAwait(false);
-            device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
-        }
+        var success = device is not null;
         
         if (success && settings.Boot)
         {
-            var target = device?.Udid ?? settings.Name;
+            var target = device!.Udid ?? settings.Name;
             var bootSuccess = await simctl.BootAsync(target, data.CancellationToken).ConfigureAwait(false);
             
             if (bootSuccess && settings.Wait)
@@ -47,15 +42,12 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
             if (format == OutputFormat.None)
             {
                 AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
-                if (device is not null)
-                    AnsiConsole.WriteLine(device.Udid!);
+                if (device!.Udid is not null)
+                    AnsiConsole.WriteLine(device.Udid);
             }
             else
             {
-                if (device is not null)
-                    OutputHelper.Output(device, format);
-                else
-                    OutputHelper.Output(new { name = settings.Name }, format);
+                OutputHelper.Output(device!, format);
             }
         }
         else
