@@ -39,6 +39,10 @@ public class SimCtlCreateTests : IAsyncLifetime
 	[Fact]
 	public async Task CreateAsync_CreatesSimulator()
 	{
+		// Verify the simulator does not exist before creating
+		var existingBefore = await _simCtl.GetSimulatorsAsync(availableOnly: false);
+		Assert.DoesNotContain(existingBefore, s => string.Equals(s.Name, _testSimName, StringComparison.Ordinal));
+
 		var deviceTypes = await _simCtl.GetSimulatorGroupsAsync();
 		var iPhoneType = deviceTypes.FirstOrDefault(dt => dt.ProductFamily?.Contains("iPhone") == true);
 		Assert.NotNull(iPhoneType);
