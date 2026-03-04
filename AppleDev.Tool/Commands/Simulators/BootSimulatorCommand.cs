@@ -12,38 +12,33 @@ public class BootSimulatorCommand : AsyncCommand<BootSimulatorCommandSettings>
         var simctl = new SimCtl();
         var success = await simctl.BootAsync(settings.Target, data.CancellationToken).ConfigureAwait(false);
 
-        if (!success)
-        {
-            AnsiConsole.MarkupLine($"[red]Failed to boot simulator '{settings.Target}'[/]");
-            return this.ExitCode(false);
-        }
-
-        if (settings.Wait)
+        if (success && settings.Wait)
             success = await simctl.WaitForBootedAsync(settings.Target, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
 
-        if (!success)
+        if (success)
         {
-            AnsiConsole.MarkupLine($"[red]Simulator '{settings.Target}' failed to become ready[/]");
-            return this.ExitCode(false);
-        }
+            var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
+            var device = sims.FirstOrDefault(s =>
+                string.Equals(s.Udid, settings.Target, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(s.Name, settings.Target, StringComparison.Ordinal));
 
-        var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
-        var device = sims.FirstOrDefault(s =>
-            string.Equals(s.Udid, settings.Target, StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(s.Name, settings.Target, StringComparison.Ordinal));
-
-        if (device is not null)
-        {
-            OutputHelper.Output(device, settings.Format,
-                new[] { "Name", "UDID", "State", "Device Type", "Runtime" },
-                d => new[] { d.Name, d.Udid, d.State, d.DeviceType?.Name ?? d.DeviceTypeIdentifier, d.Runtime?.Name });
+            if (device is not null)
+            {
+                OutputHelper.Output(device, settings.Format,
+                    new[] { "Name", "UDID", "State", "Device Type", "Runtime" },
+                    d => new[] { d.Name, d.Udid, d.State, d.DeviceType?.Name ?? d.DeviceTypeIdentifier, d.Runtime?.Name });
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"[green]Simulator '{settings.Target}' booted successfully[/]");
+            }
         }
         else
         {
-            AnsiConsole.MarkupLine($"[green]Simulator '{settings.Target}' booted successfully[/]");
+            AnsiConsole.MarkupLine($"[red]Failed to boot simulator '{settings.Target}'[/]");
         }
         
-        return this.ExitCode(true);
+        return this.ExitCode(success);
     }
 }
 public class BootSimulatorCommandSettings : FormattableOutputCommandSettings

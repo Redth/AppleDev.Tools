@@ -19,27 +19,28 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
             settings.RuntimeId,
             data.CancellationToken).ConfigureAwait(false);
         
-        if (!success)
+        if (success)
         {
-            AnsiConsole.MarkupLine($"[red]Failed to create simulator '{settings.Name}'[/]");
-            return this.ExitCode(false);
-        }
+            var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
+            var device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
 
-        var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
-        var device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
-
-        if (device is not null)
-        {
-            OutputHelper.Output(device, settings.Format,
-                new[] { "Name", "UDID", "State", "Device Type", "Runtime" },
-                d => new[] { d.Name, d.Udid, d.State, d.DeviceType?.Name ?? d.DeviceTypeIdentifier, d.Runtime?.Name });
+            if (device is not null)
+            {
+                OutputHelper.Output(device, settings.Format,
+                    new[] { "Name", "UDID", "State", "Device Type", "Runtime" },
+                    d => new[] { d.Name, d.Udid, d.State, d.DeviceType?.Name ?? d.DeviceTypeIdentifier, d.Runtime?.Name });
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
+            }
         }
         else
         {
-            AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
+            AnsiConsole.MarkupLine($"[red]Failed to create simulator '{settings.Name}'[/]");
         }
-
-        return this.ExitCode(true);
+        
+        return this.ExitCode(success);
     }
 }
 
