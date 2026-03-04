@@ -13,20 +13,26 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
         var data = context.GetData();
         var simctl = new SimCtl();
         
-        var udid = await simctl.CreateWithUdidAsync(
+        var success = await simctl.CreateAsync(
             settings.Name, 
             settings.DeviceTypeId, 
             settings.RuntimeId,
             data.CancellationToken).ConfigureAwait(false);
         
-        var success = udid is not null;
+        SimCtlDevice? device = null;
+        if (success)
+        {
+            var sims = await simctl.GetSimulatorsAsync(availableOnly: false, cancellationToken: data.CancellationToken).ConfigureAwait(false);
+            device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
+        }
         
         if (success && settings.Boot)
         {
-            var bootSuccess = await simctl.BootAsync(udid!, data.CancellationToken).ConfigureAwait(false);
+            var target = device?.Udid ?? settings.Name;
+            var bootSuccess = await simctl.BootAsync(target, data.CancellationToken).ConfigureAwait(false);
             
             if (bootSuccess && settings.Wait)
-                bootSuccess = await simctl.WaitForBootedAsync(udid!, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
+                bootSuccess = await simctl.WaitForBootedAsync(target, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
             
             if (!bootSuccess)
             {
@@ -41,15 +47,15 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
             if (format == OutputFormat.None)
             {
                 AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
-                AnsiConsole.WriteLine(udid!);
+                if (device is not null)
+                    AnsiConsole.WriteLine(device.Udid!);
             }
             else
             {
-                var device = await simctl.GetSimulatorAsync(udid!, data.CancellationToken).ConfigureAwait(false);
                 if (device is not null)
                     OutputHelper.Output(device, format);
                 else
-                    OutputHelper.Output(new { udid, name = settings.Name }, format);
+                    OutputHelper.Output(new { name = settings.Name }, format);
             }
         }
         else
