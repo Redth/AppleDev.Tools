@@ -19,21 +19,22 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
             settings.RuntimeId,
             data.CancellationToken).ConfigureAwait(false);
         
-        if (!success)
+        if (success)
+        {
+            var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
+            var device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
+    
+            if (device is not null)
+                OutputHelper.Output(device, settings.Format);
+            else
+                OutputHelper.Output(new { name = settings.Name }, settings.Format);
+        }
+        else
         {
             AnsiConsole.MarkupLine($"[red]Failed to create simulator '{settings.Name}'[/]");
-            return this.ExitCode(false);
         }
 
-        var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
-        var device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
-
-        if (device is not null)
-            OutputHelper.Output(device, settings.Format);
-        else
-            OutputHelper.Output(new { name = settings.Name }, settings.Format);
-
-        return this.ExitCode(true);
+        return this.ExitCode(success);
     }
 }
 
