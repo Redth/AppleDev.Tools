@@ -28,21 +28,11 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
         var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
         var device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
 
-        var format = settings.Format;
-        if (format == OutputFormat.None)
-        {
-            AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
-            if (device?.Udid is not null)
-                AnsiConsole.WriteLine(device.Udid);
-        }
+        if (device is not null)
+            OutputHelper.Output(device, settings.Format);
         else
-        {
-            if (device is not null)
-                OutputHelper.Output(device, format);
-            else
-                OutputHelper.Output(new { name = settings.Name }, format);
-        }
-        
+            OutputHelper.Output(new { name = settings.Name }, settings.Format);
+
         return this.ExitCode(true);
     }
 }
