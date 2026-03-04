@@ -276,15 +276,29 @@ public class SimCtlComplexTests : IAsyncLifetime
 	{
 		await BootAndWaitAsync();
 
-		// Reduced delay - simulator boot already generated plenty of logs
-		await Task.Delay(1000);
+		// Launch Maps so it generates logs we can filter for
+		await _simCtl.LaunchAppAsync(_testSimName, "com.apple.Maps");
+		await Task.Delay(3000);
 
-		// Get logs with a predicate filter — use SpringBoard which is always present
-		var logs = await _simCtl.GetLogsAsync(_testSimName, predicate: "subsystem contains 'SpringBoard'");
+		// Get logs with a predicate filter for Maps
+		var logs = await _simCtl.GetLogsAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
 
-		Assert.Contains(logs, log => log.Subsystem?.Contains("SpringBoard") == true);
+		try
+		{
+			Assert.Contains(logs, log => log.Subsystem == "com.apple.Maps");
+			Assert.DoesNotContain(logs, log => log.Subsystem == "ClockKit");
+		}
+		catch
+		{
+			_testOutputHelper.WriteLine($"Logs for {_testSimName}:");
+			foreach (var log in logs)
+			{
+				_testOutputHelper.WriteLine(JsonSerializer.Serialize(log));
+			}
+			throw;
+		}
 	}
 
 	[SkippableFact]
@@ -292,10 +306,11 @@ public class SimCtlComplexTests : IAsyncLifetime
 	{
 		await BootAndWaitAsync();
 
-		// Reduced delay - simulator boot already generated plenty of logs
-		await Task.Delay(1000);
+		// Launch Maps so it generates logs we can filter for
+		await _simCtl.LaunchAppAsync(_testSimName, "com.apple.Maps");
+		await Task.Delay(3000);
 
-		// Get logs with a predicate filter
+		// Get logs with a predicate filter for Maps
 		var logs = await _simCtl.GetLogsPlainAsync(_testSimName, predicate: "senderImagePath contains 'Maps'");
 		Assert.NotNull(logs);
 		Assert.NotEmpty(logs);
@@ -303,6 +318,7 @@ public class SimCtlComplexTests : IAsyncLifetime
 		try
 		{
 			Assert.Contains(logs, log => log.Contains("Maps"));
+			Assert.DoesNotContain(logs, log => log.Contains("ClockKit"));
 		}
 		catch
 		{
