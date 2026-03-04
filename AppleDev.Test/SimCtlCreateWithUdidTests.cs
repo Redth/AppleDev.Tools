@@ -21,16 +21,16 @@ public class SimCtlCreateWithUdidTests : IAsyncLifetime
 
 	public async Task DisposeAsync()
 	{
+		var udid = _createdUdid ?? _testSimName;
 		try
 		{
-			// Shutdown first (ignore failures)
-			await _simCtl.ShutdownAsync(_testSimName);
+			await _simCtl.ShutdownAsync(udid);
 		}
 		catch { }
 
 		try
 		{
-			await _simCtl.DeleteAsync(_testSimName);
+			await _simCtl.DeleteAsync(udid);
 		}
 		catch (Exception ex)
 		{
@@ -50,20 +50,12 @@ public class SimCtlCreateWithUdidTests : IAsyncLifetime
 
 		Assert.NotNull(udid);
 		Assert.NotEmpty(udid);
-		_testOutputHelper.WriteLine($"Created simulator '{_testSimName}' with UDID: {udid}");
-
-		// Verify it's a valid UUID format
 		Assert.True(Guid.TryParse(udid, out _), $"UDID '{udid}' is not a valid UUID");
-
-		// Verify the simulator exists
-		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
-		var created = sims.FirstOrDefault(s => s.Udid == udid);
-		Assert.NotNull(created);
-		Assert.Equal(_testSimName, created.Name);
+		_testOutputHelper.WriteLine($"Created simulator '{_testSimName}' with UDID: {udid}");
 	}
 
 	[Fact]
-	public async Task CreateWithUdidAsync_CanBootAndWait()
+	public async Task GetSimulatorAsync_ReturnsDevice()
 	{
 		var deviceTypes = await _simCtl.GetSimulatorGroupsAsync();
 		var iPhoneType = deviceTypes.FirstOrDefault(dt => dt.ProductFamily?.Contains("iPhone") == true);
@@ -73,19 +65,48 @@ public class SimCtlCreateWithUdidTests : IAsyncLifetime
 		_createdUdid = udid;
 		Assert.NotNull(udid);
 
+		var device = await _simCtl.GetSimulatorAsync(udid);
+
+		Assert.NotNull(device);
+		Assert.Equal(udid, device.Udid);
+		Assert.Equal(_testSimName, device.Name);
+		Assert.NotNull(device.DeviceTypeIdentifier);
+		Assert.NotNull(device.State);
+		_testOutputHelper.WriteLine($"GetSimulatorAsync returned: Name={device.Name}, State={device.State}, Type={device.DeviceTypeIdentifier}");
+	}
+
+	[Fact]
+	public async Task GetSimulatorAsync_NonExistentUdid_ReturnsNull()
+	{
+		var device = await _simCtl.GetSimulatorAsync(Guid.NewGuid().ToString());
+		Assert.Null(device);
+	}
+
+	[Fact]
+	public async Task CreateAndBoot_FullLifecycle()
+	{
+		var deviceTypes = await _simCtl.GetSimulatorGroupsAsync();
+		var iPhoneType = deviceTypes.FirstOrDefault(dt => dt.ProductFamily?.Contains("iPhone") == true);
+		Assert.NotNull(iPhoneType);
+
+		// Create
+		var udid = await _simCtl.CreateWithUdidAsync(_testSimName, iPhoneType.Identifier!);
+		_createdUdid = udid;
+		Assert.NotNull(udid);
+
 		// Boot
 		var bootSuccess = await _simCtl.BootAsync(udid);
 		Assert.True(bootSuccess, "Failed to boot simulator");
 
-		// Wait for ready (uses simctl bootstatus internally)
+		// Wait for ready
 		var waitSuccess = await _simCtl.WaitForBootedAsync(udid, TimeSpan.FromSeconds(300));
 		Assert.True(waitSuccess, "Failed to wait for simulator to boot");
 
-		// Verify booted
-		var sims = await _simCtl.GetSimulatorsAsync();
-		var booted = sims.FirstOrDefault(s => s.Udid == udid);
-		Assert.NotNull(booted);
-		Assert.True(booted.IsBooted);
+		// Verify booted via GetSimulatorAsync
+		var device = await _simCtl.GetSimulatorAsync(udid);
+		Assert.NotNull(device);
+		Assert.True(device.IsBooted);
+		_testOutputHelper.WriteLine($"Booted simulator: Name={device.Name}, State={device.State}");
 	}
 
 	[Fact]

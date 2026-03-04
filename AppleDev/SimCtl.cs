@@ -333,6 +333,18 @@ public class SimCtl : XCRun
 	}
 
 	/// <summary>
+	/// Gets a single simulator device by its UDID.
+	/// </summary>
+	/// <param name="udid">The UDID of the simulator to find.</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>The simulator device, or null if not found.</returns>
+	public async Task<SimCtlDevice?> GetSimulatorAsync(string udid, CancellationToken cancellationToken = default)
+	{
+		var sims = await GetSimulatorsAsync(availableOnly: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+		return sims.FirstOrDefault(s => string.Equals(s.Udid, udid, StringComparison.OrdinalIgnoreCase));
+	}
+
+	/// <summary>
 	/// Gets the list of apps installed on the target simulator(s).
 	/// </summary>
 	/// <param name="target">The target UDID, Simulator Name, or 'booted' for all booted simulators</param>

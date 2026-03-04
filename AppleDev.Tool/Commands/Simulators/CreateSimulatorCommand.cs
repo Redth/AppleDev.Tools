@@ -31,13 +31,6 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
             if (!bootSuccess)
             {
                 AnsiConsole.MarkupLine($"[red]Simulator created but failed to boot '{settings.Name}'[/]");
-                
-                if (settings.Format == OutputFormat.Json || settings.Format == OutputFormat.JsonPretty)
-                {
-                    var errorResult = new { udid = udid, name = settings.Name, error = $"Simulator created but failed to boot '{settings.Name}'" };
-                    OutputHelper.Output(errorResult, settings.Format);
-                }
-                
                 return this.ExitCode(false);
             }
         }
@@ -50,14 +43,13 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
                 AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
                 AnsiConsole.WriteLine(udid!);
             }
-            else if (format == OutputFormat.Json || format == OutputFormat.JsonPretty)
+            else
             {
-                var result = new { udid, name = settings.Name, deviceType = settings.DeviceTypeId, runtime = settings.RuntimeId };
-                OutputHelper.Output(result, format);
-            }
-            else if (format == OutputFormat.Xml)
-            {
-                OutputHelper.Output(udid!, format);
+                var device = await simctl.GetSimulatorAsync(udid!, data.CancellationToken).ConfigureAwait(false);
+                if (device is not null)
+                    OutputHelper.Output(device, format);
+                else
+                    OutputHelper.Output(new { udid, name = settings.Name }, format);
             }
         }
         else
