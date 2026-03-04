@@ -21,21 +21,6 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
         
         var success = device is not null;
         
-        if (success && settings.Boot)
-        {
-            var target = device!.Udid ?? settings.Name;
-            var bootSuccess = await simctl.BootAsync(target, data.CancellationToken).ConfigureAwait(false);
-            
-            if (bootSuccess && settings.Wait)
-                bootSuccess = await simctl.WaitForBootedAsync(target, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
-            
-            if (!bootSuccess)
-            {
-                AnsiConsole.MarkupLine($"[red]Simulator created but failed to boot '{settings.Name}'[/]");
-                return this.ExitCode(false);
-            }
-        }
-        
         if (success)
         {
             var format = settings.Format;
@@ -74,21 +59,6 @@ public class CreateSimulatorCommandSettings : FormattableOutputCommandSettings
     [CommandOption("-r|--runtime")]
     public string? RuntimeId { get; set; }
 
-    [Description("Boot the simulator after creation")]
-    [CommandOption("--boot")]
-    [DefaultValue(false)]
-    public bool Boot { get; set; }
-
-    [Description("Wait for the simulator to be fully ready (requires --boot)")]
-    [CommandOption("--wait")]
-    [DefaultValue(false)]
-    public bool Wait { get; set; }
-
-    [Description("Timeout in seconds to wait for boot readiness")]
-    [CommandOption("--timeout")]
-    [DefaultValue(120)]
-    public int Timeout { get; set; }
-
     public override ValidationResult Validate()
     {
         if (string.IsNullOrWhiteSpace(Name))
@@ -96,12 +66,6 @@ public class CreateSimulatorCommandSettings : FormattableOutputCommandSettings
         
         if (string.IsNullOrWhiteSpace(DeviceTypeId))
             return ValidationResult.Error("Device type identifier is required");
-
-        if (Wait && !Boot)
-            return ValidationResult.Error("--wait requires --boot");
-
-        if (Wait && Timeout <= 0)
-            return ValidationResult.Error("--timeout must be > 0");
         
         return base.Validate();
     }
