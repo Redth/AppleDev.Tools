@@ -2,8 +2,6 @@ using System.ComponentModel;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-using Col = AppleDev.Tool.ColumnInfo<AppleDev.SimCtlDevice>;
-
 namespace AppleDev.Tool.Commands;
 
 public class BootSimulatorCommand : AsyncCommand<BootSimulatorCommandSettings>
@@ -36,7 +34,9 @@ public class BootSimulatorCommand : AsyncCommand<BootSimulatorCommandSettings>
 
         if (device is not null)
         {
-            OutputHelper.Output(device, settings.Format, settings.Verbose, SimulatorColumns.ForDevice(settings.Verbose));
+            OutputHelper.Output(device, settings.Format,
+                new[] { "Name", "UDID", "State", "Device Type", "Runtime" },
+                d => new[] { d.Name, d.Udid, d.State, d.DeviceType?.Name ?? d.DeviceTypeIdentifier, d.Runtime?.Name });
         }
         else
         {

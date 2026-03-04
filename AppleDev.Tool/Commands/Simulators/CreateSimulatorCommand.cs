@@ -4,8 +4,6 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 using ValidationResult = Spectre.Console.ValidationResult;
 
-using Col = AppleDev.Tool.ColumnInfo<AppleDev.SimCtlDevice>;
-
 namespace AppleDev.Tool.Commands;
 
 public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSettings>
@@ -32,7 +30,9 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
 
         if (device is not null)
         {
-            OutputHelper.Output(device, settings.Format, settings.Verbose, SimulatorColumns.ForDevice(settings.Verbose));
+            OutputHelper.Output(device, settings.Format,
+                new[] { "Name", "UDID", "State", "Device Type", "Runtime" },
+                d => new[] { d.Name, d.Udid, d.State, d.DeviceType?.Name ?? d.DeviceTypeIdentifier, d.Runtime?.Name });
         }
         else
         {
