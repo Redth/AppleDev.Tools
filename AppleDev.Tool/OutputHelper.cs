@@ -32,9 +32,11 @@ static class OutputHelper
 		else
 		{
 			if (format == OutputFormat.Json)
-				AnsiConsole.WriteLine(JsonSerialize(item));
+				Console.WriteLine(JsonSerialize(item));
+			else if (format == OutputFormat.JsonPretty)
+				Console.WriteLine(JsonSerialize(item, indented: true));
 			else if (format == OutputFormat.Xml)
-				AnsiConsole.WriteLine(XmlSerialize(item));
+				Console.WriteLine(XmlSerialize(item));
 		}
 	}
 
@@ -47,9 +49,11 @@ static class OutputHelper
 		else
 		{
 			if (format == OutputFormat.Json)
-				AnsiConsole.WriteLine(JsonSerialize(items));
+				Console.WriteLine(JsonSerialize(items));
+			else if (format == OutputFormat.JsonPretty)
+				Console.WriteLine(JsonSerialize(items, indented: true));
 			else if (format == OutputFormat.Xml)
-				AnsiConsole.WriteLine(XmlSerialize(items));
+				Console.WriteLine(XmlSerialize(items));
 		}
 	}
 	
@@ -62,9 +66,11 @@ static class OutputHelper
 		else
 		{
 			if (format == OutputFormat.Json)
-				AnsiConsole.WriteLine(JsonSerialize<T>(item));
+				Console.WriteLine(JsonSerialize<T>(item));
+			else if (format == OutputFormat.JsonPretty)
+				Console.WriteLine(JsonSerialize<T>(item, indented: true));
 			else if (format == OutputFormat.Xml)
-				AnsiConsole.WriteLine(XmlSerialize<T>(item));
+				Console.WriteLine(XmlSerialize<T>(item));
 		}
 	}
 
@@ -150,6 +156,9 @@ static class OutputHelper
 			case OutputFormat.Json:
 				r = JsonSerialize<T>(data);
 				break;
+			case OutputFormat.JsonPretty:
+				r = JsonSerialize<T>(data, indented: true);
+				break;
 			case OutputFormat.Xml:
 				r = XmlSerialize<T>(data);
 				break;
@@ -165,11 +174,11 @@ static class OutputHelper
 		AnsiConsole.WriteException(ex);
 	}
 
-	static string JsonSerialize<T>(T obj)
+	static string JsonSerialize<T>(T obj, bool indented = false)
 	{
 		var options = new System.Text.Json.JsonSerializerOptions
 		{
-			WriteIndented = true,
+			WriteIndented = indented,
 			DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
 		};
 		return System.Text.Json.JsonSerializer.Serialize(obj, options);

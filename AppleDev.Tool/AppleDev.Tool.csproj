@@ -39,6 +39,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="AppleDev.Tool.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\AppleDev\AppleDev.csproj" />
         <ProjectReference Include="..\AppStoreConnectClient\AppStoreConnectClient.csproj" />
         <ProjectReference Include="..\AppleDev.FbIdb\AppleDev.FbIdb.csproj" />
