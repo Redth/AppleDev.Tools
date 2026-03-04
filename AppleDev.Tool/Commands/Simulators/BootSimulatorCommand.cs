@@ -27,7 +27,7 @@ public class BootSimulatorCommand : AsyncCommand<BootSimulatorCommandSettings>
             return this.ExitCode(false);
         }
 
-        var sims = await simctl.GetSimulatorsAsync(availableOnly: false, cancellationToken: data.CancellationToken).ConfigureAwait(false);
+        var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
         var device = sims.FirstOrDefault(s =>
             string.Equals(s.Udid, settings.Target, StringComparison.OrdinalIgnoreCase) ||
             string.Equals(s.Name, settings.Target, StringComparison.Ordinal));

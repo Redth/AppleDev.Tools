@@ -25,7 +25,7 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
             return this.ExitCode(false);
         }
 
-        var sims = await simctl.GetSimulatorsAsync(availableOnly: false, cancellationToken: data.CancellationToken).ConfigureAwait(false);
+        var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
         var device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
 
         if (device is not null)
