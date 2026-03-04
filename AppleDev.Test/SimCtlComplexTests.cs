@@ -27,8 +27,8 @@ public class SimCtlComplexTests : IAsyncLifetime
 		Assert.NotNull(iPhoneType);
 
 		// Create a simulator
-		var device = await _simCtl.CreateAsync(_testSimName, iPhoneType.Identifier!);
-		Assert.NotNull(device);
+		var success = await _simCtl.CreateAsync(_testSimName, iPhoneType.Identifier!);
+		Assert.True(success);
 	}
 
 	private bool _isBooted = false;

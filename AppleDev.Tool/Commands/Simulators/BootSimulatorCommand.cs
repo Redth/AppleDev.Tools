@@ -21,25 +21,31 @@ public class BootSimulatorCommand : AsyncCommand<BootSimulatorCommandSettings>
         if (settings.Wait)
             success = await simctl.WaitForBootedAsync(settings.Target, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
 
-        if (success)
+        if (!success)
         {
-            var format = settings.Format;
-            if (format == OutputFormat.None)
-            {
-                AnsiConsole.MarkupLine($"[green]Simulator '{settings.Target}' booted successfully[/]");
-            }
-            else if (format == OutputFormat.Json || format == OutputFormat.JsonPretty)
-            {
-                var result = new { target = settings.Target, state = "Booted" };
-                OutputHelper.Output(result, format);
-            }
+            AnsiConsole.MarkupLine($"[red]Simulator '{settings.Target}' failed to become ready[/]");
+            return this.ExitCode(false);
+        }
+
+        var sims = await simctl.GetSimulatorsAsync(availableOnly: false, cancellationToken: data.CancellationToken).ConfigureAwait(false);
+        var device = sims.FirstOrDefault(s =>
+            string.Equals(s.Udid, settings.Target, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(s.Name, settings.Target, StringComparison.Ordinal));
+
+        var format = settings.Format;
+        if (format == OutputFormat.None)
+        {
+            AnsiConsole.MarkupLine($"[green]Simulator '{settings.Target}' booted successfully[/]");
         }
         else
         {
-            AnsiConsole.MarkupLine($"[red]Simulator '{settings.Target}' failed to become ready[/]");
+            if (device is not null)
+                OutputHelper.Output(device, format);
+            else
+                OutputHelper.Output(new { target = settings.Target, state = "Booted" }, format);
         }
         
-        return this.ExitCode(success);
+        return this.ExitCode(true);
     }
 }
 public class BootSimulatorCommandSettings : FormattableOutputCommandSettings

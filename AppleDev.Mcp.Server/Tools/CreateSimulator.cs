@@ -28,11 +28,11 @@ public static partial class AppleDevTools
         try
         {
             var simctl = new SimCtl();
-            var device = await simctl.CreateAsync(name, deviceType, runtime);
+            var success = await simctl.CreateAsync(name, deviceType, runtime);
 
-            if (device is not null)
+            if (success)
             {
-                return $"Successfully created simulator '{name}' with device type '{deviceType}' (UDID: {device.Udid}).";
+                return $"Successfully created simulator '{name}' with device type '{deviceType}'.";
             }
             else
             {

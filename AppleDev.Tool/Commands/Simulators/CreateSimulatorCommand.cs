@@ -13,34 +13,37 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
         var data = context.GetData();
         var simctl = new SimCtl();
         
-        var device = await simctl.CreateAsync(
+        var success = await simctl.CreateAsync(
             settings.Name, 
             settings.DeviceTypeId, 
             settings.RuntimeId,
             data.CancellationToken).ConfigureAwait(false);
         
-        var success = device is not null;
-        
-        if (success)
+        if (!success)
         {
-            var format = settings.Format;
-            if (format == OutputFormat.None)
-            {
-                AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
-                if (device!.Udid is not null)
-                    AnsiConsole.WriteLine(device.Udid);
-            }
-            else
-            {
-                OutputHelper.Output(device!, format);
-            }
+            AnsiConsole.MarkupLine($"[red]Failed to create simulator '{settings.Name}'[/]");
+            return this.ExitCode(false);
+        }
+
+        var sims = await simctl.GetSimulatorsAsync(availableOnly: false, cancellationToken: data.CancellationToken).ConfigureAwait(false);
+        var device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
+
+        var format = settings.Format;
+        if (format == OutputFormat.None)
+        {
+            AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
+            if (device?.Udid is not null)
+                AnsiConsole.WriteLine(device.Udid);
         }
         else
         {
-            AnsiConsole.MarkupLine($"[red]Failed to create simulator '{settings.Name}'[/]");
+            if (device is not null)
+                OutputHelper.Output(device, format);
+            else
+                OutputHelper.Output(new { name = settings.Name }, format);
         }
         
-        return this.ExitCode(success);
+        return this.ExitCode(true);
     }
 }
 

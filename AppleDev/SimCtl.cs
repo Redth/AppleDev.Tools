@@ -290,30 +290,22 @@ public class SimCtl : XCRun
 		}, cancellationToken);
 	
 	/// <summary>
-	/// Creates a new simulator device and returns it.
+	/// Creates a new simulator device.
 	/// </summary>
 	/// <param name="name">The name for the new simulator device.</param>
 	/// <param name="deviceTypeId">The device type identifier (e.g., "com.apple.CoreSimulator.SimDeviceType.iPhone-15" or "iPhone 15").</param>
 	/// <param name="runtimeId">Optional runtime identifier. If not specified, the newest compatible runtime is used.</param>
 	/// <param name="cancellationToken"></param>
-	/// <returns>The created simulator device, or null if creation failed.</returns>
-	public async Task<SimCtlDevice?> CreateAsync(string name, string deviceTypeId, string? runtimeId = null, CancellationToken cancellationToken = default)
-	{
-		var success = await RunSimCtlCmdAsync(args =>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> CreateAsync(string name, string deviceTypeId, string? runtimeId = null, CancellationToken cancellationToken = default)
+		=> RunSimCtlCmdAsync(args =>
 		{
 			args.Add("create");
 			args.Add(name);
 			args.Add(deviceTypeId);
 			if (!string.IsNullOrEmpty(runtimeId))
 				args.Add(runtimeId);
-		}, cancellationToken).ConfigureAwait(false);
-
-		if (!success)
-			return null;
-
-		var sims = await GetSimulatorsAsync(availableOnly: false, cancellationToken: cancellationToken).ConfigureAwait(false);
-		return sims.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.Ordinal));
-	}
+		}, cancellationToken);
 
 	/// <summary>
 	/// Gets the list of apps installed on the target simulator(s).

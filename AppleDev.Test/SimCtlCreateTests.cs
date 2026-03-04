@@ -47,9 +47,14 @@ public class SimCtlCreateTests : IAsyncLifetime
 		var iPhoneType = deviceTypes.FirstOrDefault(dt => dt.ProductFamily?.Contains("iPhone") == true);
 		Assert.NotNull(iPhoneType);
 
-		var device = await _simCtl.CreateAsync(_testSimName, iPhoneType.Identifier!);
-		Assert.NotNull(device);
+		var success = await _simCtl.CreateAsync(_testSimName, iPhoneType.Identifier!);
+		Assert.True(success, "CreateAsync should return true");
 
+		// Find the created simulator by name
+		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
+		var device = sims.FirstOrDefault(s => string.Equals(s.Name, _testSimName, StringComparison.Ordinal));
+
+		Assert.NotNull(device);
 		Assert.Equal(_testSimName, device.Name);
 		Assert.NotNull(device.Udid);
 		Assert.NotEmpty(device.Udid);
@@ -67,7 +72,12 @@ public class SimCtlCreateTests : IAsyncLifetime
 		Assert.NotNull(iPhoneType);
 
 		// Create
-		var device = await _simCtl.CreateAsync(_testSimName, iPhoneType.Identifier!);
+		var success = await _simCtl.CreateAsync(_testSimName, iPhoneType.Identifier!);
+		Assert.True(success, "CreateAsync should return true");
+
+		// Find by name
+		var sims = await _simCtl.GetSimulatorsAsync(availableOnly: false);
+		var device = sims.FirstOrDefault(s => string.Equals(s.Name, _testSimName, StringComparison.Ordinal));
 		Assert.NotNull(device);
 
 		// Boot
@@ -79,7 +89,7 @@ public class SimCtlCreateTests : IAsyncLifetime
 		Assert.True(waitSuccess, "Failed to wait for simulator to boot");
 
 		// Verify booted
-		var sims = await _simCtl.GetSimulatorsAsync();
+		sims = await _simCtl.GetSimulatorsAsync();
 		var booted = sims.FirstOrDefault(s => s.Udid == device.Udid);
 		Assert.NotNull(booted);
 		Assert.True(booted.IsBooted);
