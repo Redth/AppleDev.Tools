@@ -4,6 +4,8 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 using ValidationResult = Spectre.Console.ValidationResult;
 
+using Col = AppleDev.Tool.ColumnInfo<AppleDev.SimCtlDevice>;
+
 namespace AppleDev.Tool.Commands;
 
 public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSettings>
@@ -19,22 +21,25 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
             settings.RuntimeId,
             data.CancellationToken).ConfigureAwait(false);
         
-        if (success)
+        if (!success)
         {
-            var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
-            var device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
-    
-            if (device is not null)
-                OutputHelper.Output(device, settings.Format);
-            else
-                OutputHelper.Output(new { name = settings.Name }, settings.Format);
+            AnsiConsole.MarkupLine($"[red]Failed to create simulator '{settings.Name}'[/]");
+            return this.ExitCode(false);
+        }
+
+        var sims = await simctl.GetSimulatorsAsync(availableOnly: false, cancellationToken: data.CancellationToken).ConfigureAwait(false);
+        var device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
+
+        if (device is not null)
+        {
+            OutputHelper.Output(device, settings.Format, settings.Verbose, SimulatorColumns.ForDevice(settings.Verbose));
         }
         else
         {
-            AnsiConsole.MarkupLine($"[red]Failed to create simulator '{settings.Name}'[/]");
+            AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
         }
 
-        return this.ExitCode(success);
+        return this.ExitCode(true);
     }
 }
 

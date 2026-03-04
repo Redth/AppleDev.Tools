@@ -2,6 +2,8 @@ using System.ComponentModel;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
+using Col = AppleDev.Tool.ColumnInfo<AppleDev.SimCtlDevice>;
+
 namespace AppleDev.Tool.Commands;
 
 public class BootSimulatorCommand : AsyncCommand<BootSimulatorCommandSettings>
@@ -32,17 +34,13 @@ public class BootSimulatorCommand : AsyncCommand<BootSimulatorCommandSettings>
             string.Equals(s.Udid, settings.Target, StringComparison.OrdinalIgnoreCase) ||
             string.Equals(s.Name, settings.Target, StringComparison.Ordinal));
 
-        var format = settings.Format;
-        if (format == OutputFormat.None)
+        if (device is not null)
         {
-            AnsiConsole.MarkupLine($"[green]Simulator '{settings.Target}' booted successfully[/]");
+            OutputHelper.Output(device, settings.Format, settings.Verbose, SimulatorColumns.ForDevice(settings.Verbose));
         }
         else
         {
-            if (device is not null)
-                OutputHelper.Output(device, format);
-            else
-                OutputHelper.Output(new { target = settings.Target, state = "Booted" }, format);
+            AnsiConsole.MarkupLine($"[green]Simulator '{settings.Target}' booted successfully[/]");
         }
         
         return this.ExitCode(true);
