@@ -13,15 +13,52 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
         var data = context.GetData();
         var simctl = new SimCtl();
         
-        var success = await simctl.CreateAsync(
+        var udid = await simctl.CreateWithUdidAsync(
             settings.Name, 
             settings.DeviceTypeId, 
             settings.RuntimeId,
             data.CancellationToken).ConfigureAwait(false);
         
+        var success = udid is not null;
+        
+        if (success && settings.Boot)
+        {
+            var bootSuccess = await simctl.BootAsync(udid!, data.CancellationToken).ConfigureAwait(false);
+            
+            if (bootSuccess && settings.Wait)
+                bootSuccess = await simctl.WaitForBootedAsync(udid!, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
+            
+            if (!bootSuccess)
+            {
+                AnsiConsole.MarkupLine($"[red]Simulator created but failed to boot '{settings.Name}'[/]");
+                
+                if (settings.Format == OutputFormat.Json || settings.Format == OutputFormat.JsonPretty)
+                {
+                    var errorResult = new { udid = udid, name = settings.Name, error = $"Simulator created but failed to boot '{settings.Name}'" };
+                    OutputHelper.Output(errorResult, settings.Format);
+                }
+                
+                return this.ExitCode(false);
+            }
+        }
+        
         if (success)
         {
-            AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
+            var format = settings.Format;
+            if (format == OutputFormat.None)
+            {
+                AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
+                AnsiConsole.WriteLine(udid!);
+            }
+            else if (format == OutputFormat.Json || format == OutputFormat.JsonPretty)
+            {
+                var result = new { udid, name = settings.Name, deviceType = settings.DeviceTypeId, runtime = settings.RuntimeId };
+                OutputHelper.Output(result, format);
+            }
+            else if (format == OutputFormat.Xml)
+            {
+                OutputHelper.Output(udid!, format);
+            }
         }
         else
         {
@@ -32,7 +69,7 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
     }
 }
 
-public class CreateSimulatorCommandSettings : CommandSettings
+public class CreateSimulatorCommandSettings : FormattableOutputCommandSettings
 {
     [Description("Name for the new simulator")]
     [CommandArgument(0, "<name>")]
@@ -47,6 +84,21 @@ public class CreateSimulatorCommandSettings : CommandSettings
     [CommandOption("-r|--runtime")]
     public string? RuntimeId { get; set; }
 
+    [Description("Boot the simulator after creation")]
+    [CommandOption("--boot")]
+    [DefaultValue(false)]
+    public bool Boot { get; set; }
+
+    [Description("Wait for the simulator to be fully ready (requires --boot)")]
+    [CommandOption("--wait")]
+    [DefaultValue(false)]
+    public bool Wait { get; set; }
+
+    [Description("Timeout in seconds to wait for boot readiness")]
+    [CommandOption("--timeout")]
+    [DefaultValue(120)]
+    public int Timeout { get; set; }
+
     public override ValidationResult Validate()
     {
         if (string.IsNullOrWhiteSpace(Name))
@@ -54,6 +106,12 @@ public class CreateSimulatorCommandSettings : CommandSettings
         
         if (string.IsNullOrWhiteSpace(DeviceTypeId))
             return ValidationResult.Error("Device type identifier is required");
+
+        if (Wait && !Boot)
+            return ValidationResult.Error("--wait requires --boot");
+
+        if (Wait && Timeout <= 0)
+            return ValidationResult.Error("--timeout must be > 0");
         
         return base.Validate();
     }
