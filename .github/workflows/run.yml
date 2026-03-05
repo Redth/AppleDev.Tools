@@ -95,14 +95,10 @@ jobs:
         echo "APP_LAUNCH_TIME=$(date '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_ENV"
         dotnet $TOOL simulator app launch "$SIMULATOR_UDID" com.apple.Preferences
 
-    - name: Validate Launch app
-      timeout-minutes: 2
+    - name: Do Screenshot
       run: |
         sleep 5
-        echo "✅ App launched successfully (no crash observed)"
-
-    - name: Do Screenshot
-      run: dotnet $TOOL simulator screenshot "$SIMULATOR_UDID" -o artifacts/screenshot.png
+        dotnet $TOOL simulator screenshot "$SIMULATOR_UDID" -o artifacts/screenshot.png
 
     - name: Validate Screenshot
       run: |
