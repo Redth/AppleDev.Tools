@@ -11,7 +11,7 @@ concurrency:
 
 env:
   SIM_NAME: E2ETestSim
-  TEST_APP_BUNDLE_ID: com.companyname.mauiapp12345
+  TEST_APP_BUNDLE_ID: com.companyname.E2ETestApp
 
 jobs:
   run:
@@ -26,11 +26,22 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 10.0.x
+    - name: 📱 Install iOS workload
+      run: dotnet workload install ios
     - name: 🔨 Build the CLI tool
       run: |
         dotnet build AppleDev.Tool/AppleDev.Tool.csproj
         echo "TOOL=$PWD/AppleDev.Tool/bin/Debug/net10.0/apple.dll" >> "$GITHUB_ENV"
         mkdir -p artifacts
+
+    - name: 🔨 Build test iOS app
+      run: |
+        mkdir -p /tmp/E2ETestApp && cd /tmp/E2ETestApp
+        dotnet new ios -n E2ETestApp
+        dotnet build E2ETestApp/E2ETestApp.csproj -r iossimulator-arm64
+        APP_PATH=$(find . -name "E2ETestApp.app" -type d | head -1)
+        echo "TEST_APP_PATH=$(cd "$(dirname "$APP_PATH")" && pwd)/$(basename "$APP_PATH")" >> "$GITHUB_ENV"
+        echo "✅ Built test app at $APP_PATH"
 
     - name: Do Create simulator
       run: |
@@ -46,7 +57,6 @@ jobs:
           exit 1
         fi
         SIMS=$(dotnet $TOOL simulator list --format json)
-        echo "Simulators JSON: $SIMS" | head -c 2000
         if ! echo "$SIMS" | jq -e --arg udid "$SIMULATOR_UDID" '.[] | select(.udid == $udid)' > /dev/null 2>&1; then
           echo "❌ Simulator $SIMULATOR_UDID not found in simulator list after create"
           exit 1
@@ -69,7 +79,7 @@ jobs:
         echo "✅ Simulator $SIMULATOR_UDID is Booted"
 
     - name: Do Install test app
-      run: dotnet $TOOL simulator app install "$SIMULATOR_UDID" "AppleDev.Test/testdata/MauiApp7.app"
+      run: dotnet $TOOL simulator app install "$SIMULATOR_UDID" "$TEST_APP_PATH"
 
     - name: Validate Install test app
       run: |
@@ -90,26 +100,19 @@ jobs:
           exit 1
         fi
 
-    - name: Do Launch app
+    - name: Do Launch test app
       run: |
         echo "APP_LAUNCH_TIME=$(date '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_ENV"
-        dotnet $TOOL simulator app launch "$SIMULATOR_UDID" com.apple.Preferences
+        dotnet $TOOL simulator app launch "$SIMULATOR_UDID" "$TEST_APP_BUNDLE_ID"
 
-    - name: Validate Launch app
+    - name: Validate Launch test app
       timeout-minutes: 5
       run: |
         FOUND=0
         for i in $(seq 1 30); do
-          LOGS=$(xcrun simctl spawn "$SIMULATOR_UDID" log show --predicate 'subsystem == "com.apple.launchd" AND eventMessage CONTAINS "Preferences"' --style compact --last 1m 2>/dev/null || true)
-          if echo "$LOGS" | grep -q "Preferences"; then
-            echo "✅ Preferences app launch confirmed in system logs (attempt $i)"
-            FOUND=1
-            break
-          fi
-          # Fallback: check if process is running via simctl listapps
           APPS=$(dotnet $TOOL simulator app list "$SIMULATOR_UDID" --format json 2>/dev/null || true)
-          if echo "$APPS" | jq -e '.[] | select(.CFBundleIdentifier == "com.apple.Preferences")' > /dev/null 2>&1; then
-            echo "✅ Preferences app found in running apps (attempt $i)"
+          if echo "$APPS" | jq -e --arg bid "$TEST_APP_BUNDLE_ID" '.[] | select(.CFBundleIdentifier == $bid)' > /dev/null 2>&1; then
+            echo "✅ App $TEST_APP_BUNDLE_ID found running on simulator (attempt $i)"
             FOUND=1
             break
           fi
@@ -117,14 +120,12 @@ jobs:
           sleep 5
         done
         if [ "$FOUND" -ne 1 ]; then
-          echo "❌ Preferences app launch could not be verified after 30 attempts"
+          echo "❌ $TEST_APP_BUNDLE_ID not found running after launch"
           exit 1
         fi
 
     - name: Do Screenshot
-      run: |
-        sleep 5
-        dotnet $TOOL simulator screenshot "$SIMULATOR_UDID" -o artifacts/screenshot.png
+      run: dotnet $TOOL simulator screenshot "$SIMULATOR_UDID" -o artifacts/screenshot.png
 
     - name: Validate Screenshot
       run: |
