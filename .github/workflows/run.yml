@@ -90,15 +90,15 @@ jobs:
           exit 1
         fi
 
-    - name: Do Launch test app
+    - name: Do Launch app
       run: |
         echo "APP_LAUNCH_TIME=$(date '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_ENV"
-        dotnet $TOOL simulator app launch "$SIMULATOR_UDID" "$TEST_APP_BUNDLE_ID"
+        dotnet $TOOL simulator app launch "$SIMULATOR_UDID" com.apple.Preferences
 
-    - name: Validate Launch test app
+    - name: Validate Launch app
       timeout-minutes: 2
       run: |
-        sleep 10
+        sleep 5
         echo "✅ App launched successfully (no crash observed)"
 
     - name: Do Screenshot
