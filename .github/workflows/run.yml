@@ -1,0 +1,68 @@
+name: Run iOS Simulator
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  run:
+    name: 🚀 E2E Simulator
+    runs-on: macos-latest
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - name: ⚙️ Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+    - name: 🔨 Build the CLI tool
+      run: |
+        dotnet build AppleDev.Tool/AppleDev.Tool.csproj
+        echo "TOOL=$PWD/AppleDev.Tool/bin/Debug/net10.0/apple.dll" >> "$GITHUB_ENV"
+
+    - name: 📋 List available simulators
+      run: dotnet $TOOL simulator list
+
+    - name: 🆕 Create simulator
+      run: |
+        RESULT=$(dotnet $TOOL simulator create "E2ETestSim" --device-type "iPhone 16" --format json)
+        echo "Create result: $RESULT"
+        UDID=$(echo "$RESULT" | jq -r '.Udid')
+        if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
+          echo "❌ Failed to parse UDID from create output"
+          exit 1
+        fi
+        echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
+        echo "✅ Created simulator: $UDID"
+
+    - name: 🔄 Boot simulator
+      run: |
+        RESULT=$(dotnet $TOOL simulator boot "$SIMULATOR_UDID" --wait --timeout 300 --format json)
+        echo "Boot result: $RESULT"
+        STATE=$(echo "$RESULT" | jq -r '.State')
+        if [ "$STATE" != "Booted" ]; then
+          echo "❌ Simulator not booted, state: $STATE"
+          exit 1
+        fi
+        echo "✅ Simulator booted"
+
+    - name: 📋 Verify simulator is running
+      run: |
+        SIMS=$(dotnet $TOOL simulator list --format json)
+        if ! echo "$SIMS" | jq -e ".[] | select(.Udid == \"$SIMULATOR_UDID\" and .State == \"Booted\")" > /dev/null 2>&1; then
+          echo "❌ Simulator $SIMULATOR_UDID not found as Booted"
+          echo "$SIMS" | jq ".[] | select(.Name == \"E2ETestSim\")"
+          exit 1
+        fi
+        echo "✅ Simulator $SIMULATOR_UDID is Booted"
+
+    - name: 🧹 Cleanup simulator
+      if: always()
+      run: dotnet $TOOL simulator delete --force "E2ETestSim"
