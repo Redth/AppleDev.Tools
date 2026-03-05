@@ -34,7 +34,7 @@ jobs:
       run: |
         RESULT=$(dotnet $TOOL simulator create "E2ETestSim" --device-type "iPhone 16" --format json)
         echo "Create result: $RESULT"
-        UDID=$(echo "$RESULT" | jq -r '.Udid')
+        UDID=$(echo "$RESULT" | jq -r '.udid')
         if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
           echo "❌ Failed to parse UDID from create output"
           exit 1
@@ -46,7 +46,7 @@ jobs:
       run: |
         RESULT=$(dotnet $TOOL simulator boot "$SIMULATOR_UDID" --wait --timeout 300 --format json)
         echo "Boot result: $RESULT"
-        STATE=$(echo "$RESULT" | jq -r '.State')
+        STATE=$(echo "$RESULT" | jq -r '.state')
         if [ "$STATE" != "Booted" ]; then
           echo "❌ Simulator not booted, state: $STATE"
           exit 1
@@ -56,9 +56,9 @@ jobs:
     - name: 📋 Verify simulator is running
       run: |
         SIMS=$(dotnet $TOOL simulator list --format json)
-        if ! echo "$SIMS" | jq -e ".[] | select(.Udid == \"$SIMULATOR_UDID\" and .State == \"Booted\")" > /dev/null 2>&1; then
+        if ! echo "$SIMS" | jq -e ".[] | select(.udid == \"$SIMULATOR_UDID\" and .state == \"Booted\")" > /dev/null 2>&1; then
           echo "❌ Simulator $SIMULATOR_UDID not found as Booted"
-          echo "$SIMS" | jq ".[] | select(.Name == \"E2ETestSim\")"
+          echo "$SIMS" | jq ".[] | select(.name == \"E2ETestSim\")"
           exit 1
         fi
         echo "✅ Simulator $SIMULATOR_UDID is Booted"
