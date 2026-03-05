@@ -95,6 +95,32 @@ jobs:
         echo "APP_LAUNCH_TIME=$(date '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_ENV"
         dotnet $TOOL simulator app launch "$SIMULATOR_UDID" com.apple.Preferences
 
+    - name: Validate Launch app
+      timeout-minutes: 5
+      run: |
+        FOUND=0
+        for i in $(seq 1 30); do
+          LOGS=$(xcrun simctl spawn "$SIMULATOR_UDID" log show --predicate 'subsystem == "com.apple.launchd" AND eventMessage CONTAINS "Preferences"' --style compact --last 1m 2>/dev/null || true)
+          if echo "$LOGS" | grep -q "Preferences"; then
+            echo "✅ Preferences app launch confirmed in system logs (attempt $i)"
+            FOUND=1
+            break
+          fi
+          # Fallback: check if process is running via simctl listapps
+          APPS=$(dotnet $TOOL simulator app list "$SIMULATOR_UDID" --format json 2>/dev/null || true)
+          if echo "$APPS" | jq -e '.[] | select(.CFBundleIdentifier == "com.apple.Preferences")' > /dev/null 2>&1; then
+            echo "✅ Preferences app found in running apps (attempt $i)"
+            FOUND=1
+            break
+          fi
+          echo "Attempt $i/30 - waiting 5s..."
+          sleep 5
+        done
+        if [ "$FOUND" -ne 1 ]; then
+          echo "❌ Preferences app launch could not be verified after 30 attempts"
+          exit 1
+        fi
+
     - name: Do Screenshot
       run: |
         sleep 5
