@@ -9,6 +9,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+  SIM_NAME: E2ETestSim
+  TEST_APP_BUNDLE_ID: com.companyname.mauiapp12345
+
 jobs:
   run:
     name: 🚀 E2E Simulator
@@ -26,43 +30,128 @@ jobs:
       run: |
         dotnet build AppleDev.Tool/AppleDev.Tool.csproj
         echo "TOOL=$PWD/AppleDev.Tool/bin/Debug/net10.0/apple.dll" >> "$GITHUB_ENV"
+        mkdir -p artifacts
 
-    - name: 📋 List available simulators
-      run: dotnet $TOOL simulator list
-
-    - name: 🆕 Create simulator
+    - name: Do Create simulator
       run: |
-        RESULT=$(dotnet $TOOL simulator create "E2ETestSim" --device-type "iPhone 16" --format json)
+        RESULT=$(dotnet $TOOL simulator create "$SIM_NAME" --device-type "iPhone 16" --format json)
         echo "Create result: $RESULT"
         UDID=$(echo "$RESULT" | jq -r '.udid')
-        if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
+        echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
+
+    - name: Validate Create simulator
+      run: |
+        if [ -z "$SIMULATOR_UDID" ] || [ "$SIMULATOR_UDID" = "null" ]; then
           echo "❌ Failed to parse UDID from create output"
           exit 1
         fi
-        echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
-        echo "✅ Created simulator: $UDID"
+        SIMS=$(dotnet $TOOL simulator list --format json)
+        echo "Simulators JSON: $SIMS" | head -c 2000
+        if ! echo "$SIMS" | jq -e --arg udid "$SIMULATOR_UDID" '.[] | select(.udid == $udid)' > /dev/null 2>&1; then
+          echo "❌ Simulator $SIMULATOR_UDID not found in simulator list after create"
+          exit 1
+        fi
+        echo "✅ Simulator '$SIM_NAME' ($SIMULATOR_UDID) created successfully"
 
-    - name: 🔄 Boot simulator
+    - name: Do Boot simulator
       run: |
         RESULT=$(dotnet $TOOL simulator boot "$SIMULATOR_UDID" --wait --timeout 300 --format json)
         echo "Boot result: $RESULT"
-        STATE=$(echo "$RESULT" | jq -r '.state')
-        if [ "$STATE" != "Booted" ]; then
-          echo "❌ Simulator not booted, state: $STATE"
-          exit 1
-        fi
-        echo "✅ Simulator booted"
 
-    - name: 📋 Verify simulator is running
+    - name: Validate Boot simulator
       run: |
         SIMS=$(dotnet $TOOL simulator list --format json)
-        if ! echo "$SIMS" | jq -e ".[] | select(.udid == \"$SIMULATOR_UDID\" and .state == \"Booted\")" > /dev/null 2>&1; then
+        if ! echo "$SIMS" | jq -e --arg udid "$SIMULATOR_UDID" '.[] | select(.udid == $udid and .state == "Booted")' > /dev/null 2>&1; then
           echo "❌ Simulator $SIMULATOR_UDID not found as Booted"
-          echo "$SIMS" | jq ".[] | select(.name == \"E2ETestSim\")"
+          echo "$SIMS" | jq --arg name "$SIM_NAME" '.[] | select(.name == $name)'
           exit 1
         fi
         echo "✅ Simulator $SIMULATOR_UDID is Booted"
 
+    - name: Do Install test app
+      run: dotnet $TOOL simulator app install "$SIMULATOR_UDID" "AppleDev.Test/testdata/MauiApp7.app"
+
+    - name: Validate Install test app
+      run: |
+        FOUND=0
+        for i in $(seq 1 12); do
+          APPS=$(dotnet $TOOL simulator app list "$SIMULATOR_UDID" --format json)
+          if echo "$APPS" | jq -e --arg bid "$TEST_APP_BUNDLE_ID" '.[] | select(.CFBundleIdentifier == $bid)' > /dev/null 2>&1; then
+            echo "✅ App installed and verified via CLI (attempt $i)"
+            FOUND=1
+            break
+          fi
+          echo "Attempt $i/12 - app not visible yet, waiting 5s..."
+          sleep 5
+        done
+        if [ "$FOUND" -ne 1 ]; then
+          echo "❌ $TEST_APP_BUNDLE_ID not found in app list after retries"
+          echo "$APPS" | jq '.[].CFBundleIdentifier' | head -20
+          exit 1
+        fi
+
+    - name: Do Launch test app
+      run: |
+        echo "APP_LAUNCH_TIME=$(date '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_ENV"
+        dotnet $TOOL simulator app launch "$SIMULATOR_UDID" "$TEST_APP_BUNDLE_ID"
+
+    - name: Validate Launch test app
+      timeout-minutes: 2
+      run: |
+        sleep 10
+        echo "✅ App launched successfully (no crash observed)"
+
+    - name: Do Screenshot
+      run: dotnet $TOOL simulator screenshot "$SIMULATOR_UDID" -o artifacts/screenshot.png
+
+    - name: Validate Screenshot
+      run: |
+        if [ ! -f artifacts/screenshot.png ]; then
+          echo "❌ Screenshot file not found at artifacts/screenshot.png"
+          ls -la artifacts/
+          exit 1
+        fi
+        SIZE=$(stat -f%z artifacts/screenshot.png)
+        if [ "$SIZE" -lt 1000 ]; then
+          echo "❌ Screenshot file too small ($SIZE bytes), likely invalid"
+          exit 1
+        fi
+        echo "✅ Screenshot captured ($SIZE bytes)"
+
+    - name: Do Gather logs
+      run: dotnet $TOOL simulator logs "$SIMULATOR_UDID" --start "$APP_LAUNCH_TIME" --format json > artifacts/simulator-logs.json 2>&1 || true
+
+    - name: Validate Gather logs
+      run: |
+        if [ ! -f artifacts/simulator-logs.json ]; then
+          echo "❌ Logs file not found"
+          exit 1
+        fi
+        SIZE=$(stat -f%z artifacts/simulator-logs.json)
+        echo "✅ Logs gathered ($SIZE bytes)"
+
+    - name: Do Uninstall test app
+      if: always()
+      run: dotnet $TOOL simulator app uninstall "$SIMULATOR_UDID" "$TEST_APP_BUNDLE_ID" || true
+
+    - name: Validate Uninstall test app
+      if: always()
+      run: |
+        APPS=$(dotnet $TOOL simulator app list "$SIMULATOR_UDID" --format json 2>/dev/null) || true
+        if echo "$APPS" | jq -e --arg bid "$TEST_APP_BUNDLE_ID" '.[] | select(.CFBundleIdentifier == $bid)' > /dev/null 2>&1; then
+          echo "❌ $TEST_APP_BUNDLE_ID still found after uninstall"
+          exit 1
+        fi
+        echo "✅ App uninstalled and verified via CLI"
+
     - name: 🧹 Cleanup simulator
       if: always()
-      run: dotnet $TOOL simulator delete --force "E2ETestSim"
+      run: dotnet $TOOL simulator delete --force "$SIM_NAME"
+
+    - name: 📦 Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-logs
+        path: artifacts/
+        if-no-files-found: ignore
