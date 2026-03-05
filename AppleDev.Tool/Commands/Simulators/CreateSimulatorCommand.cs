@@ -21,7 +21,19 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
         
         if (success)
         {
-            AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
+            var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
+            var device = sims.FirstOrDefault(s => string.Equals(s.Name, settings.Name, StringComparison.Ordinal));
+
+            if (device is not null)
+            {
+                OutputHelper.Output(device, settings.Format,
+                    new[] { "Name", "UDID", "State", "Device Type", "Runtime" },
+                    d => new[] { d.Name, d.Udid, d.State, d.DeviceType?.Name ?? d.DeviceTypeIdentifier, d.Runtime?.Name });
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"[green]Successfully created simulator '{settings.Name}'[/]");
+            }
         }
         else
         {
@@ -32,7 +44,7 @@ public class CreateSimulatorCommand : AsyncCommand<CreateSimulatorCommandSetting
     }
 }
 
-public class CreateSimulatorCommandSettings : CommandSettings
+public class CreateSimulatorCommandSettings : FormattableOutputCommandSettings
 {
     [Description("Name for the new simulator")]
     [CommandArgument(0, "<name>")]

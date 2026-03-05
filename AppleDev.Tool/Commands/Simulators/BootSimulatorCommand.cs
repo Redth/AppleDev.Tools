@@ -14,11 +14,34 @@ public class BootSimulatorCommand : AsyncCommand<BootSimulatorCommandSettings>
 
         if (success && settings.Wait)
             success = await simctl.WaitForBootedAsync(settings.Target, TimeSpan.FromSeconds(settings.Timeout), data.CancellationToken).ConfigureAwait(false);
+
+        if (success)
+        {
+            var sims = await simctl.GetSimulatorsAsync(cancellationToken: data.CancellationToken).ConfigureAwait(false);
+            var device = sims.FirstOrDefault(s =>
+                string.Equals(s.Udid, settings.Target, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(s.Name, settings.Target, StringComparison.Ordinal));
+
+            if (device is not null)
+            {
+                OutputHelper.Output(device, settings.Format,
+                    new[] { "Name", "UDID", "State", "Device Type", "Runtime" },
+                    d => new[] { d.Name, d.Udid, d.State, d.DeviceType?.Name ?? d.DeviceTypeIdentifier, d.Runtime?.Name });
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"[green]Simulator '{settings.Target}' booted successfully[/]");
+            }
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[red]Failed to boot simulator '{settings.Target}'[/]");
+        }
         
         return this.ExitCode(success);
     }
 }
-public class BootSimulatorCommandSettings : CommandSettings
+public class BootSimulatorCommandSettings : FormattableOutputCommandSettings
 {
     [Description("Wait Until Ready")]
     [CommandOption("--wait")]
