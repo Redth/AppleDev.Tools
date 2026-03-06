@@ -160,11 +160,11 @@ jobs:
         echo "✅ Logs gathered ($SIZE bytes)"
 
     - name: Do Uninstall test app
-      if: always()
+      if: always() && env.SIMULATOR_UDID != ''
       run: dotnet $TOOL simulator app uninstall "$SIMULATOR_UDID" "$TEST_APP_BUNDLE_ID" || true
 
     - name: Validate Uninstall test app
-      if: always()
+      if: always() && env.SIMULATOR_UDID != ''
       run: |
         APPS=$(dotnet $TOOL simulator app list "$SIMULATOR_UDID" --format json)
         echo "Apps JSON: $APPS"
@@ -175,7 +175,7 @@ jobs:
         echo "✅ App uninstalled and verified via CLI"
 
     - name: 🧹 Cleanup simulator
-      if: always()
+      if: always() && env.SIMULATOR_UDID != ''
       run: dotnet $TOOL simulator delete --force "$SIM_NAME"
 
     - name: 📦 Upload artifacts
