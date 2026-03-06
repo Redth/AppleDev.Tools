@@ -11,7 +11,7 @@ concurrency:
 
 env:
   SIM_NAME: E2ETestSim
-  TEST_APP_BUNDLE_ID: com.companyname.E2ETestApp
+  TEST_APP_BUNDLE_ID: com.test.E2ETestApp
 
 jobs:
   run:
@@ -26,33 +26,6 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 10.0.x
-    - name: 🔧 Select Xcode
-      run: |
-        XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
-        if [ -z "$XCODE_PATH" ]; then
-          echo "Available Xcode versions:"
-          ls -d /Applications/Xcode*.app
-          echo "❌ No Xcode 26.x found"
-          exit 1
-        fi
-        sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
-        echo "✅ Selected $XCODE_PATH"
-        xcodebuild -version
-
-        # Fix SDK symlinks if needed (RC builds may have versioned SDK names)
-        MACOS_PLATFORM="$XCODE_PATH/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs"
-        if [ ! -d "$MACOS_PLATFORM/MacOSX.sdk" ] && [ -d "$MACOS_PLATFORM" ]; then
-          ACTUAL_SDK=$(ls -d "$MACOS_PLATFORM"/MacOSX*.sdk 2>/dev/null | head -1)
-          if [ -n "$ACTUAL_SDK" ]; then
-            sudo ln -s "$ACTUAL_SDK" "$MACOS_PLATFORM/MacOSX.sdk"
-            echo "✅ Created MacOSX.sdk symlink -> $(basename "$ACTUAL_SDK")"
-          else
-            echo "⚠️ No MacOSX SDK found in $MACOS_PLATFORM"
-            ls -la "$MACOS_PLATFORM" || true
-          fi
-        fi
-    - name: 📱 Install iOS workload
-      run: dotnet workload install ios
     - name: 🔨 Build the CLI tool
       run: |
         dotnet build AppleDev.Tool/AppleDev.Tool.csproj
@@ -61,11 +34,69 @@ jobs:
 
     - name: 🔨 Build test iOS app
       run: |
-        cd /tmp && dotnet new ios -n E2ETestApp
-        dotnet build E2ETestApp/E2ETestApp.csproj -r iossimulator-arm64 -p:ValidateXcodeVersion=false
-        APP_PATH=$(find E2ETestApp -name "E2ETestApp.app" -type d | head -1)
-        echo "TEST_APP_PATH=/tmp/$APP_PATH" >> "$GITHUB_ENV"
-        echo "✅ Built test app at /tmp/$APP_PATH"
+        APP_DIR="/tmp/E2ETestApp.app"
+        mkdir -p "$APP_DIR"
+
+        SDK_PATH=$(xcrun --sdk iphonesimulator --show-sdk-path)
+        echo "Using simulator SDK: $SDK_PATH"
+
+        cat > /tmp/main.m << 'OBJC'
+        #import <UIKit/UIKit.h>
+        @interface AppDelegate : UIResponder <UIApplicationDelegate>
+        @property (strong, nonatomic) UIWindow *window;
+        @end
+        @implementation AppDelegate
+        - (BOOL)application:(UIApplication *)app didFinishLaunchingWithOptions:(NSDictionary *)opts {
+            self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+            UIViewController *vc = [UIViewController new];
+            vc.view.backgroundColor = [UIColor systemBlueColor];
+            UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(50, 200, 300, 50)];
+            label.text = @"E2E Test App";
+            label.textColor = [UIColor whiteColor];
+            label.font = [UIFont systemFontOfSize:24 weight:UIFontWeightBold];
+            [vc.view addSubview:label];
+            self.window.rootViewController = vc;
+            [self.window makeKeyAndVisible];
+            return YES;
+        }
+        @end
+        int main(int argc, char *argv[]) {
+            @autoreleasepool { return UIApplicationMain(argc, argv, nil, @"AppDelegate"); }
+        }
+        OBJC
+
+        clang -isysroot "$SDK_PATH" \
+          -framework UIKit \
+          -arch arm64 \
+          -target arm64-apple-ios17.0-simulator \
+          -fobjc-arc \
+          -o "$APP_DIR/E2ETestApp" \
+          /tmp/main.m
+
+        cat > "$APP_DIR/Info.plist" << 'PLIST'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleIdentifier</key>
+            <string>com.test.E2ETestApp</string>
+            <key>CFBundleName</key>
+            <string>E2ETestApp</string>
+            <key>CFBundleExecutable</key>
+            <string>E2ETestApp</string>
+            <key>CFBundleVersion</key>
+            <string>1</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0</string>
+            <key>UILaunchScreen</key>
+            <dict/>
+        </dict>
+        </plist>
+        PLIST
+
+        codesign --force --sign - "$APP_DIR"
+        echo "TEST_APP_PATH=$APP_DIR" >> "$GITHUB_ENV"
+        echo "✅ Built native iOS test app"
 
     - name: Do Create simulator
       run: |
