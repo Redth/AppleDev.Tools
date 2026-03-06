@@ -98,7 +98,7 @@ jobs:
 
     - name: Do Launch test app
       run: |
-        echo "APP_LAUNCH_TIME=$(date '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_ENV"
+        echo "APP_LAUNCH_TIME=$(date -v-5S '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_ENV"
         dotnet $TOOL simulator app launch "$SIMULATOR_UDID" "$TEST_APP_BUNDLE_ID"
 
     - name: Validate Launch test app
@@ -153,6 +153,10 @@ jobs:
           exit 1
         fi
         SIZE=$(stat -f%z artifacts/simulator-logs.json)
+        if [ "$SIZE" -lt 1 ]; then
+          echo "❌ Logs file is empty (0 bytes)"
+          exit 1
+        fi
         echo "✅ Logs gathered ($SIZE bytes)"
 
     - name: Do Uninstall test app
@@ -162,7 +166,8 @@ jobs:
     - name: Validate Uninstall test app
       if: always()
       run: |
-        APPS=$(dotnet $TOOL simulator app list "$SIMULATOR_UDID" --format json 2>/dev/null) || true
+        APPS=$(dotnet $TOOL simulator app list "$SIMULATOR_UDID" --format json)
+        echo "Apps JSON: $APPS"
         if echo "$APPS" | jq -e --arg bid "$TEST_APP_BUNDLE_ID" '.[] | select(.CFBundleIdentifier == $bid)' > /dev/null 2>&1; then
           echo "❌ $TEST_APP_BUNDLE_ID still found after uninstall"
           exit 1
@@ -175,7 +180,7 @@ jobs:
 
     - name: 📦 Upload artifacts
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: e2e-logs
         path: artifacts/
