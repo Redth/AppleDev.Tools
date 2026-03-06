@@ -52,7 +52,7 @@ jobs:
       run: |
         mkdir -p /tmp/E2ETestApp && cd /tmp/E2ETestApp
         dotnet new ios -n E2ETestApp
-        dotnet build E2ETestApp/E2ETestApp.csproj -r iossimulator-arm64
+        dotnet build E2ETestApp/E2ETestApp.csproj -r iossimulator-arm64 -p:ValidateXcodeVersion=false
         APP_PATH=$(find . -name "E2ETestApp.app" -type d | head -1)
         echo "TEST_APP_PATH=$(cd "$(dirname "$APP_PATH")" && pwd)/$(basename "$APP_PATH")" >> "$GITHUB_ENV"
         echo "✅ Built test app at $APP_PATH"
