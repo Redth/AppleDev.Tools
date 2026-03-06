@@ -12,6 +12,7 @@ concurrency:
 env:
   SIM_NAME: E2ETestSim
   TEST_APP_BUNDLE_ID: com.test.E2ETestApp
+  APP_START_MARKER: E2E_APP_STARTED_SUCCESSFULLY
 
 jobs:
   run:
@@ -57,6 +58,7 @@ jobs:
             [vc.view addSubview:label];
             self.window.rootViewController = vc;
             [self.window makeKeyAndVisible];
+            NSLog(@"E2E_APP_STARTED_SUCCESSFULLY");
             return YES;
         }
         @end
@@ -165,17 +167,19 @@ jobs:
       run: |
         FOUND=0
         for i in $(seq 1 30); do
-          APPS=$(dotnet $TOOL simulator app list "$SIMULATOR_UDID" --format json 2>/dev/null || true)
-          if echo "$APPS" | jq -e --arg bid "$TEST_APP_BUNDLE_ID" '.[] | select(.CFBundleIdentifier == $bid)' > /dev/null 2>&1; then
-            echo "✅ App $TEST_APP_BUNDLE_ID found running on simulator (attempt $i)"
+          dotnet $TOOL simulator logs "$SIMULATOR_UDID" --start "$APP_LAUNCH_TIME" > artifacts/simulator-launch-logs.txt 2>&1 || true
+          if grep -q "$APP_START_MARKER" artifacts/simulator-launch-logs.txt 2>/dev/null; then
+            echo "✅ App marker '$APP_START_MARKER' found in simulator logs (attempt $i)"
             FOUND=1
             break
           fi
-          echo "Attempt $i/30 - waiting 5s..."
+          echo "Attempt $i/30 - marker not found yet, waiting 5s..."
           sleep 5
         done
         if [ "$FOUND" -ne 1 ]; then
-          echo "❌ $TEST_APP_BUNDLE_ID not found running after launch"
+          echo "❌ Marker '$APP_START_MARKER' not found in simulator logs after 30 attempts"
+          echo "--- Last captured logs ---"
+          tail -50 artifacts/simulator-launch-logs.txt 2>/dev/null || echo "(no logs)"
           exit 1
         fi
 
