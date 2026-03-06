@@ -15,8 +15,26 @@ permissions:
 
 jobs:
   test:
-    name: 🧪 Test
+    name: 🧪 ${{ matrix.name }}
     runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: AppleDev
+            project: AppleDev.Test/AppleDev.Test.csproj
+            trx: test-results-appledev.trx
+            setup: ''
+          - name: AppleDev.Tool
+            project: AppleDev.Tool.Test/AppleDev.Tool.Test.csproj
+            trx: test-results-tool.trx
+            setup: ''
+          - name: AppleDev.FbIdb
+            project: AppleDev.FbIdb.Test/AppleDev.FbIdb.Test.csproj
+            trx: test-results-fbidb.trx
+            setup: |
+              brew tap facebook/fb
+              brew install idb-companion
     env:
       APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
       APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -31,23 +49,23 @@ jobs:
     - name: ⚙️ Setup .NET
       uses: actions/setup-dotnet@v5
 
-    - name: 🍺 Install IDB Companion
-      run: |
-        brew tap facebook/fb
-        brew install idb-companion
+    - name: 🔧 Setup dependencies
+      if: matrix.setup != ''
+      run: ${{ matrix.setup }}
 
     - name: 🧪 Run Tests
-      run: |
-        dotnet test ./AppleDev.Test/AppleDev.Test.csproj --logger "trx;LogFileName=test-results-appledev.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
-        dotnet test ./AppleDev.Tool.Tests/AppleDev.Tool.Tests.csproj --logger "trx;LogFileName=test-results-tool.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
-        dotnet test ./AppleDev.FbIdb.Test/AppleDev.FbIdb.Test.csproj --logger "trx;LogFileName=test-results-fbidb.trx" --logger "console;verbosity=detailed" --results-directory ./TestResults
+      run: >
+        dotnet test ./${{ matrix.project }}
+        --logger "trx;LogFileName=${{ matrix.trx }}"
+        --logger "console;verbosity=detailed"
+        --results-directory ./TestResults
 
     - name: 📊 Publish Test Results
       uses: dorny/test-reporter@v2
       if: always()
       with:
-        name: Test Results
-        path: './TestResults/*.trx'
+        name: Test Results (${{ matrix.name }})
+        path: './TestResults/${{ matrix.trx }}'
         reporter: dotnet-trx
         fail-on-error: true
         fail-on-empty: false

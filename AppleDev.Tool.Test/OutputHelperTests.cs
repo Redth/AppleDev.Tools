@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using AppleDev.Tool;
 using Xunit;
 
-namespace AppleDev.Tool.Tests;
+namespace AppleDev.Tool.Test;
 
 public class OutputHelperTests
 {
