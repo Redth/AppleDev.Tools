@@ -25,23 +25,11 @@ jobs:
     - name: ⚙️ Setup .NET
       uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: 10.0.x
-    - name: 🔧 Select Xcode
-      run: |
-        XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
-        if [ -z "$XCODE_PATH" ]; then
-          echo "Available Xcode versions:"
-          ls -d /Applications/Xcode*.app
-          echo "❌ No Xcode 26.x found"
-          exit 1
-        fi
-        sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
-        echo "✅ Selected $XCODE_PATH"
-        xcodebuild -version
+        dotnet-version: |
+          9.0.x
+          10.0.x
     - name: 📱 Install iOS workload
-      run: |
-        dotnet workload install ios
-        dotnet workload update
+      run: dotnet workload install ios --sdk-version 9.0.200
     - name: 🔨 Build the CLI tool
       run: |
         dotnet build AppleDev.Tool/AppleDev.Tool.csproj
@@ -50,12 +38,11 @@ jobs:
 
     - name: 🔨 Build test iOS app
       run: |
-        mkdir -p /tmp/E2ETestApp && cd /tmp/E2ETestApp
-        dotnet new ios -n E2ETestApp
-        dotnet build E2ETestApp/E2ETestApp.csproj -r iossimulator-arm64 -p:ValidateXcodeVersion=false
-        APP_PATH=$(find . -name "E2ETestApp.app" -type d | head -1)
-        echo "TEST_APP_PATH=$(cd "$(dirname "$APP_PATH")" && pwd)/$(basename "$APP_PATH")" >> "$GITHUB_ENV"
-        echo "✅ Built test app at $APP_PATH"
+        cd /tmp && dotnet new ios -n E2ETestApp --framework net9.0
+        dotnet build E2ETestApp/E2ETestApp.csproj -r iossimulator-arm64
+        APP_PATH=$(find E2ETestApp -name "E2ETestApp.app" -type d | head -1)
+        echo "TEST_APP_PATH=/tmp/$APP_PATH" >> "$GITHUB_ENV"
+        echo "✅ Built test app at /tmp/$APP_PATH"
 
     - name: Do Create simulator
       run: |
