@@ -11,7 +11,7 @@ concurrency:
 
 env:
   SIM_NAME: E2ETestSim
-  TEST_APP_BUNDLE_ID: com.test.E2ETestApp
+  TEST_APP_BUNDLE_ID: com.companyname.e2etestapp
   APP_START_MARKER: E2E_APP_STARTED_SUCCESSFULLY
 
 jobs:
@@ -33,72 +33,11 @@ jobs:
         echo "TOOL=$PWD/AppleDev.Tool/bin/Debug/net10.0/apple.dll" >> "$GITHUB_ENV"
         mkdir -p artifacts
 
-    - name: 🔨 Build test iOS app
+    - name: 📦 Extract test iOS app
       run: |
-        APP_DIR="/tmp/E2ETestApp.app"
-        mkdir -p "$APP_DIR"
-
-        SDK_PATH=$(xcrun --sdk iphonesimulator --show-sdk-path)
-        echo "Using simulator SDK: $SDK_PATH"
-
-        cat > /tmp/main.m << 'OBJC'
-        #import <UIKit/UIKit.h>
-        @interface AppDelegate : UIResponder <UIApplicationDelegate>
-        @property (strong, nonatomic) UIWindow *window;
-        @end
-        @implementation AppDelegate
-        - (BOOL)application:(UIApplication *)app didFinishLaunchingWithOptions:(NSDictionary *)opts {
-            self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-            UIViewController *vc = [UIViewController new];
-            vc.view.backgroundColor = [UIColor systemBlueColor];
-            UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(50, 200, 300, 50)];
-            label.text = @"E2E Test App";
-            label.textColor = [UIColor whiteColor];
-            label.font = [UIFont systemFontOfSize:24 weight:UIFontWeightBold];
-            [vc.view addSubview:label];
-            self.window.rootViewController = vc;
-            [self.window makeKeyAndVisible];
-            NSLog(@"E2E_APP_STARTED_SUCCESSFULLY");
-            return YES;
-        }
-        @end
-        int main(int argc, char *argv[]) {
-            @autoreleasepool { return UIApplicationMain(argc, argv, nil, @"AppDelegate"); }
-        }
-        OBJC
-
-        clang -isysroot "$SDK_PATH" \
-          -framework UIKit \
-          -arch arm64 \
-          -target arm64-apple-ios17.0-simulator \
-          -fobjc-arc \
-          -o "$APP_DIR/E2ETestApp" \
-          /tmp/main.m
-
-        cat > "$APP_DIR/Info.plist" << 'PLIST'
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>CFBundleIdentifier</key>
-            <string>com.test.E2ETestApp</string>
-            <key>CFBundleName</key>
-            <string>E2ETestApp</string>
-            <key>CFBundleExecutable</key>
-            <string>E2ETestApp</string>
-            <key>CFBundleVersion</key>
-            <string>1</string>
-            <key>CFBundleShortVersionString</key>
-            <string>1.0</string>
-            <key>UILaunchScreen</key>
-            <dict/>
-        </dict>
-        </plist>
-        PLIST
-
-        codesign --force --sign - "$APP_DIR"
-        echo "TEST_APP_PATH=$APP_DIR" >> "$GITHUB_ENV"
-        echo "✅ Built native iOS test app"
+        unzip -o AppleDev.Test/testdata/com.companyname.e2etestapp.zip -d /tmp/testapp
+        echo "TEST_APP_PATH=/tmp/testapp/E2ETestApp.app" >> "$GITHUB_ENV"
+        echo "✅ Extracted pre-built test app"
 
     - name: Do Create simulator
       run: |
