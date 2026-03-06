@@ -1,0 +1,185 @@
+name: Run iOS Simulator
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  SIM_NAME: E2ETestSim
+  TEST_APP_BUNDLE_ID: com.companyname.e2etestapp
+  APP_START_MARKER: E2E_APP_STARTED_SUCCESSFULLY
+
+jobs:
+  run:
+    name: 🚀 E2E Simulator
+    runs-on: macos-latest
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - name: ⚙️ Setup .NET
+      uses: actions/setup-dotnet@v5
+    - name: 🔨 Build the CLI tool
+      run: |
+        dotnet build AppleDev.Tool/AppleDev.Tool.csproj
+        echo "TOOL=$PWD/AppleDev.Tool/bin/Debug/net10.0/apple.dll" >> "$GITHUB_ENV"
+        mkdir -p artifacts
+
+    - name: 📦 Extract test iOS app
+      run: |
+        unzip -o AppleDev.Test/testdata/com.companyname.e2etestapp.zip -d /tmp/testapp
+        echo "TEST_APP_PATH=/tmp/testapp/E2ETestApp.app" >> "$GITHUB_ENV"
+        echo "✅ Extracted pre-built test app"
+
+    - name: Do Create simulator
+      run: |
+        RESULT=$(dotnet $TOOL simulator create "$SIM_NAME" --device-type "iPhone 16" --format json)
+        echo "Create result: $RESULT"
+        UDID=$(echo "$RESULT" | jq -r '.udid')
+        echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
+
+    - name: Validate Create simulator
+      run: |
+        if [ -z "$SIMULATOR_UDID" ] || [ "$SIMULATOR_UDID" = "null" ]; then
+          echo "❌ Failed to parse UDID from create output"
+          exit 1
+        fi
+        SIMS=$(dotnet $TOOL simulator list --format json)
+        if ! echo "$SIMS" | jq -e --arg udid "$SIMULATOR_UDID" '.[] | select(.udid == $udid)' > /dev/null 2>&1; then
+          echo "❌ Simulator $SIMULATOR_UDID not found in simulator list after create"
+          exit 1
+        fi
+        echo "✅ Simulator '$SIM_NAME' ($SIMULATOR_UDID) created successfully"
+
+    - name: Do Boot simulator
+      run: |
+        RESULT=$(dotnet $TOOL simulator boot "$SIMULATOR_UDID" --wait --timeout 300 --format json)
+        echo "Boot result: $RESULT"
+
+    - name: Validate Boot simulator
+      run: |
+        SIMS=$(dotnet $TOOL simulator list --format json)
+        if ! echo "$SIMS" | jq -e --arg udid "$SIMULATOR_UDID" '.[] | select(.udid == $udid and .state == "Booted")' > /dev/null 2>&1; then
+          echo "❌ Simulator $SIMULATOR_UDID not found as Booted"
+          echo "$SIMS" | jq --arg name "$SIM_NAME" '.[] | select(.name == $name)'
+          exit 1
+        fi
+        echo "✅ Simulator $SIMULATOR_UDID is Booted"
+
+    - name: Do Install test app
+      run: dotnet $TOOL simulator app install "$SIMULATOR_UDID" "$TEST_APP_PATH"
+
+    - name: Validate Install test app
+      run: |
+        FOUND=0
+        for i in $(seq 1 12); do
+          APPS=$(dotnet $TOOL simulator app list "$SIMULATOR_UDID" --format json)
+          if echo "$APPS" | jq -e --arg bid "$TEST_APP_BUNDLE_ID" '.[] | select(.CFBundleIdentifier == $bid)' > /dev/null 2>&1; then
+            echo "✅ App installed and verified via CLI (attempt $i)"
+            FOUND=1
+            break
+          fi
+          echo "Attempt $i/12 - app not visible yet, waiting 5s..."
+          sleep 5
+        done
+        if [ "$FOUND" -ne 1 ]; then
+          echo "❌ $TEST_APP_BUNDLE_ID not found in app list after retries"
+          echo "$APPS" | jq '.[].CFBundleIdentifier' | head -20
+          exit 1
+        fi
+
+    - name: Do Launch test app
+      run: |
+        echo "APP_LAUNCH_TIME=$(date -v-5S '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_ENV"
+        dotnet $TOOL simulator app launch "$SIMULATOR_UDID" "$TEST_APP_BUNDLE_ID"
+
+    - name: Validate Launch test app
+      timeout-minutes: 5
+      run: |
+        FOUND=0
+        for i in $(seq 1 30); do
+          dotnet $TOOL simulator logs "$SIMULATOR_UDID" \
+            --start "$APP_LAUNCH_TIME" \
+            --predicate "eventMessage contains '$APP_START_MARKER'" \
+            --format json \
+            > artifacts/simulator-launch-logs.json 2>&1 || true
+          if grep -q "$APP_START_MARKER" artifacts/simulator-launch-logs.json 2>/dev/null; then
+            echo "✅ App marker '$APP_START_MARKER' found in simulator logs via CLI (attempt $i)"
+            FOUND=1
+            break
+          fi
+          echo "Attempt $i/30 - marker not found yet, waiting 5s..."
+          sleep 5
+        done
+        if [ "$FOUND" -ne 1 ]; then
+          echo "❌ Marker '$APP_START_MARKER' not found in simulator logs after 30 attempts"
+          echo "--- Last captured logs ---"
+          cat artifacts/simulator-launch-logs.json 2>/dev/null || echo "(no logs)"
+          exit 1
+        fi
+
+    - name: Do Screenshot
+      run: dotnet $TOOL simulator screenshot "$SIMULATOR_UDID" -o artifacts/screenshot.png
+
+    - name: Validate Screenshot
+      run: |
+        if [ ! -f artifacts/screenshot.png ]; then
+          echo "❌ Screenshot file not found at artifacts/screenshot.png"
+          ls -la artifacts/
+          exit 1
+        fi
+        SIZE=$(stat -f%z artifacts/screenshot.png)
+        if [ "$SIZE" -lt 1000 ]; then
+          echo "❌ Screenshot file too small ($SIZE bytes), likely invalid"
+          exit 1
+        fi
+        echo "✅ Screenshot captured ($SIZE bytes)"
+
+    - name: Do Gather logs
+      run: dotnet $TOOL simulator logs "$SIMULATOR_UDID" --start "$APP_LAUNCH_TIME" --format json > artifacts/simulator-logs.json 2>&1 || true
+
+    - name: Validate Gather logs
+      run: |
+        if [ ! -f artifacts/simulator-logs.json ]; then
+          echo "❌ Logs file not found"
+          exit 1
+        fi
+        SIZE=$(stat -f%z artifacts/simulator-logs.json)
+        if [ "$SIZE" -lt 1 ]; then
+          echo "❌ Logs file is empty (0 bytes)"
+          exit 1
+        fi
+        echo "✅ Logs gathered ($SIZE bytes)"
+
+    - name: Do Uninstall test app
+      if: always() && env.SIMULATOR_UDID != ''
+      run: dotnet $TOOL simulator app uninstall "$SIMULATOR_UDID" "$TEST_APP_BUNDLE_ID" || true
+
+    - name: Validate Uninstall test app
+      if: always() && env.SIMULATOR_UDID != ''
+      run: |
+        APPS=$(dotnet $TOOL simulator app list "$SIMULATOR_UDID" --format json)
+        echo "Apps JSON: $APPS"
+        if echo "$APPS" | jq -e --arg bid "$TEST_APP_BUNDLE_ID" '.[] | select(.CFBundleIdentifier == $bid)' > /dev/null 2>&1; then
+          echo "❌ $TEST_APP_BUNDLE_ID still found after uninstall"
+          exit 1
+        fi
+        echo "✅ App uninstalled and verified via CLI"
+
+    - name: 🧹 Cleanup simulator
+      if: always() && env.SIMULATOR_UDID != ''
+      run: dotnet $TOOL simulator delete --force "$SIM_NAME"
+
+    - name: 📦 Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v5
+      with:
+        name: e2e-logs
+        path: artifacts/
+        if-no-files-found: ignore

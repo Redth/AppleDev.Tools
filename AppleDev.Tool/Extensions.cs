@@ -122,8 +122,8 @@ static class Extensions
 			}
 			else // Output is a file
 			{
-				var invalidFileChars = Path.GetInvalidFileNameChars();
-				if (!command.Output.Any(c => invalidFileChars.Contains(c)))
+				var invalidPathChars = Path.GetInvalidPathChars();
+				if (!command.Output.Any(c => invalidPathChars.Contains(c)))
 					return new FileInfo(command.Output);
 			}
 		}
@@ -149,8 +149,8 @@ static class Extensions
 			}
 			else
 			{
-				var invalidFileChars = Path.GetInvalidFileNameChars();
-				if (command.Output.Any(c => invalidFileChars.Contains(c)))
+				var invalidPathChars = Path.GetInvalidPathChars();
+				if (command.Output.Any(c => invalidPathChars.Contains(c)))
 				{
 					validationResult = ValidationResult.Error("Invalid path specified for --output");
 					return false;

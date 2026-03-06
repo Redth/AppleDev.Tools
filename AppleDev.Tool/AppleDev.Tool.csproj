@@ -39,7 +39,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="AppleDev.Tool.Tests" />
+        <InternalsVisibleTo Include="AppleDev.Tool.Test" />
     </ItemGroup>
 
     <ItemGroup>

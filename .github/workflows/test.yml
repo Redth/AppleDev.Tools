@@ -1,0 +1,71 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  checks: write
+  pull-requests: write
+
+jobs:
+  test:
+    name: 🧪 ${{ matrix.name }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: AppleDev
+            project: AppleDev.Test/AppleDev.Test.csproj
+            trx: test-results-appledev.trx
+            setup: ''
+          - name: AppleDev.Tool
+            project: AppleDev.Tool.Test/AppleDev.Tool.Test.csproj
+            trx: test-results-tool.trx
+            setup: ''
+          - name: AppleDev.FbIdb
+            project: AppleDev.FbIdb.Test/AppleDev.FbIdb.Test.csproj
+            trx: test-results-fbidb.trx
+            setup: |
+              brew tap facebook/fb
+              brew install idb-companion
+    env:
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+    steps:
+
+    - name: 📥 Checkout
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: ⚙️ Setup .NET
+      uses: actions/setup-dotnet@v5
+
+    - name: 🔧 Setup dependencies
+      if: matrix.setup != ''
+      run: ${{ matrix.setup }}
+
+    - name: 🧪 Run Tests
+      run: >
+        dotnet test ./${{ matrix.project }}
+        --logger "trx;LogFileName=${{ matrix.trx }}"
+        --logger "console;verbosity=detailed"
+        --results-directory ./TestResults
+
+    - name: 📊 Publish Test Results
+      uses: dorny/test-reporter@v2
+      if: always()
+      with:
+        name: Test Results (${{ matrix.name }})
+        path: './TestResults/${{ matrix.trx }}'
+        reporter: dotnet-trx
+        fail-on-error: true
+        fail-on-empty: false

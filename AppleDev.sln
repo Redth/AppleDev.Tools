@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppleDev.FbIdb", "AppleDev.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppleDev.FbIdb.Test", "AppleDev.FbIdb.Test\AppleDev.FbIdb.Test.csproj", "{191CAE26-FBF9-40E1-9656-2D1774DFDC00}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppleDev.Tool.Tests", "AppleDev.Tool.Tests\AppleDev.Tool.Tests.csproj", "{426A126C-1817-4479-8D16-48A90391AB42}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppleDev.Tool.Test", "AppleDev.Tool.Test\AppleDev.Tool.Test.csproj", "{426A126C-1817-4479-8D16-48A90391AB42}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
