@@ -167,7 +167,11 @@ jobs:
       run: |
         FOUND=0
         for i in $(seq 1 30); do
-          dotnet $TOOL simulator logs "$SIMULATOR_UDID" --start "$APP_LAUNCH_TIME" > artifacts/simulator-launch-logs.txt 2>&1 || true
+          xcrun simctl spawn "$SIMULATOR_UDID" log show \
+            --start "$APP_LAUNCH_TIME" \
+            --predicate "eventMessage contains '$APP_START_MARKER'" \
+            --info --style compact --color none \
+            > artifacts/simulator-launch-logs.txt 2>&1 || true
           if grep -q "$APP_START_MARKER" artifacts/simulator-launch-logs.txt 2>/dev/null; then
             echo "✅ App marker '$APP_START_MARKER' found in simulator logs (attempt $i)"
             FOUND=1
@@ -178,8 +182,12 @@ jobs:
         done
         if [ "$FOUND" -ne 1 ]; then
           echo "❌ Marker '$APP_START_MARKER' not found in simulator logs after 30 attempts"
-          echo "--- Last captured logs ---"
-          tail -50 artifacts/simulator-launch-logs.txt 2>/dev/null || echo "(no logs)"
+          echo "--- Last captured logs (tail) ---"
+          tail -30 artifacts/simulator-launch-logs.txt 2>/dev/null || echo "(no logs)"
+          echo "--- Dumping all recent logs for debugging ---"
+          xcrun simctl spawn "$SIMULATOR_UDID" log show \
+            --start "$APP_LAUNCH_TIME" --info --style compact --color none \
+            2>&1 | tail -50 || true
           exit 1
         fi
 
