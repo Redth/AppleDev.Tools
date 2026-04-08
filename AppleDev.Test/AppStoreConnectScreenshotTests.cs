@@ -221,14 +221,14 @@ public class AppStoreConnectScreenshotTests
 		var localization = localizations.Data.First();
 		var screenshotSets = await Client!.ListAppScreenshotSetsAsync(
 			localization.Id,
-			filterScreenshotDisplayType: ScreenshotDisplayType.APP_IPHONE_69);
+			filterScreenshotDisplayType: ScreenshotDisplayType.APP_IPHONE_67);
 		Assert.NotNull(screenshotSets);
 		Assert.NotNull(screenshotSets.Data);
 
 		if (screenshotSets.Data.Any())
 		{
 			Assert.All(screenshotSets.Data, set =>
-				Assert.Equal(ScreenshotDisplayType.APP_IPHONE_69, set.Attributes.ScreenshotDisplayType));
+				Assert.Equal(ScreenshotDisplayType.APP_IPHONE_67, set.Attributes.ScreenshotDisplayType));
 		}
 	}
 
@@ -266,12 +266,15 @@ public class AppStoreConnectScreenshotTests
 	public void ScreenshotDisplayType_EnumHasExpectedValues()
 	{
 		// Verify common display types exist
-		Assert.True(Enum.IsDefined(typeof(ScreenshotDisplayType), ScreenshotDisplayType.APP_IPHONE_69));
 		Assert.True(Enum.IsDefined(typeof(ScreenshotDisplayType), ScreenshotDisplayType.APP_IPHONE_67));
 		Assert.True(Enum.IsDefined(typeof(ScreenshotDisplayType), ScreenshotDisplayType.APP_IPHONE_65));
+		Assert.True(Enum.IsDefined(typeof(ScreenshotDisplayType), ScreenshotDisplayType.APP_IPHONE_61));
 		Assert.True(Enum.IsDefined(typeof(ScreenshotDisplayType), ScreenshotDisplayType.APP_IPAD_PRO_3GEN_129));
+		Assert.True(Enum.IsDefined(typeof(ScreenshotDisplayType), ScreenshotDisplayType.APP_IPAD_PRO_3GEN_11));
 		Assert.True(Enum.IsDefined(typeof(ScreenshotDisplayType), ScreenshotDisplayType.APP_APPLE_TV));
 		Assert.True(Enum.IsDefined(typeof(ScreenshotDisplayType), ScreenshotDisplayType.APP_APPLE_VISION_PRO));
+		Assert.True(Enum.IsDefined(typeof(ScreenshotDisplayType), ScreenshotDisplayType.APP_WATCH_SERIES_10));
+		Assert.True(Enum.IsDefined(typeof(ScreenshotDisplayType), ScreenshotDisplayType.IMESSAGE_APP_IPHONE_67));
 	}
 
 	[Fact]
@@ -279,10 +282,10 @@ public class AppStoreConnectScreenshotTests
 	{
 		var attrs = new AppScreenshotSetAttributes
 		{
-			ScreenshotDisplayTypeValue = "APP_IPHONE_69"
+			ScreenshotDisplayTypeValue = "APP_IPHONE_67"
 		};
 
-		Assert.Equal(ScreenshotDisplayType.APP_IPHONE_69, attrs.ScreenshotDisplayType);
+		Assert.Equal(ScreenshotDisplayType.APP_IPHONE_67, attrs.ScreenshotDisplayType);
 	}
 
 	[Fact]
