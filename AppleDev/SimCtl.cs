@@ -236,12 +236,23 @@ public class SimCtl : XCRun
 	/// <param name="cancellationToken"></param>
 	/// <returns>True if command execution exit code is zero.</returns>
 	public Task<bool> LaunchAppAsync(string target, string bundleIdentifier, CancellationToken cancellationToken = default)
+		=> LaunchAppAsync(target, bundleIdentifier, environmentVariables: null, cancellationToken);
+
+	/// <summary>
+	/// Launches an installed app on the target simulator(s) with optional environment variables.
+	/// </summary>
+	/// <param name="target">The target UDID, Simulator Name, Literal value 'all', or status (eg: 'available')</param>
+	/// <param name="bundleIdentifier">The app's bundle identifier to launch (eg: com.company.appname).</param>
+	/// <param name="environmentVariables">Optional environment variables to pass to the launched app. Each key-value pair is forwarded via the <c>SIMCTL_CHILD_</c> prefix convention.</param>
+	/// <param name="cancellationToken"></param>
+	/// <returns>True if command execution exit code is zero.</returns>
+	public Task<bool> LaunchAppAsync(string target, string bundleIdentifier, IReadOnlyDictionary<string, string>? environmentVariables, CancellationToken cancellationToken = default)
 		=> RunSimCtlCmdAsync(args =>
 		{
 			args.Add("launch");
 			args.Add(target);
 			args.Add(bundleIdentifier);
-		}, cancellationToken);
+		}, environmentVariables, cancellationToken);
 	
 	/// <summary>
 	/// Terminates a running app on the target simulator(s).
@@ -1280,6 +1291,9 @@ public class SimCtl : XCRun
 	}
 
 	async Task<bool> RunSimCtlCmdAsync(Action<ArgumentsBuilder> argsBuilder, CancellationToken cancellationToken = default)
+		=> await RunSimCtlCmdAsync(argsBuilder, environmentVariables: null, cancellationToken).ConfigureAwait(false);
+
+	async Task<bool> RunSimCtlCmdAsync(Action<ArgumentsBuilder> argsBuilder, IReadOnlyDictionary<string, string>? environmentVariables, CancellationToken cancellationToken = default)
 	{
 		base.ThrowIfNotMacOS();
 		
@@ -1287,13 +1301,26 @@ public class SimCtl : XCRun
 
 		try
 		{
-			var result = await Cli.Wrap(xcrun.FullName)
+			var cmd = Cli.Wrap(xcrun.FullName)
 				.WithValidation(CommandResultValidation.None)
 				.WithArguments(args =>
 				{
 					args.Add("simctl");
 					argsBuilder?.Invoke(args);
-				})
+				});
+
+			if (environmentVariables is not null && environmentVariables.Count > 0)
+			{
+				cmd = cmd.WithEnvironmentVariables(env =>
+				{
+					foreach (var kvp in environmentVariables)
+					{
+						env.Set($"SIMCTL_CHILD_{kvp.Key}", kvp.Value);
+					}
+				});
+			}
+
+			var result = await cmd
 				.ExecuteAsync(cancellationToken)
 				.ConfigureAwait(false);
 

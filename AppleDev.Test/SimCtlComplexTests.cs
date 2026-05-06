@@ -332,6 +332,39 @@ public class SimCtlComplexTests : IAsyncLifetime
 	}
 
 	[SkippableFact]
+	public async Task LaunchAppAsync_WithNullEnvironmentVariables_ShouldSucceed()
+	{
+		await BootAndWaitAsync();
+
+		var success = await _simCtl.LaunchAppAsync(_testSimName, "com.apple.Maps", environmentVariables: null);
+		Assert.True(success, "Failed to launch app with null environment variables");
+	}
+
+	[SkippableFact]
+	public async Task LaunchAppAsync_WithEmptyEnvironmentVariables_ShouldSucceed()
+	{
+		await BootAndWaitAsync();
+
+		var envVars = new Dictionary<string, string>();
+		var success = await _simCtl.LaunchAppAsync(_testSimName, "com.apple.Maps", envVars);
+		Assert.True(success, "Failed to launch app with empty environment variables");
+	}
+
+	[SkippableFact]
+	public async Task LaunchAppAsync_WithEnvironmentVariables_ShouldSucceed()
+	{
+		await BootAndWaitAsync();
+
+		var envVars = new Dictionary<string, string>
+		{
+			["MY_TEST_VAR"] = "hello",
+			["ANOTHER_VAR"] = "world",
+		};
+		var success = await _simCtl.LaunchAppAsync(_testSimName, "com.apple.Maps", envVars);
+		Assert.True(success, "Failed to launch app with environment variables");
+	}
+
+	[SkippableFact]
 	public async Task CollectLogsAsync_ShouldSucceed()
 	{
 		await BootAndWaitAsync();
