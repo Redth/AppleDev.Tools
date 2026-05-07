@@ -232,7 +232,7 @@ public class SimCtl : XCRun
 	/// Launches an installed app on the target simulator(s).
 	/// </summary>
 	/// <param name="target">The target UDID, Simulator Name, Literal value 'all', or status (eg: 'available')</param>
-	/// <param name="bundleIdentifier">The app's bundle identifier to add to uninstall (eg: com.company.appname).</param>
+	/// <param name="bundleIdentifier">The app's bundle identifier to launch (eg: com.company.appname).</param>
 	/// <param name="cancellationToken"></param>
 	/// <returns>True if command execution exit code is zero.</returns>
 	public Task<bool> LaunchAppAsync(string target, string bundleIdentifier, CancellationToken cancellationToken = default)
