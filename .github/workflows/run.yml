@@ -13,6 +13,8 @@ env:
   SIM_NAME: E2ETestSim
   TEST_APP_BUNDLE_ID: com.companyname.e2etestapp
   APP_START_MARKER: E2E_APP_STARTED_SUCCESSFULLY
+  ENV_TEST_VALUE: hello_from_ci
+  ENV_MARKER: E2E_ENV_RECEIVED
 
 jobs:
   run:
@@ -97,7 +99,7 @@ jobs:
     - name: Do Launch test app
       run: |
         echo "APP_LAUNCH_TIME=$(date -v-5S '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_ENV"
-        dotnet $TOOL simulator app launch "$SIMULATOR_UDID" "$TEST_APP_BUNDLE_ID"
+        dotnet $TOOL simulator app launch "$SIMULATOR_UDID" "$TEST_APP_BUNDLE_ID" --env "E2E_TEST_VALUE=$ENV_TEST_VALUE"
 
     - name: Validate Launch test app
       timeout-minutes: 5
@@ -121,6 +123,31 @@ jobs:
           echo "❌ Marker '$APP_START_MARKER' not found in simulator logs after 30 attempts"
           echo "--- Last captured logs ---"
           cat artifacts/simulator-launch-logs.json 2>/dev/null || echo "(no logs)"
+          exit 1
+        fi
+
+    - name: Validate env vars forwarded to app
+      timeout-minutes: 5
+      run: |
+        FOUND=0
+        for i in $(seq 1 30); do
+          dotnet $TOOL simulator logs "$SIMULATOR_UDID" \
+            --start "$APP_LAUNCH_TIME" \
+            --predicate "eventMessage contains '$ENV_MARKER'" \
+            --format json \
+            > artifacts/simulator-env-logs.json 2>&1 || true
+          if grep -q "${ENV_MARKER}:${ENV_TEST_VALUE}" artifacts/simulator-env-logs.json 2>/dev/null; then
+            echo "✅ Env var marker '${ENV_MARKER}:${ENV_TEST_VALUE}' found in simulator logs (attempt $i)"
+            FOUND=1
+            break
+          fi
+          echo "Attempt $i/30 - env marker not found yet, waiting 5s..."
+          sleep 5
+        done
+        if [ "$FOUND" -ne 1 ]; then
+          echo "❌ Env marker '${ENV_MARKER}:${ENV_TEST_VALUE}' not found in simulator logs after 30 attempts"
+          echo "--- Last captured logs ---"
+          cat artifacts/simulator-env-logs.json 2>/dev/null || echo "(no logs)"
           exit 1
         fi
 

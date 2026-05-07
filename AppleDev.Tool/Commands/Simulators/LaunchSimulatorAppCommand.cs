@@ -16,7 +16,9 @@ public class LaunchSimulatorAppCommand : AsyncCommand<LaunchSimulatorAppCommandS
 		{
 			AnsiConsole.MarkupLine($"Launching [cyan]{settings.BundleId}[/] on simulator [cyan]{settings.Target}[/]...");
 
-			var success = await simctl.LaunchAppAsync(settings.Target, settings.BundleId, data.CancellationToken);
+			var envVars = settings.ParseEnvironmentVariables();
+
+			var success = await simctl.LaunchAppAsync(settings.Target, settings.BundleId, envVars, data.CancellationToken);
 
 			if (success)
 			{
@@ -47,6 +49,28 @@ public class LaunchSimulatorAppCommandSettings : CommandSettings
 	[CommandArgument(1, "<bundle-id>")]
 	public string BundleId { get; set; } = string.Empty;
 
+	[Description("Environment variable to pass to the launched app (KEY=VALUE). Can be specified multiple times.")]
+	[CommandOption("--env|-e")]
+	public string[]? EnvironmentVariables { get; set; }
+
+	internal IReadOnlyDictionary<string, string>? ParseEnvironmentVariables()
+	{
+		if (EnvironmentVariables is null || EnvironmentVariables.Length == 0)
+			return null;
+
+		var dict = new Dictionary<string, string>();
+		foreach (var env in EnvironmentVariables)
+		{
+			var eqIndex = env.IndexOf('=');
+			if (eqIndex <= 0)
+			{
+				throw new InvalidOperationException($"Invalid environment variable format: '{env}'. Expected KEY=VALUE.");
+			}
+			dict[env[..eqIndex]] = env[(eqIndex + 1)..];
+		}
+		return dict;
+	}
+
 	public override ValidationResult Validate()
 	{
 		if (string.IsNullOrWhiteSpace(Target))
@@ -57,6 +81,15 @@ public class LaunchSimulatorAppCommandSettings : CommandSettings
 		if (string.IsNullOrWhiteSpace(BundleId))
 		{
 			return ValidationResult.Error("Bundle ID is required");
+		}
+
+		try
+		{
+			ParseEnvironmentVariables();
+		}
+		catch (InvalidOperationException ex)
+		{
+			return ValidationResult.Error(ex.Message);
 		}
 
 		return ValidationResult.Success();
