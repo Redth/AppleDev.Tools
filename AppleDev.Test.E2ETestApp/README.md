@@ -16,6 +16,9 @@ dotnet build AppleDev.Test.E2ETestApp/E2ETestApp.csproj \
   -f net10.0-ios \
   -r iossimulator-arm64
 
+# If your Xcode version doesn't exactly match the .NET iOS SDK requirement,
+# add -p:ValidateXcodeVersion=false to skip the version check.
+
 # Zip the .app bundle:
 cd AppleDev.Test.E2ETestApp/bin/Debug/net10.0-ios/iossimulator-arm64
 rm -f ../../../../../AppleDev.Test/testdata/com.companyname.e2etestapp.zip
